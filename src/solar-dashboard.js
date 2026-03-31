@@ -1083,7 +1083,7 @@ class SolarDashboard extends HTMLElement {
       cloudy: 'cloudy', partlycloudy: 'cloudy',
     };
     if (this._weatherFx) {
-      this._weatherFx.update(particleTypes[key] || null, theme);
+      this._weatherFx.start(particleTypes[key] || null, isNight, theme);
     }
   }
 
