@@ -43,8 +43,19 @@ A real-time solar monitoring dashboard for Home Assistant, built as a HACS-compa
 
 ## Configuration
 
-Add this to your `configuration.yaml`:
+Add this to your `configuration.yaml`.
 
+**If you installed via HACS (Recommended):**
+```yaml
+panel_custom:
+  - name: solar-dashboard
+    url_path: solar
+    sidebar_title: Solar
+    sidebar_icon: mdi:solar-power
+    module_url: /local/community/solar-dashboard/solar-dashboard.js
+```
+
+**If you installed manually:**
 ```yaml
 panel_custom:
   - name: solar-dashboard
@@ -53,9 +64,6 @@ panel_custom:
     sidebar_icon: mdi:solar-power
     module_url: /local/solar-dashboard/solar-dashboard.js
 ```
-
-> **Note:** If installed via HACS, use this path instead:
-> `module_url: /local/community/solar-dashboard/solar-dashboard.js`
 
 Restart Home Assistant after adding the configuration.
 
