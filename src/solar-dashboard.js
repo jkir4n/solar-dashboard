@@ -236,6 +236,9 @@ class SolarDashboard extends HTMLElement {
 
     // Init charts
     this._charts = new ChartManager(this._bridge);
+    ['chartPower', 'chartSOC', 'chartSolar'].forEach(id => {
+      this._charts.attachCrosshair(root.getElementById(id));
+    });
 
     // Init flow particles
     this._flowPS1 = new FlowParticles(root, 'flowWrap1', 'flowParticles1', 'flowLine1', '#00F0FF');
@@ -1300,6 +1303,21 @@ class SolarDashboard extends HTMLElement {
       soc: E.SOC,
     };
     const result = await this._charts.loadRange(range, canvases, entityIds, this._bridge.timezone);
+
+    // Overlay estimated solar line on solar chart
+    if (canvases.solar && result.powerData?.length && this._engine && this._solarEngineReady) {
+      const panelConfig = this._getPanelConfig();
+      const actualPts = result.powerData.map(d => (d.v !== null && d.v > 0) ? d.v : 0);
+      const estPts = result.powerData.map(d => {
+        const out = this._engine.calcSolarOutput(d.t, panelConfig, 0, null);
+        return out.watts;
+      });
+      this._charts.drawChart(canvases.solar, [
+        { points: actualPts, color: 'rgb(34,197,94)', label: 'W', fill: true },
+        { points: estPts, color: 'rgb(249,115,22)', label: 'W est', fill: false },
+      ], { minY: 0, xLabel: result.timeXLabel(result.powerData), yFormat: v => Math.round(v) + ' W' }, false);
+      this._charts.attachCrosshair(canvases.solar);
+    }
 
     // Update chart value displays with last data point
     const lastPwr = result.powerData?.[result.powerData.length - 1];

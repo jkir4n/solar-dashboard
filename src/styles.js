@@ -24,22 +24,22 @@ export const STYLES = `
     --icon-fill:rgba(255,255,255,0.9);
   }
   [data-theme="light"]{
-    --bg:#EFF0F5;
-    --glass:rgba(255,255,255,0.55);--glass-hover:rgba(255,255,255,0.7);
-    --glass-border:rgba(255,255,255,0.6);--glass-highlight:rgba(255,255,255,0.85);
-    --glass-blur:24px;
-    --text:#1D1D1F;--text2:rgba(0,0,0,0.45);--text3:rgba(0,0,0,0.18);
-    --fill-subtle:rgba(0,0,0,0.04);
-    --green:#28A745;--green-glow:rgba(40,167,69,0.2);--green-bg:rgba(40,167,69,0.1);
-    --orange:#E08600;--orange-glow:rgba(224,134,0,0.2);--orange-bg:rgba(224,134,0,0.1);
-    --red:#E0342B;--red-glow:rgba(224,52,43,0.2);--red-bg:rgba(224,52,43,0.1);
-    --blue:#0071E3;--blue-glow:rgba(0,113,227,0.15);--blue-bg:rgba(0,113,227,0.08);
-    --indigo:#5856D6;--teal:#5AC8FA;
-    --mesh-1:rgba(0,113,227,0.06);--mesh-2:rgba(40,167,69,0.05);
-    --mesh-3:rgba(224,134,0,0.04);--mesh-4:rgba(88,86,214,0.06);
-    --shadow:0 8px 32px rgba(0,0,0,0.08);--shadow-sm:0 2px 12px rgba(0,0,0,0.06);
-    --chart-grid:rgba(0,0,0,0.06);--chart-text:rgba(0,0,0,0.35);
-    --icon-fill:rgba(0,0,0,0.85);
+    --bg:#E8E9EF;
+    --glass:rgba(255,255,255,0.82);--glass-hover:rgba(255,255,255,0.92);
+    --glass-border:rgba(0,0,0,0.10);--glass-highlight:rgba(0,0,0,0.06);
+    --glass-blur:20px;
+    --text:#1D1D1F;--text2:rgba(0,0,0,0.62);--text3:rgba(0,0,0,0.35);
+    --fill-subtle:rgba(0,0,0,0.05);
+    --green:#1E8C3A;--green-glow:rgba(30,140,58,0.2);--green-bg:rgba(30,140,58,0.1);
+    --orange:#C47000;--orange-glow:rgba(196,112,0,0.2);--orange-bg:rgba(196,112,0,0.1);
+    --red:#D0281F;--red-glow:rgba(208,40,31,0.2);--red-bg:rgba(208,40,31,0.1);
+    --blue:#0062CC;--blue-glow:rgba(0,98,204,0.15);--blue-bg:rgba(0,98,204,0.08);
+    --indigo:#4B48C8;--teal:#3AAFE0;
+    --mesh-1:rgba(0,98,204,0.07);--mesh-2:rgba(30,140,58,0.06);
+    --mesh-3:rgba(196,112,0,0.05);--mesh-4:rgba(75,72,200,0.07);
+    --shadow:0 8px 32px rgba(0,0,0,0.12);--shadow-sm:0 2px 12px rgba(0,0,0,0.08);
+    --chart-grid:rgba(0,0,0,0.08);--chart-text:rgba(0,0,0,0.60);
+    --icon-fill:rgba(0,0,0,0.80);
   }
 
   * { margin:0; padding:0; box-sizing:border-box; }
