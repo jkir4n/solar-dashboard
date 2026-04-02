@@ -658,7 +658,7 @@ class SolarDashboard extends HTMLElement {
         }
       }
       if (eid === E.FIRMWARE) root.getElementById('sysFirmware').textContent = unavail ? '--' : val.replace(/[^\x20-\x7E]/g, '').replace(/_+/g, ' ').trim();
-      if (eid === E.MANUFACTURER) root.getElementById('sysBmsModel').textContent = unavail ? '--' : val.replace(/[^\x20-\x7E]/g, '').trim();
+      if (eid === E.MANUFACTURER) { const c = val.replace(/[^\x20-\x7E]/g, '').trim(); const m = c.match(/JK\S*/); root.getElementById('sysBmsModel').textContent = unavail ? '--' : (m ? m[0] : c); }
 
       // Dynamic battery specs
       if (eid === E.STRINGS && !unavail) {
@@ -1259,10 +1259,11 @@ class SolarDashboard extends HTMLElement {
       this._todayOut = outAh;
     } catch (e) { console.warn('[Solar] Today In/Out fetch failed', e); }
 
+    const nomV = this._bridge.battSpec.nomV;
     const inEl = root.getElementById('battTodayIn');
-    this._animateValue(inEl, parseFloat(inEl.textContent) || 0, this._todayIn, 600, v => v.toFixed(2) + ' Ah');
+    this._animateValue(inEl, parseFloat(inEl.textContent) || 0, this._todayIn * nomV / 1000, 600, v => v.toFixed(2) + ' kWh');
     const outEl = root.getElementById('battTodayOut');
-    this._animateValue(outEl, parseFloat(outEl.textContent) || 0, this._todayOut, 600, v => v.toFixed(2) + ' Ah');
+    this._animateValue(outEl, parseFloat(outEl.textContent) || 0, this._todayOut * nomV / 1000, 600, v => v.toFixed(2) + ' kWh');
 
     // Update solar generation today
     const genKWh = this._todayIn * this._bridge.battSpec.nomV / 1000;
