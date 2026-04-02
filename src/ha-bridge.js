@@ -125,7 +125,7 @@ export class HABridge {
       let path = `history/period/${startDate.toISOString()}?filter_entity_id=${entityId}&end_time=${endDate.toISOString()}&minimal_response&no_attributes`;
       if (significantOnly) path += '&significant_changes_only';
       const result = await this._hass.callApi('GET', path);
-      return (result?.[0] || []).map(d => ({ t: new Date(d.last_updated), v: parseFloat(d.state) || 0 }));
+      return (result?.[0] || []).map(d => ({ t: new Date(d.last_changed || d.last_updated), v: isNaN(parseFloat(d.state)) ? null : parseFloat(d.state) }));
     } catch (e) {
       console.warn('[Solar] History fetch failed:', e);
       return [];

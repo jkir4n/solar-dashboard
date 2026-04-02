@@ -350,7 +350,7 @@ export class ChartManager {
     // Render power chart
     if (canvases.power) {
       if (powerData?.length) {
-        const pts = powerData.map(d => d.v <= 0 ? Math.abs(d.v) : 0);
+        const pts = powerData.map(d => (d.v !== null && d.v < 0) ? Math.abs(d.v) : 0);
         this.drawChart(canvases.power, [{ points: pts, color: 'rgb(59,130,246)' }], {
           minY: 0, xLabel: timeXLabel(powerData), yFormat: v => Math.round(v) + ' W'
         }, true);
@@ -362,12 +362,24 @@ export class ChartManager {
     // Render SOC chart
     if (canvases.soc) {
       if (socData?.length) {
-        const pts = socData.map(d => d.v);
+        const pts = socData.map(d => d.v ?? 0);
         this.drawChart(canvases.soc, [{ points: pts, color: 'rgb(249,115,22)' }], {
           minY: 0, maxY: 100, yFormat: v => v + '%', xLabel: timeXLabel(socData)
         }, true);
       } else {
         this.showPlaceholder(canvases.soc, 'No data available');
+      }
+    }
+
+    // Render solar chart (positive power = charging from solar)
+    if (canvases.solar) {
+      if (powerData?.length) {
+        const pts = powerData.map(d => (d.v !== null && d.v > 0) ? d.v : 0);
+        this.drawChart(canvases.solar, [{ points: pts, color: 'rgb(34,197,94)' }], {
+          minY: 0, xLabel: timeXLabel(powerData), yFormat: v => Math.round(v) + ' W'
+        }, true);
+      } else {
+        this.showPlaceholder(canvases.solar, 'No data available');
       }
     }
 

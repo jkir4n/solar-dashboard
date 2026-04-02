@@ -657,8 +657,8 @@ class SolarDashboard extends HTMLElement {
           this._animateValue(el, old, parseFloat(val), 600, v => v.toFixed(3) + ' V (C' + cellNum + ')');
         }
       }
-      if (eid === E.FIRMWARE) root.getElementById('sysFirmware').textContent = unavail ? '--' : val;
-      if (eid === E.MANUFACTURER) root.getElementById('sysBmsModel').textContent = unavail ? '--' : val;
+      if (eid === E.FIRMWARE) root.getElementById('sysFirmware').textContent = unavail ? '--' : val.replace(/[^\x20-\x7E]/g, '').replace(/_+/g, ' ').trim();
+      if (eid === E.MANUFACTURER) root.getElementById('sysBmsModel').textContent = unavail ? '--' : val.replace(/[^\x20-\x7E]/g, '').trim();
 
       // Dynamic battery specs
       if (eid === E.STRINGS && !unavail) {
@@ -1234,26 +1234,24 @@ class SolarDashboard extends HTMLElement {
       const states = await this._bridge.fetchHistoryRange(E.CURRENT, midnightUTC, now, true);
       let inAh = 0, outAh = 0;
       for (let i = 1; i < states.length; i++) {
-        const prevCurrent = parseFloat(states[i - 1].state);
-        if (isNaN(prevCurrent) || states[i - 1].state === 'unavailable') continue;
-        const t0 = new Date(states[i - 1].last_changed).getTime();
-        const t1 = new Date(states[i].last_changed).getTime();
+        const prevV = states[i - 1].v;
+        if (prevV === null) continue;
+        const t0 = states[i - 1].t.getTime();
+        const t1 = states[i].t.getTime();
         const dtHours = (t1 - t0) / 3600000;
         if (dtHours > 0 && dtHours < 1) {
-          if (prevCurrent > 0.5) inAh += prevCurrent * dtHours;
-          else if (prevCurrent < -0.5) outAh += Math.abs(prevCurrent) * dtHours;
+          if (prevV > 0.5) inAh += prevV * dtHours;
+          else if (prevV < -0.5) outAh += Math.abs(prevV) * dtHours;
         }
       }
       // Include last state to now
       if (states.length > 0) {
-        const lastState = states[states.length - 1];
-        const lastCurrent = parseFloat(lastState.state);
-        if (!isNaN(lastCurrent) && lastState.state !== 'unavailable') {
-          const t0 = new Date(lastState.last_changed).getTime();
-          const dtHours = (now.getTime() - t0) / 3600000;
+        const last = states[states.length - 1];
+        if (last.v !== null) {
+          const dtHours = (now.getTime() - last.t.getTime()) / 3600000;
           if (dtHours > 0 && dtHours < 1) {
-            if (lastCurrent > 0.5) inAh += lastCurrent * dtHours;
-            else if (lastCurrent < -0.5) outAh += Math.abs(lastCurrent) * dtHours;
+            if (last.v > 0.5) inAh += last.v * dtHours;
+            else if (last.v < -0.5) outAh += Math.abs(last.v) * dtHours;
           }
         }
       }
@@ -1300,7 +1298,17 @@ class SolarDashboard extends HTMLElement {
       power: E.POWER,
       soc: E.SOC,
     };
-    await this._charts.loadRange(range, canvases, entityIds, this._bridge.timezone);
+    const result = await this._charts.loadRange(range, canvases, entityIds, this._bridge.timezone);
+
+    // Update chart value displays with last data point
+    const lastPwr = result.powerData?.[result.powerData.length - 1];
+    const lastSoc = result.socData?.[result.socData.length - 1];
+    const pwrEl = root.getElementById('pwrVal');
+    const socEl = root.getElementById('socVal');
+    const solEl = root.getElementById('solVal');
+    if (pwrEl && lastPwr?.v != null) pwrEl.textContent = Math.round(Math.abs(lastPwr.v)) + ' W';
+    if (socEl && lastSoc?.v != null) socEl.textContent = lastSoc.v.toFixed(1) + '%';
+    if (solEl && lastPwr?.v != null) solEl.textContent = Math.round(Math.max(0, lastPwr.v)) + ' W';
 
     // Pulse chart values
     ['pwrVal', 'socVal', 'solVal'].forEach(id => {

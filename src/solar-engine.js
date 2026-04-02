@@ -237,6 +237,10 @@ export class SolarEngine {
     const nextYrW = Math.round(totalRatedW * (1 - nextYrDeg));
     const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     const installStr = months[INSTALL.installDate.getMonth()] + ' ' + INSTALL.installDate.getFullYear();
+    const totalMonths = Math.floor(yearsAge * 12);
+    const ageYears = Math.floor(totalMonths / 12);
+    const ageMonths = totalMonths % 12;
+    const ageStr = ageYears > 0 ? `${ageYears} yr${ageYears !== 1 ? 's' : ''} ${ageMonths} mo` : `${ageMonths} mo`;
 
     return {
       model: INSTALL.model,
@@ -248,6 +252,7 @@ export class SolarEngine {
       nextYrW,
       totalRatedW,
       installStr,
+      ageStr,
       healthPct: (1 - degradation) * 100,
     };
   }
