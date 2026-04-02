@@ -231,6 +231,7 @@ class SolarDashboard extends HTMLElement {
     const rootEl = root.querySelector('.dashboard-root');
     if (weatherCanvas && rootEl) {
       this._weatherFx = new WeatherFX(weatherCanvas, rootEl);
+      this._weatherFx.resize(window.innerWidth, window.innerHeight);
     }
 
     // Init charts
@@ -285,8 +286,7 @@ class SolarDashboard extends HTMLElement {
     // Resize handler
     this._resizeHandler = () => {
       if (this._weatherFx) {
-        const rect = rootEl?.getBoundingClientRect();
-        if (rect) this._weatherFx.resize(rect.width, rect.height);
+        this._weatherFx.resize(window.innerWidth, window.innerHeight);
       }
     };
     window.addEventListener('resize', this._resizeHandler);
