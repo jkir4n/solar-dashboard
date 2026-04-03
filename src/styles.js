@@ -160,6 +160,7 @@ export const STYLES = `
   .stat-item { text-align: center; }
   .stat-val { font-size: 18px; font-weight: 700; color: var(--text); }
   .stat-label { font-size: 11px; font-weight: 500; color: var(--text2); margin-top: 2px; }
+  .stat-divider { height: 1px; background: var(--glass-border); margin: 12px 0; opacity: 0.5; }
 
   /* Power Flow */
   .flow { display: flex; align-items: flex-start; justify-content: center; padding: 16px 0 24px; gap: 0; }

@@ -363,8 +363,24 @@ class SolarDashboard extends HTMLElement {
         <div class="stat-item"><div class="stat-val" id="battTodayOut">--</div><div class="stat-label">Today Out</div></div>
         <div class="stat-item"><div class="stat-val" id="battTTE">--</div><div class="stat-label" id="battTTELabel">Time to Empty</div></div>
       </div>
-      <div class="stat-grid">
-        <div class="stat-item"><div class="stat-val" id="battMosfetTemp">--</div><div class="stat-label">MOSFET</div></div>
+      <div class="stat-divider"></div>
+      <div class="info-row" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px">
+        <div class="inf"><div class="inf-v" id="sysCycles">--</div><div class="inf-k">Cycles</div></div>
+        <div class="inf"><div class="inf-v" id="sysCapacity">215 Ah</div><div class="inf-k">Capacity</div></div>
+        <div class="inf"><div class="inf-v" id="sysNominal">51.2 V</div><div class="inf-k">Nominal</div></div>
+        <div class="inf"><div class="inf-v" id="sysConfig">16S</div><div class="inf-k">Config</div></div>
+      </div>
+      <div class="info-row" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px">
+        <div class="inf"><div class="inf-v" id="sysMinCell">-- V</div><div class="inf-k">Min Cell</div></div>
+        <div class="inf"><div class="inf-v" id="sysMaxCell">-- V</div><div class="inf-k">Max Cell</div></div>
+        <div class="inf"><div class="inf-v" id="sysRuntime">--</div><div class="inf-k">Runtime</div></div>
+        <div class="inf"><div class="inf-v" id="sysThroughput">--</div><div class="inf-k">Throughput</div></div>
+      </div>
+      <div class="info-row" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+        <div class="inf"><div class="inf-v" id="battMosfetTemp">--</div><div class="inf-k">MOSFET</div></div>
+        <div class="inf"><div class="inf-v" id="sysBmsModel">--</div><div class="inf-k">BMS Model</div></div>
+        <div class="inf"><div class="inf-v" id="sysFirmware">--</div><div class="inf-k">Firmware</div></div>
+        <div class="inf"><div class="inf-v">LiFePO\u2084</div><div class="inf-k">Chemistry</div></div>
       </div>
     </div>
     <div class="right-col">
@@ -541,27 +557,6 @@ class SolarDashboard extends HTMLElement {
         </div>
       </div>
     </div>
-    <div class="card" id="systemCard">
-      <h2 class="section-title">System</h2>
-      <div class="info-row" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px">
-        <div class="inf"><div class="inf-v" id="sysCycles">--</div><div class="inf-k">Cycles</div></div>
-        <div class="inf"><div class="inf-v" id="sysCapacity">215 Ah</div><div class="inf-k">Capacity</div></div>
-        <div class="inf"><div class="inf-v" id="sysNominal">51.2 V</div><div class="inf-k">Nominal</div></div>
-        <div class="inf"><div class="inf-v">LiFePO\u2084</div><div class="inf-k">Chemistry</div></div>
-      </div>
-      <div class="info-row" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px">
-        <div class="inf"><div class="inf-v" id="sysMinCell">-- V</div><div class="inf-k">Min Cell</div></div>
-        <div class="inf"><div class="inf-v" id="sysMaxCell">-- V</div><div class="inf-k">Max Cell</div></div>
-        <div class="inf"><div class="inf-v" id="sysConfig">16S</div><div class="inf-k">Config</div></div>
-        <div class="inf"><div class="inf-v">Prismatic</div><div class="inf-k">Cell Type</div></div>
-      </div>
-      <div class="info-row" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
-        <div class="inf"><div class="inf-v" id="sysRuntime">--</div><div class="inf-k">Runtime</div></div>
-        <div class="inf"><div class="inf-v" id="sysThroughput">--</div><div class="inf-k">Throughput</div></div>
-        <div class="inf"><div class="inf-v" id="sysBmsModel">--</div><div class="inf-k">BMS Model</div></div>
-        <div class="inf"><div class="inf-v" id="sysFirmware">--</div><div class="inf-k">Firmware</div></div>
-      </div>
-    </div>
   </div>
 </div>
 </div>`;
@@ -596,7 +591,10 @@ class SolarDashboard extends HTMLElement {
   _updateUI(changedEntities) {
     const E = this._bridge.E;
     const root = this.shadowRoot;
-    const batteryEntities = [E.SOC, E.VOLTAGE, E.CURRENT, E.POWER, E.REMAINING];
+    const batteryEntities = [E.SOC, E.VOLTAGE, E.CURRENT, E.POWER, E.REMAINING,
+      E.CYCLES, E.RUNTIME, E.THROUGHPUT, E.MIN_CELL_V, E.MAX_CELL_V,
+      E.MIN_V_CELL, E.MAX_V_CELL, E.FIRMWARE, E.MANUFACTURER, E.STRINGS,
+      E.MOSFET_TEMP, E.CHG_POWER, E.DISCHG_POWER];
     const hasBatteryChange = changedEntities.some(id => batteryEntities.includes(id));
 
     if (hasBatteryChange) {
@@ -627,67 +625,6 @@ class SolarDashboard extends HTMLElement {
         if (unavail) el.textContent = '--';
         else { const old = parseFloat(el.textContent) || 0; this._animateValue(el, old, parseFloat(val), 600, v => v.toFixed(1) + ' \u00B0C'); }
       }
-      if (eid === E.MOSFET_TEMP) {
-        const el = root.getElementById('battMosfetTemp');
-        if (unavail) el.textContent = '--';
-        else { const old = parseFloat(el.textContent) || 0; this._animateValue(el, old, parseFloat(val), 600, v => v.toFixed(1) + ' \u00B0C'); }
-      }
-      if (eid === E.CYCLES) {
-        const el = root.getElementById('sysCycles');
-        if (unavail) el.textContent = '--';
-        else { const old = parseFloat(el.textContent) || 0; this._animateValue(el, old, parseFloat(val), 600, v => Math.round(v).toString()); }
-      }
-      if (eid === E.RUNTIME) root.getElementById('sysRuntime').textContent = unavail ? '--' : val;
-      if (eid === E.THROUGHPUT) {
-        const el = root.getElementById('sysThroughput');
-        if (unavail) el.textContent = '--';
-        else { const old = parseFloat(el.textContent) || 0; this._animateValue(el, old, parseFloat(val), 600, v => Math.round(v) + ' Ah'); }
-      }
-      if (eid === E.MIN_CELL_V) {
-        const el = root.getElementById('sysMinCell');
-        if (unavail) el.textContent = '-- V';
-        else {
-          const old = parseFloat(el.textContent) || 0;
-          const cellNum = this._bridge.getStrVal(E.MIN_V_CELL) || '?';
-          this._animateValue(el, old, parseFloat(val), 600, v => v.toFixed(3) + ' V (C' + cellNum + ')');
-        }
-      }
-      if (eid === E.MAX_CELL_V) {
-        const el = root.getElementById('sysMaxCell');
-        if (unavail) el.textContent = '-- V';
-        else {
-          const old = parseFloat(el.textContent) || 0;
-          const cellNum = this._bridge.getStrVal(E.MAX_V_CELL) || '?';
-          this._animateValue(el, old, parseFloat(val), 600, v => v.toFixed(3) + ' V (C' + cellNum + ')');
-        }
-      }
-      if (eid === E.FIRMWARE) root.getElementById('sysFirmware').textContent = unavail ? '--' : val.replace(/[^\x20-\x7E]/g, '').replace(/_+/g, ' ').trim();
-      if (eid === E.MANUFACTURER) { const c = val.replace(/[^\x20-\x7E]/g, '').trim(); const m = c.match(/JK\S*/); root.getElementById('sysBmsModel').textContent = unavail ? '--' : (m ? m[0] : c); }
-
-      // Dynamic battery specs
-      if (eid === E.STRINGS && !unavail) {
-        const s = parseInt(val);
-        if (s > 0) {
-          this._bridge.battSpec.strings = s;
-          this._bridge.battSpec.nomV = s * 3.2;
-          root.getElementById('sysConfig').textContent = s + 'S';
-          const nomEl = root.getElementById('sysNominal');
-          const oldNom = parseFloat(nomEl.textContent) || 0;
-          this._animateValue(nomEl, oldNom, this._bridge.battSpec.nomV, 600, v => v.toFixed(1) + ' V');
-        }
-      }
-      if (eid === E.REMAINING && !unavail) {
-        const remainAh = parseFloat(val);
-        const soc = this._bridge.getVal(E.SOC);
-        if (soc > 10 && remainAh > 0) {
-          this._bridge.battSpec.fullAh = Math.round(remainAh / (soc / 100));
-          const capEl = root.getElementById('sysCapacity');
-          const oldCap = parseFloat(capEl.textContent) || 0;
-          this._animateValue(capEl, oldCap, this._bridge.battSpec.fullAh, 600, v => Math.round(v) + ' Ah');
-        }
-      }
-
-      // Balancer / switches
       if (eid === E.BAL_SWITCH || eid === E.BALANCING) {
         const switchOn = this._bridge.getStrVal(E.BAL_SWITCH) === 'on';
         const active = this._bridge.getStrVal(E.BALANCING) === 'on';
@@ -757,12 +694,15 @@ class SolarDashboard extends HTMLElement {
 
     if (current != null) {
       const el = root.getElementById('battCurr');
-      this._animateValue(el, parseFloat(el.textContent) || 0, current, 600, v => v.toFixed(2) + ' A');
+      this._animateValue(el, parseFloat(el.textContent) || 0, Math.abs(current), 600, v => v.toFixed(2) + ' A');
     } else root.getElementById('battCurr').textContent = '--';
 
-    if (power != null) {
+    const chgPower = this._bridge.getVal(E.CHG_POWER);
+    const dischgPower = this._bridge.getVal(E.DISCHG_POWER);
+    const battPower = chgPower ?? dischgPower ?? (power != null ? Math.abs(power) : null);
+    if (battPower != null) {
       const el = root.getElementById('battPow');
-      this._animateValue(el, parseFloat(el.textContent) || 0, power, 600, v => Math.round(v) + ' W');
+      this._animateValue(el, parseFloat(el.textContent) || 0, battPower, 600, v => Math.round(v) + ' W');
     } else root.getElementById('battPow').textContent = '--';
 
     if (remaining != null) {
@@ -804,9 +744,78 @@ class SolarDashboard extends HTMLElement {
     root.getElementById('battTTE').textContent = tte;
 
     // Update actual solar (charging power = solar input)
-    const solarActual = cur > 0 ? Math.abs(power || 0) : 0;
+    const solarActual = chgPower ?? (cur > 0 ? Math.abs(power || 0) : 0);
     const solActualEl = root.getElementById('solActual');
     this._animateValue(solActualEl, parseFloat(solActualEl.textContent) || 0, solarActual, 600, v => Math.round(v) + ' W');
+
+    // System info updates
+    const cycles = this._bridge.getVal(E.CYCLES);
+    if (cycles != null) {
+      const el = root.getElementById('sysCycles');
+      const old = parseFloat(el.textContent) || 0;
+      this._animateValue(el, old, cycles, 600, v => Math.round(v).toString());
+    }
+
+    const runtime = this._bridge.getStrVal(E.RUNTIME);
+    root.getElementById('sysRuntime').textContent = runtime ?? '--';
+
+    const throughput = this._bridge.getVal(E.THROUGHPUT);
+    if (throughput != null) {
+      const el = root.getElementById('sysThroughput');
+      const old = parseFloat(el.textContent) || 0;
+      this._animateValue(el, old, throughput, 600, v => Math.round(v) + ' Ah');
+    }
+
+    const minCellV = this._bridge.getVal(E.MIN_CELL_V);
+    if (minCellV != null) {
+      const el = root.getElementById('sysMinCell');
+      const old = parseFloat(el.textContent) || 0;
+      const cellNum = this._bridge.getStrVal(E.MIN_V_CELL) || '?';
+      this._animateValue(el, old, minCellV, 600, v => v.toFixed(3) + ' V (C' + cellNum + ')');
+    } else root.getElementById('sysMinCell').textContent = '-- V';
+
+    const maxCellV = this._bridge.getVal(E.MAX_CELL_V);
+    if (maxCellV != null) {
+      const el = root.getElementById('sysMaxCell');
+      const old = parseFloat(el.textContent) || 0;
+      const cellNum = this._bridge.getStrVal(E.MAX_V_CELL) || '?';
+      this._animateValue(el, old, maxCellV, 600, v => v.toFixed(3) + ' V (C' + cellNum + ')');
+    } else root.getElementById('sysMaxCell').textContent = '-- V';
+
+    const firmware = this._bridge.getStrVal(E.FIRMWARE);
+    root.getElementById('sysFirmware').textContent = firmware ? firmware.replace(/[^\x20-\x7E]/g, '').replace(/_+/g, ' ').trim() : '--';
+
+    const manufacturer = this._bridge.getStrVal(E.MANUFACTURER);
+    if (manufacturer) {
+      const c = manufacturer.replace(/[^\x20-\x7E]/g, '').trim();
+      const m = c.match(/JK\S*/);
+      root.getElementById('sysBmsModel').textContent = m ? m[0] : c;
+    } else root.getElementById('sysBmsModel').textContent = '--';
+
+    const mosfetTemp = this._bridge.getVal(E.MOSFET_TEMP);
+    if (mosfetTemp != null) {
+      const el = root.getElementById('battMosfetTemp');
+      const old = parseFloat(el.textContent) || 0;
+      this._animateValue(el, old, mosfetTemp, 600, v => v.toFixed(1) + ' \u00B0C');
+    } else root.getElementById('battMosfetTemp').textContent = '--';
+
+    // Dynamic battery specs
+    const strings = this._bridge.getVal(E.STRINGS);
+    if (strings > 0) {
+      this._bridge.battSpec.strings = strings;
+      this._bridge.battSpec.nomV = strings * 3.2;
+      root.getElementById('sysConfig').textContent = strings + 'S';
+      const nomEl = root.getElementById('sysNominal');
+      const oldNom = parseFloat(nomEl.textContent) || 0;
+      this._animateValue(nomEl, oldNom, this._bridge.battSpec.nomV, 600, v => v.toFixed(1) + ' V');
+    }
+
+    if (remaining > 0 && soc > 10) {
+      this._bridge.battSpec.fullAh = Math.round(remaining / (soc / 100));
+      const capEl = root.getElementById('sysCapacity');
+      const oldCap = parseFloat(capEl.textContent) || 0;
+      this._animateValue(capEl, oldCap, this._bridge.battSpec.fullAh, 600, v => Math.round(v) + ' Ah');
+    }
   }
 
   // ============ POWER FLOW ============
@@ -827,9 +836,12 @@ class SolarDashboard extends HTMLElement {
     const root = this.shadowRoot;
     const E = this._bridge.E;
     const current = this._bridge.getVal(E.CURRENT) || 0;
-    const power = Math.abs(this._bridge.getVal(E.POWER) || 0);
-    const solarW = current > 0 ? power : 0;
-    const batteryW = power;
+    const dischgPower = this._bridge.getVal(E.DISCHG_POWER);
+    const chgPower = this._bridge.getVal(E.CHG_POWER);
+    const netPower = Math.abs(this._bridge.getVal(E.POWER) || 0);
+    const power = dischgPower ?? chgPower ?? netPower;
+    const solarW = chgPower ?? (current > 0 ? power : 0);
+    const batteryW = dischgPower ?? power;
     const charging = current > 0.5;
     const discharging = current < -0.5;
 
@@ -882,20 +894,24 @@ class SolarDashboard extends HTMLElement {
 
     // Live view: show real-time values from HA
     if (this._activeChartRange === 'Live') {
+      const dischgPower = this._bridge.getVal(E.DISCHG_POWER);
+      const chgPower = this._bridge.getVal(E.CHG_POWER);
       const power = this._bridge.getVal(E.POWER);
       const soc = this._bridge.getVal(E.SOC);
       const pwrEl = root.getElementById('pwrVal');
       const socEl = root.getElementById('socVal');
       const solEl = root.getElementById('solVal');
-      // Power only shows when discharging (negative = battery powering home)
+      // Power shows discharging power only
       if (pwrEl) {
-        if (power != null && power < -0.5) pwrEl.textContent = Math.round(Math.abs(power)) + ' W';
+        const dischargeVal = dischgPower ?? (power != null && power < -0.5 ? Math.abs(power) : null);
+        if (dischargeVal != null && dischargeVal > 0.5) pwrEl.textContent = Math.round(dischargeVal) + ' W';
         else pwrEl.textContent = '--';
       }
       if (socEl && soc != null) socEl.textContent = Math.round(soc) + '%';
-      // Solar only shows when charging (positive = solar input to battery)
+      // Solar shows charging power only
       if (solEl) {
-        if (power != null && power > 0.5) solEl.textContent = Math.round(power) + ' W';
+        const chargeVal = chgPower ?? (power != null && power > 0.5 ? power : null);
+        if (chargeVal != null && chargeVal > 0.5) solEl.textContent = Math.round(chargeVal) + ' W';
         else solEl.textContent = '--';
       }
       return;
@@ -1355,23 +1371,27 @@ class SolarDashboard extends HTMLElement {
       solar: root.getElementById('chartSolar'),
     };
     const entityIds = {
-      power: E.POWER,
+      power: E.DISCHG_POWER,
       soc: E.SOC,
     };
     const result = await this._charts.loadRange(range, canvases, entityIds, this._bridge.timezone);
+
+    // Load solar chart data from CHG_POWER
+    const solarEntityIds = { power: E.CHG_POWER };
+    const solarResult = await this._charts.loadRange(range, { solar: canvases.solar }, solarEntityIds, this._bridge.timezone);
 
     // Overlay estimated solar line on solar chart
     // For Live: use current weather conditions for fair comparison
     // For historical (1D/7D/30D): use clear-sky (no weather) since past weather is unknown
     // For 7D/30D: data points are daily averages — calculate daily estimated kWh
-    if (canvases.solar && result.powerData?.length && this._engine && this._solarEngineReady) {
+    if (canvases.solar && solarResult.powerData?.length && this._engine && this._solarEngineReady) {
       const panelConfig = this._getPanelConfig();
-      const actualPts = result.powerData.map(d => (d.v !== null && d.v > 0) ? d.v : 0);
+      const actualPts = solarResult.powerData.map(d => (d.v !== null) ? Math.max(d.v, 0) : 0);
       const isLive = range === 'Live';
       const isMultiDay = range === '7D' || range === '30D';
       const cloudPct = isLive ? (1 - this._weatherCloudFactor) * 100 : 0;
       const ambientC = isLive ? this._weatherAmbientC : null;
-      const estPts = result.powerData.map(d => {
+      const estPts = solarResult.powerData.map(d => {
         if (isMultiDay) {
           // For daily data points, estimate total kWh for that day
           const dayStart = new Date(d.t);
@@ -1393,19 +1413,20 @@ class SolarDashboard extends HTMLElement {
       this._charts.drawChart(canvases.solar, [
         { points: actualPts, color: 'rgb(34,197,94)', label: isMultiDay ? 'kWh' : 'W', fill: true },
         { points: estPts, color: 'rgb(249,115,22)', label: isMultiDay ? 'kWh est' : 'W est', fill: false },
-      ], { minY: 0, xLabel: result.timeXLabel(result.powerData), yFormat }, false);
+      ], { minY: 0, xLabel: solarResult.timeXLabel(solarResult.powerData), yFormat }, false);
       this._charts.attachCrosshair(canvases.solar);
     }
 
     // Update chart value displays with last data point
     const lastPwr = result.powerData?.[result.powerData.length - 1];
     const lastSoc = result.socData?.[result.socData.length - 1];
+    const lastSol = solarResult.powerData?.[solarResult.powerData.length - 1];
     const pwrEl = root.getElementById('pwrVal');
     const socEl = root.getElementById('socVal');
     const solEl = root.getElementById('solVal');
     if (pwrEl && lastPwr?.v != null) pwrEl.textContent = Math.round(Math.abs(lastPwr.v)) + ' W';
     if (socEl && lastSoc?.v != null) socEl.textContent = Math.round(lastSoc.v) + '%';
-    if (solEl && lastPwr?.v != null) solEl.textContent = Math.round(Math.max(0, lastPwr.v)) + ' W';
+    if (solEl && lastSol?.v != null) solEl.textContent = Math.round(Math.max(0, lastSol.v)) + ' W';
 
     // Pulse chart values
     ['pwrVal', 'socVal', 'solVal'].forEach(id => {
