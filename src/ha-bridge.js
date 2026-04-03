@@ -1,30 +1,34 @@
-// Entity ID map — exact match of v9 line 722-746
-const ENTITIES = {
-  SOC: 'sensor.jk_bms_jk_bms_capacity_remaining',           // percentage
-  VOLTAGE: 'sensor.jk_bms_jk_bms_total_voltage',
-  CURRENT: 'sensor.jk_bms_jk_bms_current',
-  POWER: 'sensor.jk_bms_jk_bms_power',
-  REMAINING: 'sensor.jk_bms_jk_bms_capacity_remaining_derived', // Ah remaining
-  CYCLES: 'sensor.jk_bms_jk_bms_charging_cycles',
-  RUNTIME: 'sensor.jk_bms_jk_bms_total_runtime_formatted',
-  THROUGHPUT: 'sensor.jk_bms_jk_bms_total_charging_cycle_capacity',
-  MIN_CELL_V: 'sensor.jk_bms_jk_bms_min_cell_voltage',
-  MAX_CELL_V: 'sensor.jk_bms_jk_bms_max_cell_voltage',
-  MIN_V_CELL: 'sensor.jk_bms_jk_bms_min_voltage_cell',
-  MAX_V_CELL: 'sensor.jk_bms_jk_bms_max_voltage_cell',
-  FIRMWARE: 'sensor.jk_bms_jk_bms_software_version',
-  TEMP1: 'sensor.jk_bms_jk_bms_temperature_sensor_1',
-  TEMP2: 'sensor.jk_bms_jk_bms_temperature_sensor_2',
-  BALANCING: 'binary_sensor.jk_bms_jk_bms_balancing',       // binary_sensor, not sensor
-  BAL_SWITCH: 'binary_sensor.jk_bms_jk_bms_balancing_switch', // binary_sensor, not sensor
-  CHG_SWITCH: 'switch.jk_bms_jk_bms_charging',
-  DISCHG_SWITCH: 'switch.jk_bms_jk_bms_discharging',
-  MOSFET_TEMP: 'sensor.jk_bms_jk_bms_power_tube_temperature',
-  STRINGS: 'sensor.jk_bms_jk_bms_battery_strings',
-  MANUFACTURER: 'sensor.jk_bms_jk_bms_manufacturer',
+// BMS entity keyword definitions — covers JK, JBD, Daly, BatMON integrations
+const SENSOR_KEYWORDS = {
+  SOC:          ['capacity_remaining'],
+  VOLTAGE:      ['total_voltage'],
+  CURRENT:      ['current'],
+  POWER:        ['power'],
+  REMAINING:    ['capacity_remaining_derived', 'remaining_capacity'],
+  CYCLES:       ['charging_cycles'],
+  RUNTIME:      ['total_runtime'],
+  THROUGHPUT:   ['total_charging_cycle_capacity'],
+  MIN_CELL_V:   ['min_cell_voltage'],
+  MAX_CELL_V:   ['max_cell_voltage'],
+  MIN_V_CELL:   ['min_voltage_cell'],
+  MAX_V_CELL:   ['max_voltage_cell'],
+  FIRMWARE:     ['software_version'],
+  TEMP1:        ['temperature_sensor_1', 'temperature_1'],
+  TEMP2:        ['temperature_sensor_2', 'temperature_2'],
+  MOSFET_TEMP:  ['power_tube_temperature', 'mosfet_temp'],
+  STRINGS:      ['battery_strings', 'cell_count'],
+  MANUFACTURER: ['manufacturer'],
 };
-// Generate per-cell voltage entities (v9 line 746)
-for (let i = 1; i <= 16; i++) ENTITIES['CELL' + i] = `sensor.jk_bms_jk_bms_cell_voltage_${i}`;
+
+const BINARY_SENSOR_KEYWORDS = {
+  BALANCING:    ['balancing'],
+  BAL_SWITCH:   ['balancing_switch'],
+};
+
+const SWITCH_KEYWORDS = {
+  CHG_SWITCH:   ['charging'],
+  DISCHG_SWITCH:['discharging'],
+};
 
 // Dynamic battery specs — updated from BMS entities (v9 line 748)
 const BATT_SPEC = { fullAh: 215, strings: 16, nomV: 51.2 };
@@ -41,6 +45,7 @@ const HELPER_DEFS = [
   { type: 'input_text', name: 'Solar Panel Model', id: 'input_text.solar_panel_model', initial: 'NOVA585TG144', mode: 'text' },
   { type: 'input_text', name: 'Solar Panel Type', id: 'input_text.solar_panel_type', initial: 'TOPCon', mode: 'text' },
   { type: 'input_datetime', name: 'Solar Install Date', id: 'input_datetime.solar_install_date', has_date: true, has_time: false, initial: '2026-03-01' },
+  { type: 'input_text', name: 'BMS Entity Prefix', id: 'input_text.bms_entity_prefix', initial: 'jk_bms_jk_bms', mode: 'text' },
 ];
 
 export class HABridge {
@@ -48,9 +53,13 @@ export class HABridge {
     this._hass = null;
     this._prevStates = {};
     this._helpersChecked = false;
+    this._entities = {};
+    this._discoveryRun = 0;
+    this._helperCreated = false;
+    this._prefixBeforeChange = null;
   }
 
-  get E() { return ENTITIES; }
+  get E() { return this._entities || {}; }
   get battSpec() { return BATT_SPEC; }
 
   // Called on every set hass(hass) from the main component
@@ -59,6 +68,119 @@ export class HABridge {
     if (!this._helpersChecked) {
       this._ensureHelpers();
       this._helpersChecked = true;
+    }
+    // Dynamic re-discovery: detect prefix change or first run
+    const currentPrefix = this.getStrVal('input_text.bms_entity_prefix');
+    if (this._discoveryRun === 0 || (currentPrefix && currentPrefix !== this._prefixBeforeChange)) {
+      this._entities = this._discoverEntities(hass);
+      this._discoveryRun++;
+      this._prefixBeforeChange = currentPrefix;
+      // Lazy helper creation: only if discovery found too few entities
+      const found = Object.keys(this._entities).filter(k => {
+        const v = this._entities[k];
+        return v && this.getState(v);
+      }).length;
+      if (found < 5 && !this._helperCreated) {
+        this._createBmsPrefixHelper();
+        this._helperCreated = true;
+      }
+    }
+  }
+
+  _buildFallbacks(prefix) {
+    return {
+      SOC:          `sensor.${prefix}_capacity_remaining`,
+      VOLTAGE:      `sensor.${prefix}_total_voltage`,
+      CURRENT:      `sensor.${prefix}_current`,
+      POWER:        `sensor.${prefix}_power`,
+      REMAINING:    `sensor.${prefix}_capacity_remaining_derived`,
+      CYCLES:       `sensor.${prefix}_charging_cycles`,
+      RUNTIME:      `sensor.${prefix}_total_runtime`,
+      THROUGHPUT:   `sensor.${prefix}_total_charging_cycle_capacity`,
+      MIN_CELL_V:   `sensor.${prefix}_min_cell_voltage`,
+      MAX_CELL_V:   `sensor.${prefix}_max_cell_voltage`,
+      MIN_V_CELL:   `sensor.${prefix}_min_voltage_cell`,
+      MAX_V_CELL:   `sensor.${prefix}_max_voltage_cell`,
+      FIRMWARE:     `sensor.${prefix}_software_version`,
+      TEMP1:        `sensor.${prefix}_temperature_sensor_1`,
+      TEMP2:        `sensor.${prefix}_temperature_sensor_2`,
+      MOSFET_TEMP:  `sensor.${prefix}_power_tube_temperature`,
+      STRINGS:      `sensor.${prefix}_battery_strings`,
+      MANUFACTURER: `sensor.${prefix}_manufacturer`,
+      BALANCING:    `binary_sensor.${prefix}_balancing`,
+      BAL_SWITCH:   `binary_sensor.${prefix}_balancing_switch`,
+      CHG_SWITCH:   `switch.${prefix}_charging`,
+      DISCHG_SWITCH:`switch.${prefix}_discharging`,
+    };
+  }
+
+  _discoverEntities(hass) {
+    const discovered = {};
+    const states = hass.states;
+
+    for (const [entityId, state] of Object.entries(states)) {
+      const domain = entityId.split('.')[0];
+      const searchable = `${entityId} ${(state.attributes?.friendly_name || '').toLowerCase()}`;
+
+      if (domain === 'sensor') {
+        for (const [role, keywords] of Object.entries(SENSOR_KEYWORDS)) {
+          if (!discovered[role] && keywords.some(kw => searchable.includes(kw))) {
+            discovered[role] = entityId;
+          }
+        }
+      }
+      if (domain === 'binary_sensor') {
+        for (const [role, keywords] of Object.entries(BINARY_SENSOR_KEYWORDS)) {
+          if (!discovered[role] && keywords.some(kw => searchable.includes(kw))) {
+            discovered[role] = entityId;
+          }
+        }
+      }
+      if (domain === 'switch') {
+        for (const [role, keywords] of Object.entries(SWITCH_KEYWORDS)) {
+          if (!discovered[role] && keywords.some(kw => searchable.includes(kw))) {
+            discovered[role] = entityId;
+          }
+        }
+      }
+    }
+
+    // Discover cell voltages via regex (only valid states)
+    for (const entityId of Object.keys(states)) {
+      const m = entityId.match(/cell_voltage_(\d+)/i);
+      if (m) {
+        const state = states[entityId];
+        if (state && state.state !== 'unknown' && state.state !== 'unavailable') {
+          discovered['CELL' + m[1]] = entityId;
+        }
+      }
+    }
+
+    // Fill gaps with prefix-based fallback
+    const prefix = this.getStrVal('input_text.bms_entity_prefix') || 'jk_bms_jk_bms';
+    const fallbacks = this._buildFallbacks(prefix);
+    for (const [role, fallbackId] of Object.entries(fallbacks)) {
+      if (!discovered[role]) discovered[role] = fallbackId;
+    }
+
+    return discovered;
+  }
+
+  async _createBmsPrefixHelper() {
+    if (!this._hass?.user?.is_admin) return;
+    const def = { type: 'input_text', name: 'BMS Entity Prefix', id: 'input_text.bms_entity_prefix', initial: 'jk_bms_jk_bms', mode: 'text' };
+    if (!(def.id in this._hass.states)) {
+      try {
+        await this._hass.callWS({
+          type: `${def.type}/create`,
+          name: def.name,
+          initial: def.initial,
+          mode: def.mode,
+        });
+        console.log('[Solar] Created BMS prefix helper');
+      } catch (e) {
+        console.warn('[Solar] Failed to create BMS prefix helper:', e);
+      }
     }
   }
 
@@ -118,16 +240,17 @@ export class HABridge {
     if (!this._hass) return [];
     const changed = [];
     const tracked = [
-      ...Object.values(ENTITIES),
+      ...Object.values(this._entities || {}),
       'input_number.solar_panel_count', 'input_number.solar_panel_rated_watts',
       'input_number.solar_panel_efficiency', 'input_number.solar_panel_tilt',
       'input_number.solar_panel_azimuth', 'input_number.solar_panel_width',
       'input_number.solar_panel_height', 'input_text.solar_panel_model',
       'input_text.solar_panel_type', 'input_datetime.solar_install_date',
+      'input_text.bms_entity_prefix',
     ];
     // Also track cell voltages (dynamic entity IDs) and weather
     for (const eid of Object.keys(this._hass.states)) {
-      if (eid.startsWith('sensor.jk_bms_jk_bms_cell_voltage_')) tracked.push(eid);
+      if (eid.includes('cell_voltage_')) tracked.push(eid);
       if (eid.startsWith('weather.')) tracked.push(eid);
     }
     for (const eid of tracked) {

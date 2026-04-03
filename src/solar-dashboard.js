@@ -606,7 +606,7 @@ class SolarDashboard extends HTMLElement {
     }
 
     const hasCellChange = changedEntities.some(id =>
-      id.startsWith('sensor.jk_bms_jk_bms_cell_voltage_') || id === E.BALANCING);
+      id.includes('cell_voltage_') || id === E.BALANCING);
     if (hasCellChange) this._updateCellBalance();
 
     const hasWeatherChange = changedEntities.some(id => id.startsWith('weather.'));
