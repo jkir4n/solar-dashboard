@@ -1312,8 +1312,9 @@ class SolarDashboard extends HTMLElement {
     if (canvases.solar && result.powerData?.length && this._engine && this._solarEngineReady) {
       const panelConfig = this._getPanelConfig();
       const actualPts = result.powerData.map(d => (d.v !== null && d.v > 0) ? d.v : 0);
+      const cloudPct = (1 - this._weatherCloudFactor) * 100;
       const estPts = result.powerData.map(d => {
-        const out = this._engine.calcSolarOutput(d.t, panelConfig, 0, null);
+        const out = this._engine.calcSolarOutput(d.t, panelConfig, cloudPct, this._weatherAmbientC);
         return out.watts;
       });
       this._charts.drawChart(canvases.solar, [
