@@ -1326,7 +1326,7 @@ class SolarDashboard extends HTMLElement {
     const socEl = root.getElementById('socVal');
     const solEl = root.getElementById('solVal');
     if (pwrEl && lastPwr?.v != null) pwrEl.textContent = Math.round(Math.abs(lastPwr.v)) + ' W';
-    if (socEl && lastSoc?.v != null) socEl.textContent = lastSoc.v.toFixed(1) + '%';
+    if (socEl && lastSoc?.v != null) socEl.textContent = Math.round(lastSoc.v) + '%';
     if (solEl && lastPwr?.v != null) solEl.textContent = Math.round(Math.max(0, lastPwr.v)) + ' W';
 
     // Pulse chart values
