@@ -15,6 +15,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -26,21 +27,47 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Bump patch version
+      - name: Determine version bump
         id: version
         run: |
-          npm version patch --no-git-tag-version
-          echo "tag=v$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
 
-      - name: Commit version bump
+          if [ -z "$LAST_TAG" ]; then
+            COMMITS=$(git log --format="%s" --no-merges)
+          else
+            COMMITS=$(git log --format="%s" --no-merges ${LAST_TAG}..HEAD)
+          fi
+
+          if echo "$COMMITS" | grep -q "BREAKING CHANGE"; then
+            BUMP="major"
+          elif echo "$COMMITS" | grep -qE "^feat(\(.+\))?:|^feat!:"; then
+            BUMP="minor"
+          elif echo "$COMMITS" | grep -qE "^fix(\(.+\))?:|^fix!:"; then
+            BUMP="patch"
+          else
+            echo "No version-worthy commits found. Skipping release."
+            echo "skip=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "Bumping $BUMP version from $CURRENT_VERSION"
+          npm version $BUMP --no-git-tag-version
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          echo "tag=v$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "bump=$BUMP" >> $GITHUB_OUTPUT
+
+      - name: Commit version bump and build
+        if: steps.version.outputs.skip != 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add package.json package-lock.json
+          git add package.json package-lock.json dist/solar-dashboard.js
           git commit -m "chore: bump version to ${{ steps.version.outputs.tag }} [skip ci]"
           git push
 
       - name: Create release
+        if: steps.version.outputs.skip != 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
