@@ -147,6 +147,14 @@ export class ChartManager {
     this._chartAnimIds[canvasId] = requestAnimationFrame(tick);
   }
 
+  // ─── getChartData ────────────────────────────────────────────
+  // Return the first dataset's points for a given canvas
+  getChartData(canvasId) {
+    const cd = this._chartData[canvasId];
+    if (!cd || !cd.datasets?.[0]) return null;
+    return cd.datasets[0].points;
+  }
+
   // ─── drawChartOverlay ────────────────────────────────────────
   // Ported from v9 line 2203-2301
   drawChartOverlay(canvas, mouseX) {

@@ -190,6 +190,7 @@ class SolarDashboard extends HTMLElement {
     this._lastForecastHour = -1;
     this._cachedForecastKWh = 0;
     this._resizeHandler = null;
+    this._activeChartRange = 'Live';
   }
 
   set hass(hass) {
@@ -601,6 +602,7 @@ class SolarDashboard extends HTMLElement {
     if (hasBatteryChange) {
       this._updateBattery();
       this._updatePowerFlow();
+      this._updateChartValues();
     }
 
     const hasCellChange = changedEntities.some(id =>
@@ -871,6 +873,47 @@ class SolarDashboard extends HTMLElement {
     }
 
     this._setIconGlow('iconHome', discharging ? 'icon-home-active' : charging ? 'icon-home-idle' : 'glow-dim', Math.abs(batteryW));
+  }
+
+  // ============ CHART VALUE DISPLAYS ============
+  _updateChartValues() {
+    const root = this.shadowRoot;
+    const E = this._bridge.E;
+
+    // Live view: show real-time values from HA
+    if (this._activeChartRange === 'Live') {
+      const power = this._bridge.getVal(E.POWER);
+      const soc = this._bridge.getVal(E.SOC);
+      const pwrEl = root.getElementById('pwrVal');
+      const socEl = root.getElementById('socVal');
+      const solEl = root.getElementById('solVal');
+      if (pwrEl && power != null) pwrEl.textContent = Math.round(Math.abs(power)) + ' W';
+      if (socEl && soc != null) socEl.textContent = Math.round(soc) + '%';
+      if (solEl && power != null) solEl.textContent = Math.round(Math.max(0, power)) + ' W';
+      return;
+    }
+
+    // Historical views: show averages from stored chart data
+    if (!this._charts) return;
+    const powerData = this._charts.getChartData('chartPower');
+    const socData = this._charts.getChartData('chartSOC');
+    const solarData = this._charts.getChartData('chartSolar');
+
+    const pwrEl = root.getElementById('pwrVal');
+    const socEl = root.getElementById('socVal');
+    const solEl = root.getElementById('solVal');
+    if (pwrEl && powerData?.length) {
+      const avg = powerData.reduce((s, v) => s + (v || 0), 0) / powerData.length;
+      pwrEl.textContent = Math.round(Math.abs(avg)) + ' W';
+    }
+    if (socEl && socData?.length) {
+      const avg = socData.reduce((s, v) => s + (v || 0), 0) / socData.length;
+      socEl.textContent = Math.round(avg) + '%';
+    }
+    if (solEl && solarData?.length) {
+      const avg = solarData.reduce((s, v) => s + (v || 0), 0) / solarData.length;
+      solEl.textContent = Math.round(avg) + ' W';
+    }
   }
 
   // ============ BATTERY ARCS ============
@@ -1294,6 +1337,7 @@ class SolarDashboard extends HTMLElement {
 
   // ============ CHARTS ============
   async _loadChartRange(range) {
+    this._activeChartRange = range;
     if (!this._charts) return;
     const root = this.shadowRoot;
     const E = this._bridge.E;
