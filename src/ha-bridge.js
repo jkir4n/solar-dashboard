@@ -20,6 +20,11 @@ const SENSOR_KEYWORDS = {
   MANUFACTURER: ['manufacturer'],
 };
 
+// Keywords to exclude from POWER matching (too specific entities that contain "power")
+const POWER_EXCLUDE = ['charging_power', 'discharging_power', 'power_tube', 'power_protection', 'power_recovery', 'power_balance'];
+// Keywords to exclude from CURRENT matching (too specific entities that contain "current")
+const CURRENT_EXCLUDE = ['overcurrent', 'current_calibration'];
+
 const BINARY_SENSOR_KEYWORDS = {
   BALANCING:    ['balancing'],
   BAL_SWITCH:   ['balancing_switch'],
@@ -125,6 +130,10 @@ export class HABridge {
       if (domain === 'sensor') {
         for (const [role, keywords] of Object.entries(SENSOR_KEYWORDS)) {
           if (!discovered[role] && keywords.some(kw => searchable.includes(kw))) {
+            // Exclude overly generic POWER matches
+            if (role === 'POWER' && POWER_EXCLUDE.some(ex => searchable.includes(ex))) continue;
+            // Exclude overly generic CURRENT matches
+            if (role === 'CURRENT' && CURRENT_EXCLUDE.some(ex => searchable.includes(ex))) continue;
             discovered[role] = entityId;
           }
         }
