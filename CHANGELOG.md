@@ -35,6 +35,16 @@ All notable changes to this project will be documented in this file.
 ### Features
 - real-time chart value updates for Live view, averages for historical views
 
+## v0.1.15 (2026-04-03)
+
+### Bug Fixes
+- align chart estimated solar line with hero weather-adjusted estimate
+
+## v0.1.14 (2026-04-03)
+
+### Bug Fixes
+- correct chart tooltip Y positioning and fix 30D estimated solar line
+
 ## v0.1.13 (2026-04-03)
 
 ### CI/CD
