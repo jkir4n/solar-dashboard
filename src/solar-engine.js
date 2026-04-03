@@ -1,11 +1,8 @@
 const toRad = d => d * Math.PI / 180;
 const toDeg = r => r * 180 / Math.PI;
 
-// Hardcoded installation constants (from v9 SOLAR config, line 1771)
+// Installation constants — model, area, installDate are now passed dynamically
 const INSTALL = {
-  model: 'NOVA585TG144',
-  panelAreaEach: 2.278 * 1.134,  // 2278×1134mm from datasheet
-  installDate: new Date(2026, 2, 1),
   yr1Loss: 0.01,
   annualLoss: 0.004,
   tempCoeffPmax: -0.0029,
@@ -15,10 +12,11 @@ const INSTALL = {
 };
 
 export class SolarEngine {
-  constructor(lat, lon, altitude = 0) {
+  constructor(lat, lon, altitude = 0, installDate = new Date(2026, 2, 1)) {
     this.lat = lat;
     this.lon = lon;
     this.altitude = altitude;
+    this.installDate = installDate;
   }
 
   // --- Solar Position (NOAA/Meeus) ---
@@ -178,7 +176,7 @@ export class SolarEngine {
     const tempDerate = this._tempDerate(poa * cloudFactor, ambientC);
     const degradationFactor = this._degradationFactor(date);
 
-    const panelArea = panelConfig.count * INSTALL.panelAreaEach;
+    const panelArea = panelConfig.count * panelConfig.areaEach;
     const watts = poa * 1000 * panelArea * panelConfig.efficiency * degradationFactor * cloudFactor * tempDerate * monthClarity * INSTALL.systemDerate;
 
     return { watts: Math.max(0, Math.round(watts)), elevation: pos.elevation, azimuth: pos.azimuth, poaKW: poa };
@@ -186,7 +184,7 @@ export class SolarEngine {
 
   // Degradation factor (v9 line 1978)
   _degradationFactor(date) {
-    const msAge = date - INSTALL.installDate;
+    const msAge = date - this.installDate;
     if (msAge <= 0) return 1;
     const yearsAge = msAge / (365.25 * 24 * 3600000);
     let degradation;
@@ -225,7 +223,7 @@ export class SolarEngine {
 
   // Degradation info for display (v9 line 1975 / calcSolar)
   getDegradationInfo(date, panelConfig) {
-    const msAge = date - INSTALL.installDate;
+    const msAge = date - this.installDate;
     const yearsAge = Math.max(0, msAge / (365.25 * 24 * 3600000));
     const totalRatedW = panelConfig.count * panelConfig.ratedWatts;
     let degradation;
@@ -236,14 +234,16 @@ export class SolarEngine {
     const nextYrDeg = Math.min(degradation + INSTALL.annualLoss, 0.80);
     const nextYrW = Math.round(totalRatedW * (1 - nextYrDeg));
     const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const installStr = months[INSTALL.installDate.getMonth()] + ' ' + INSTALL.installDate.getFullYear();
+    const installStr = months[this.installDate.getMonth()] + ' ' + this.installDate.getFullYear();
     const totalMonths = Math.floor(yearsAge * 12);
     const ageYears = Math.floor(totalMonths / 12);
     const ageMonths = totalMonths % 12;
     const ageStr = ageYears > 0 ? `${ageYears} yr${ageYears !== 1 ? 's' : ''} ${ageMonths} mo` : `${ageMonths} mo`;
 
     return {
-      model: INSTALL.model,
+      model: panelConfig.model ?? 'Unknown',
+      type: panelConfig.type ?? 'Unknown',
+      installStr,
       yr1Loss: INSTALL.yr1Loss,
       annualLoss: INSTALL.annualLoss,
       yearsAge,
@@ -251,7 +251,6 @@ export class SolarEngine {
       currentMaxW,
       nextYrW,
       totalRatedW,
-      installStr,
       ageStr,
       healthPct: (1 - degradation) * 100,
     };

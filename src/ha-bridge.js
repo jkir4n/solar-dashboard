@@ -36,6 +36,11 @@ const HELPER_DEFS = [
   { type: 'input_number', name: 'Solar Panel Efficiency', id: 'input_number.solar_panel_efficiency', min: 5, max: 30, step: 0.1, initial: 22.6, unit_of_measurement: '%', icon: 'mdi:percent', mode: 'box' },
   { type: 'input_number', name: 'Solar Panel Tilt', id: 'input_number.solar_panel_tilt', min: 0, max: 90, step: 0.5, initial: 7.5, unit_of_measurement: '°', icon: 'mdi:angle-acute', mode: 'box' },
   { type: 'input_number', name: 'Solar Panel Azimuth', id: 'input_number.solar_panel_azimuth', min: 0, max: 360, step: 1, initial: 220, unit_of_measurement: '°', icon: 'mdi:compass', mode: 'box' },
+  { type: 'input_number', name: 'Solar Panel Width', id: 'input_number.solar_panel_width', min: 0.5, max: 3, step: 0.001, initial: 2.278, unit_of_measurement: 'm', icon: 'mdi:arrow-left-right', mode: 'box' },
+  { type: 'input_number', name: 'Solar Panel Height', id: 'input_number.solar_panel_height', min: 0.5, max: 2, step: 0.001, initial: 1.134, unit_of_measurement: 'm', icon: 'mdi:arrow-up-down', mode: 'box' },
+  { type: 'input_text', name: 'Solar Panel Model', id: 'input_text.solar_panel_model', initial: 'NOVA585TG144', mode: 'text' },
+  { type: 'input_text', name: 'Solar Panel Type', id: 'input_text.solar_panel_type', initial: 'TOPCon', mode: 'text' },
+  { type: 'input_datetime', name: 'Solar Install Date', id: 'input_datetime.solar_install_date', has_date: true, has_time: false, initial: '2026-03-01' },
 ];
 
 export class HABridge {
@@ -90,6 +95,23 @@ export class HABridge {
   get panelEfficiency() { return (this.getVal('input_number.solar_panel_efficiency') ?? 22.6) / 100; }
   get panelTilt() { return this.getVal('input_number.solar_panel_tilt') ?? 7.5; }
   get panelAzimuth() { return this.getVal('input_number.solar_panel_azimuth') ?? 220; }
+  get panelWidth() { return this.getVal('input_number.solar_panel_width') ?? 2.278; }
+  get panelHeight() { return this.getVal('input_number.solar_panel_height') ?? 1.134; }
+  get panelAreaEach() { return this.panelWidth * this.panelHeight; }
+  get panelModel() { return this.getStrVal('input_text.solar_panel_model') ?? 'NOVA585TG144'; }
+  get panelType() { return this.getStrVal('input_text.solar_panel_type') ?? 'TOPCon'; }
+  get installDate() {
+    const s = this.getState('input_datetime.solar_install_date');
+    if (s && s.attributes?.has_date) {
+      const d = s.state || s.attributes?.timestamp;
+      if (d && typeof d === 'string' && d.includes('-')) {
+        const [y, m, day] = d.split('-').map(Number);
+        return new Date(y, m - 1, day);
+      }
+      if (typeof d === 'number') return new Date(d * 1000);
+    }
+    return new Date(2026, 2, 1);
+  }
 
   // Check which tracked entities changed since last update
   getChangedEntities() {
@@ -99,7 +121,9 @@ export class HABridge {
       ...Object.values(ENTITIES),
       'input_number.solar_panel_count', 'input_number.solar_panel_rated_watts',
       'input_number.solar_panel_efficiency', 'input_number.solar_panel_tilt',
-      'input_number.solar_panel_azimuth',
+      'input_number.solar_panel_azimuth', 'input_number.solar_panel_width',
+      'input_number.solar_panel_height', 'input_text.solar_panel_model',
+      'input_text.solar_panel_type', 'input_datetime.solar_install_date',
     ];
     // Also track cell voltages (dynamic entity IDs) and weather
     for (const eid of Object.keys(this._hass.states)) {
@@ -163,17 +187,27 @@ export class HABridge {
     for (const def of HELPER_DEFS) {
       if (!(def.id in this._hass.states)) {
         try {
-          await this._hass.callWS({
+          const params = {
             type: `${def.type}/create`,
             name: def.name,
-            min: def.min,
-            max: def.max,
-            step: def.step,
-            initial: def.initial,
-            unit_of_measurement: def.unit_of_measurement,
-            icon: def.icon,
-            mode: def.mode,
-          });
+          };
+          if (def.type === 'input_number') {
+            params.min = def.min;
+            params.max = def.max;
+            params.step = def.step;
+            params.initial = def.initial;
+            params.unit_of_measurement = def.unit_of_measurement;
+            params.icon = def.icon;
+            params.mode = def.mode;
+          } else if (def.type === 'input_text') {
+            params.initial = def.initial;
+            params.mode = def.mode;
+          } else if (def.type === 'input_datetime') {
+            params.has_date = def.has_date;
+            params.has_time = def.has_time;
+            params.initial = def.initial;
+          }
+          await this._hass.callWS(params);
           console.log(`[Solar] Created helper: ${def.id}`);
         } catch (e) {
           console.warn(`[Solar] Failed to create helper ${def.id}:`, e);

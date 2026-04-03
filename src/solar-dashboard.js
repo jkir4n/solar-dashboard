@@ -222,7 +222,7 @@ class SolarDashboard extends HTMLElement {
     const lon = this._bridge.longitude;
     const alt = this._bridge.elevation;
     if (lat != null && lon != null) {
-      this._engine = new SolarEngine(lat, lon, alt / 1000);
+      this._engine = new SolarEngine(lat, lon, alt / 1000, this._bridge.installDate);
       this._solarEngineReady = true;
     }
 
@@ -443,13 +443,13 @@ class SolarDashboard extends HTMLElement {
           <span id="solDegPct" style="color:var(--red)">--%</span>
         </div>
         <div class="stat-grid">
-          <div class="stat-item"><div class="stat-val">3510 W</div><div class="stat-label">Rated</div></div>
+          <div class="stat-item"><div class="stat-val" id="solRated">--</div><div class="stat-label">Rated</div></div>
           <div class="stat-item"><div class="stat-val" id="solInstalled">--</div><div class="stat-label">Installed</div></div>
           <div class="stat-item"><div class="stat-val" id="solAge">--</div><div class="stat-label">Age</div></div>
           <div class="stat-item"><div class="stat-val" id="solModel">--</div><div class="stat-label">Model</div></div>
         </div>
         <div class="stat-grid">
-          <div class="stat-item"><div class="stat-val">TOPCon</div><div class="stat-label">Type</div></div>
+          <div class="stat-item"><div class="stat-val" id="solType">--</div><div class="stat-label">Type</div></div>
           <div class="stat-item"><div class="stat-val" id="solYr1">--</div><div class="stat-label">Year 1 Loss</div></div>
           <div class="stat-item"><div class="stat-val" id="solYrN">--</div><div class="stat-label">Annual Loss</div></div>
           <div class="stat-item"><div class="stat-val" id="solNextYr">--</div><div class="stat-label">Next Year</div></div>
@@ -1098,6 +1098,9 @@ class SolarDashboard extends HTMLElement {
       efficiency: this._bridge.panelEfficiency,
       tilt: this._bridge.panelTilt,
       azimuth: this._bridge.panelAzimuth,
+      areaEach: this._bridge.panelAreaEach,
+      model: this._bridge.panelModel,
+      type: this._bridge.panelType,
     };
   }
 
@@ -1144,6 +1147,8 @@ class SolarDashboard extends HTMLElement {
     root.getElementById('solInstalled').textContent = s.installStr;
     root.getElementById('solAge').textContent = s.ageStr;
     root.getElementById('solModel').textContent = s.model;
+    root.getElementById('solType').textContent = s.type;
+    root.getElementById('solRated').textContent = s.totalRatedW + ' W';
     root.getElementById('solYr1').textContent = '\u2212' + (s.yr1Loss * 100).toFixed(0) + '% LID';
     root.getElementById('solYrN').textContent = '\u2212' + (s.annualLoss * 100).toFixed(1) + '%/yr';
 
