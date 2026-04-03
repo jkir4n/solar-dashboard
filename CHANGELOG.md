@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.4.2 (2026-04-03)
+
+### Bug Fixes
+- fix: restore charging_power/discharging_power to POWER_EXCLUDE; fix power chart filter for positive-only values
+- docs: add missing changelog entries for v0.1.14 and v0.1.15
+- docs: fill missing changelog entries for v0.2.0 through v0.4.1
+- ci: auto-update CHANGELOG.md in release workflow
+
+
 ## v0.4.1 (2026-04-04)
 
 ### Bug Fixes
