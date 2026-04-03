@@ -222,7 +222,7 @@ class SolarDashboard extends HTMLElement {
     const lon = this._bridge.longitude;
     const alt = this._bridge.elevation;
     if (lat != null && lon != null) {
-      this._engine = new SolarEngine(lat, lon, alt / 1000, this._bridge.installDate);
+      this._engine = new SolarEngine(lat, lon, alt, this._bridge.installDate);
       this._solarEngineReady = true;
     }
 
