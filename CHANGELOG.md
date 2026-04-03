@@ -2,6 +2,39 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.4.1 (2026-04-04)
+
+### Bug Fixes
+- use explicit null checks instead of ?? for power values that can be zero
+
+## v0.4.0 (2026-04-04)
+
+### Features
+- merge system card into battery card, use CHG_POWER/DISCHG_POWER entities, show absolute power/current
+
+## v0.3.1 (2026-04-04)
+
+### Bug Fixes
+- exclude overly-specific power/current keyword matches in BMS discovery
+
+## v0.3.0 (2026-04-04)
+
+### Features
+- replace hardcoded BMS entities with keyword auto-discovery and dynamic prefix fallback
+
+### Documentation
+- update README for BMS auto-discovery and multi-integration support
+
+## v0.2.1 (2026-04-04)
+
+### Bug Fixes
+- calculate daily kWh estimate for 7D/30D solar chart instead of flat noon snapshot
+
+## v0.2.0 (2026-04-04)
+
+### Features
+- real-time chart value updates for Live view, averages for historical views
+
 ## v0.1.13 (2026-04-03)
 
 ### CI/CD
