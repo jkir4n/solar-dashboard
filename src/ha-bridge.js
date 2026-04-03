@@ -293,12 +293,11 @@ export class HABridge {
   }
 
   // Statistics fetching — replaces v9 raw WebSocket
-  async fetchStatsRange(entityId, days) {
+  async fetchStatsRange(entityId, days, startTime, endTime) {
     if (!this._hass) return [];
     try {
-      const now = new Date();
-      const start = new Date(now);
-      start.setDate(start.getDate() - days);
+      const now = endTime || new Date();
+      const start = startTime || new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
       const result = await this._hass.callWS({
         type: 'recorder/statistics_during_period',
         start_time: start.toISOString(),

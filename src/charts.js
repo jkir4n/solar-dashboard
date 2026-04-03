@@ -322,16 +322,17 @@ export class ChartManager {
           this._bridge.fetchHistoryRange(entityIds.soc, start, now)
         ]);
       } else if (range === '1D') {
-        // Yesterday midnight-to-midnight in supplied timezone
+        // Yesterday — use statistics for regular 5-min intervals (history only returns state changes)
         const now = new Date();
         const todayLocal = new Date(now.toLocaleString('en-US', { timeZone: tz }));
         todayLocal.setHours(0, 0, 0, 0);
         const offsetMs = now.getTime() - new Date(now.toLocaleString('en-US', { timeZone: tz })).getTime();
         const endMidnight = new Date(todayLocal.getTime() + offsetMs);
         const startMidnight = new Date(endMidnight.getTime() - 24 * 60 * 60 * 1000);
+        // Use stats for yesterday (1 day) to get regular intervals
         [powerData, socData] = await Promise.all([
-          this._bridge.fetchHistoryRange(entityIds.power, startMidnight, endMidnight),
-          this._bridge.fetchHistoryRange(entityIds.soc, startMidnight, endMidnight)
+          this._bridge.fetchStatsRange(entityIds.power, 1, startMidnight, endMidnight),
+          this._bridge.fetchStatsRange(entityIds.soc, 1, startMidnight, endMidnight)
         ]);
       } else {
         // 7D or 30D — use statistics endpoint
