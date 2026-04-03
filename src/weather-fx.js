@@ -110,6 +110,14 @@ export class WeatherFX {
     }
   }
 
+  /** Full cleanup — call from disconnectedCallback. */
+  destroy() {
+    this.stop();
+    this._rootEl = null;
+    this.canvas = null;
+    this.ctx = null;
+  }
+
   // ---- Private: backdrop ----
 
   _applyBackdrop(colors) {

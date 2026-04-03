@@ -1066,7 +1066,7 @@ class SolarDashboard extends HTMLElement {
       const now = new Date();
       const panelConfig = this._getPanelConfig();
       const result = this._engine.calcSolarOutput(now, panelConfig, 0, 25);
-      isNight = result.altitude < 0;
+      isNight = result.elevation < 0;
     }
 
     let key = CONDITION_PALETTE_MAP[condition] || null;
