@@ -619,17 +619,17 @@ class SolarDashboard extends HTMLElement {
       if (eid === E.TEMP1) {
         const el = root.getElementById('pack1Temp');
         if (unavail) el.textContent = '--';
-        else { const old = parseFloat(el.textContent) || 0; this._animateValue(el, old, parseFloat(val), 600, v => v.toFixed(2) + ' \u00B0C'); }
+        else { const old = parseFloat(el.textContent) || 0; this._animateValue(el, old, parseFloat(val), 600, v => v.toFixed(1) + ' \u00B0C'); }
       }
       if (eid === E.TEMP2) {
         const el = root.getElementById('pack2Temp');
         if (unavail) el.textContent = '--';
-        else { const old = parseFloat(el.textContent) || 0; this._animateValue(el, old, parseFloat(val), 600, v => v.toFixed(2) + ' \u00B0C'); }
+        else { const old = parseFloat(el.textContent) || 0; this._animateValue(el, old, parseFloat(val), 600, v => v.toFixed(1) + ' \u00B0C'); }
       }
       if (eid === E.MOSFET_TEMP) {
         const el = root.getElementById('battMosfetTemp');
         if (unavail) el.textContent = '--';
-        else { const old = parseFloat(el.textContent) || 0; this._animateValue(el, old, parseFloat(val), 600, v => v.toFixed(2) + ' \u00B0C'); }
+        else { const old = parseFloat(el.textContent) || 0; this._animateValue(el, old, parseFloat(val), 600, v => v.toFixed(1) + ' \u00B0C'); }
       }
       if (eid === E.CYCLES) {
         const el = root.getElementById('sysCycles');
