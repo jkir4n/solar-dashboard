@@ -704,7 +704,7 @@ class SolarDashboard extends HTMLElement {
 
     const chgPower = this._bridge.getVal(E.CHG_POWER);
     const dischgPower = this._bridge.getVal(E.DISCHG_POWER);
-    const battPower = chgPower != null ? chgPower : dischgPower != null ? dischgPower : power != null ? Math.abs(power) : null;
+    const battPower = chgPower > 0 ? chgPower : dischgPower > 0 ? dischgPower : power != null ? Math.abs(power) : null;
     if (battPower != null) {
       const el = root.getElementById('battPow');
       this._animateValue(el, parseFloat(el.textContent) || 0, battPower, 600, v => Math.round(v) + ' W');
@@ -749,7 +749,7 @@ class SolarDashboard extends HTMLElement {
     root.getElementById('battTTE').textContent = tte;
 
     // Update actual solar (charging power = solar input)
-    const solarActual = chgPower != null ? chgPower : (cur > 0 ? Math.abs(power || 0) : 0);
+    const solarActual = chgPower > 0 ? chgPower : (cur > 0 ? Math.abs(power || 0) : 0);
     const solActualEl = root.getElementById('solActual');
     this._animateValue(solActualEl, parseFloat(solActualEl.textContent) || 0, solarActual, 600, v => Math.round(v) + ' W');
 
@@ -844,9 +844,9 @@ class SolarDashboard extends HTMLElement {
     const dischgPower = this._bridge.getVal(E.DISCHG_POWER);
     const chgPower = this._bridge.getVal(E.CHG_POWER);
     const netPower = Math.abs(this._bridge.getVal(E.POWER) || 0);
-    const power = dischgPower != null ? dischgPower : chgPower != null ? chgPower : netPower;
-    const solarW = chgPower != null ? chgPower : (current > 0 ? power : 0);
-    const batteryW = dischgPower != null ? dischgPower : power;
+    const power = dischgPower > 0 ? dischgPower : chgPower > 0 ? chgPower : netPower;
+    const solarW = chgPower > 0 ? chgPower : (current > 0 ? power : 0);
+    const batteryW = dischgPower > 0 ? dischgPower : power;
     const charging = current > 0.5;
     const discharging = current < -0.5;
 
@@ -908,14 +908,14 @@ class SolarDashboard extends HTMLElement {
       const solEl = root.getElementById('solVal');
       // Power shows discharging power only
       if (pwrEl) {
-        const dischargeVal = dischgPower != null ? dischgPower : (power != null && power < -0.5 ? Math.abs(power) : null);
+        const dischargeVal = dischgPower > 0 ? dischgPower : (power != null && power < -0.5 ? Math.abs(power) : null);
         if (dischargeVal != null && dischargeVal > 0.5) pwrEl.textContent = Math.round(dischargeVal) + ' W';
         else pwrEl.textContent = '--';
       }
       if (socEl && soc != null) socEl.textContent = Math.round(soc) + '%';
       // Solar shows charging power only
       if (solEl) {
-        const chargeVal = chgPower != null ? chgPower : (power != null && power > 0.5 ? power : null);
+        const chargeVal = chgPower > 0 ? chgPower : (power != null && power > 0.5 ? power : null);
         if (chargeVal != null && chargeVal > 0.5) solEl.textContent = Math.round(chargeVal) + ' W';
         else solEl.textContent = '--';
       }
