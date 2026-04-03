@@ -354,10 +354,10 @@ export class ChartManager {
         : (d.getMonth() + 1) + '/' + d.getDate();
     };
 
-    // Render power chart
+    // Render power chart (discharging power — always positive from DISCHG_POWER)
     if (canvases.power) {
       if (powerData?.length) {
-        const pts = powerData.map(d => (d.v !== null && d.v < 0) ? Math.abs(d.v) : 0);
+        const pts = powerData.map(d => (d.v !== null && d.v > 0) ? d.v : 0);
         this.drawChart(canvases.power, [{ points: pts, color: 'rgb(59,130,246)' }], {
           minY: 0, xLabel: timeXLabel(powerData), yFormat: v => Math.round(v) + ' W'
         }, true);

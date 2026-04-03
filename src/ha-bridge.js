@@ -23,7 +23,7 @@ const SENSOR_KEYWORDS = {
 };
 
 // Keywords to exclude from POWER matching (too specific entities that contain "power")
-const POWER_EXCLUDE = ['power_tube', 'power_protection', 'power_recovery', 'power_balance'];
+const POWER_EXCLUDE = ['charging_power', 'discharging_power', 'power_tube', 'power_protection', 'power_recovery', 'power_balance'];
 // Keywords to exclude from CURRENT matching (too specific entities that contain "current")
 const CURRENT_EXCLUDE = ['overcurrent', 'current_calibration'];
 
