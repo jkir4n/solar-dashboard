@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.4.4 (2026-04-03)
+
+### Bug Fixes
+- fix: use > 0 instead of != null for power value fallbacks to skip zero readings
+
+
 ## v0.4.3 (2026-04-03)
 
 ### Bug Fixes
