@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.4.3 (2026-04-03)
+
+### Bug Fixes
+- fix: animateValue early return blocked zero-value power display; add CHG_POWER/DISCHG_POWER to fallback map
+
+
 ## v0.4.2 (2026-04-03)
 
 ### Bug Fixes
