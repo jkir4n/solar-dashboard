@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.4.5 (2026-04-03)
+
+### Bug Fixes
+- fix: use statistics API for Yesterday chart to show regular intervals instead of state-change-only history
+
+
 ## v0.4.4 (2026-04-03)
 
 ### Bug Fixes
