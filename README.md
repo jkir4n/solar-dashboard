@@ -1,10 +1,10 @@
 # Solar Dashboard for Home Assistant
 
-A real-time solar monitoring dashboard for Home Assistant, built as a HACS-compatible custom panel. Displays battery status (JK BMS), solar generation forecasts (NOAA-based), weather-reactive backgrounds, and historical charts -- all in a single full-page panel.
+A real-time solar monitoring dashboard for Home Assistant, built as a HACS-compatible custom panel. Displays battery status (JK BMS, JBD, Daly, and more), solar generation forecasts (NOAA-based), weather-reactive backgrounds, and historical charts -- all in a single full-page panel.
 
 ## Features
 
-- Real-time battery monitoring (SOC, voltage, current, power, temperature, cell balance)
+- Auto-discovering BMS monitoring — works with JK, JBD, Daly, BatMON and other integrations (no hardcoded entity IDs)
 - NOAA/Meeus solar position and irradiance calculations
 - Weather-adjusted solar generation forecasts
 - Procedural weather particle effects (rain, snow, stars, clouds, lightning)
@@ -13,15 +13,15 @@ A real-time solar monitoring dashboard for Home Assistant, built as a HACS-compa
 - Animated number transitions
 - Dark and light themes with glassmorphism styling
 - Responsive layout
-- Auto-created HA helpers for panel configuration
+- Auto-created HA helpers for panel and BMS configuration
 - Native HA integration via `hass` object (no tokens or manual WebSocket)
 
 ## Prerequisites
 
 - **Home Assistant 2025.1.0+**
-- **JK BMS integration** -- provides `sensor.jk_bms_*` entities for battery data
-- **Weather integration** -- PirateWeather (preferred) or Met.no for cloud cover and conditions
-- **HACS** (optional) -- for automated installation and updates
+- **BMS integration** — JK BMS (ESPHome), JBD, Daly, BatMON, or any integration providing BMS sensor data
+- **Weather integration** — PirateWeather (preferred) or Met.no for cloud cover and conditions
+- **HACS** (optional) — for automated installation and updates
 
 ## Installation
 
@@ -81,14 +81,62 @@ The dashboard auto-creates the following HA helpers on first load (requires admi
 
 If you are not an admin user, helpers cannot be auto-created. The dashboard will use hardcoded defaults and log a warning. An admin can create the helpers manually via Settings -> Helpers.
 
+## BMS Entity Discovery
+
+The dashboard automatically discovers BMS entities through keyword matching — no manual configuration required. It scans all `hass.states` entities and matches them against known BMS naming patterns across multiple integrations:
+
+### Supported BMS Integrations
+
+| Integration | Example Entity ID Pattern |
+|-------------|--------------------------|
+| JK BMS (ESPHome) | `sensor.jk_bms_jk_bms_capacity_remaining` |
+| JBD / Xiaoxiang | `sensor.jbd_bms_state_of_charge` |
+| Daly BMS | `sensor.daly_bms_total_voltage` |
+| BatMON Add-on | `sensor.battery1_capacity_remaining` |
+
+### Discovery Tiers
+
+1. **Keyword Auto-Discovery** (primary) — Scans all entities, matches by keyword in entity_id and friendly_name. Works with any BMS integration using standard naming conventions.
+
+2. **BMS Prefix Helper** (fallback, lazy) — If keyword discovery finds fewer than 5 entities, the dashboard auto-creates `input_text.bms_entity_prefix` (default: `jk_bms_jk_bms`) to construct entity IDs. You can change this helper to match your BMS naming convention.
+
+### Dynamic Re-Discovery
+
+The dashboard re-discovers entities when `input_text.bms_entity_prefix` changes, allowing you to switch BMS configurations without restarting.
+
+### Discovered Entity Roles
+
+| Role | Entity Type | Keyword Match |
+|------|-------------|---------------|
+| SOC | sensor | `capacity_remaining` |
+| Voltage | sensor | `total_voltage` |
+| Current | sensor | `current` |
+| Power | sensor | `power` |
+| Remaining Ah | sensor | `capacity_remaining_derived` |
+| Cycles | sensor | `charging_cycles` |
+| Runtime | sensor | `total_runtime` |
+| Throughput | sensor | `total_charging_cycle_capacity` |
+| Min/Max Cell Voltage | sensor | `min_cell_voltage`, `max_cell_voltage` |
+| Min/Max Voltage Cell | sensor | `min_voltage_cell`, `max_voltage_cell` |
+| Firmware | sensor | `software_version` |
+| Temperature 1/2 | sensor | `temperature_sensor_1`, `temperature_2` |
+| MOSFET Temperature | sensor | `power_tube_temperature` |
+| Battery Strings | sensor | `battery_strings`, `cell_count` |
+| Manufacturer | sensor | `manufacturer` |
+| Cell Voltages (1–N) | sensor | `cell_voltage_1` through `cell_voltage_N` |
+| Balancing | binary_sensor | `balancing` |
+| Balancing Switch | binary_sensor | `balancing_switch` |
+| Charging Switch | switch | `charging` |
+| Discharging Switch | switch | `discharging` |
+
 ## Required Entities
 
 The dashboard reads from these entity groups:
 
-- **`sensor.jk_bms_*`** -- Battery SOC, voltage, current, power, temperatures, cell voltages
-- **`weather.*`** -- Cloud cover and weather condition (for solar forecast adjustment and weather effects)
-- **`input_number.solar_*`** -- Panel configuration helpers (auto-created)
-- **`zone.home`** -- Location for solar position calculations (uses `hass.config` lat/lon as primary)
+- **BMS entities** — Auto-discovered via keyword matching (see table above). No hardcoded entity IDs required.
+- **`weather.*`** — Cloud cover and weather condition (for solar forecast adjustment and weather effects)
+- **`input_number.solar_*`** — Panel configuration helpers (auto-created)
+- **`zone.home`** — Location for solar position calculations (uses `hass.config` lat/lon as primary)
 
 ## Troubleshooting
 
@@ -102,8 +150,9 @@ The dashboard reads from these entity groups:
 - Alternatively, create the helpers manually via Settings -> Helpers
 
 **No battery data showing:**
-- Verify the JK BMS integration is installed and providing `sensor.jk_bms_*` entities
-- Check that entities are available in Developer Tools -> States
+- Verify a BMS integration is installed (JK BMS, JBD, Daly, BatMON, etc.)
+- Check that BMS entities are available in Developer Tools -> States
+- If using a non-standard BMS integration, set `input_text.bms_entity_prefix` to match your entity naming pattern
 
 **Weather effects not showing:**
 - Ensure a weather integration is configured (PirateWeather or Met.no)
