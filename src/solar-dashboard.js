@@ -887,9 +887,17 @@ class SolarDashboard extends HTMLElement {
       const pwrEl = root.getElementById('pwrVal');
       const socEl = root.getElementById('socVal');
       const solEl = root.getElementById('solVal');
-      if (pwrEl && power != null) pwrEl.textContent = Math.round(Math.abs(power)) + ' W';
+      // Power only shows when discharging (negative = battery powering home)
+      if (pwrEl) {
+        if (power != null && power < -0.5) pwrEl.textContent = Math.round(Math.abs(power)) + ' W';
+        else pwrEl.textContent = '--';
+      }
       if (socEl && soc != null) socEl.textContent = Math.round(soc) + '%';
-      if (solEl && power != null) solEl.textContent = Math.round(Math.max(0, power)) + ' W';
+      // Solar only shows when charging (positive = solar input to battery)
+      if (solEl) {
+        if (power != null && power > 0.5) solEl.textContent = Math.round(power) + ' W';
+        else solEl.textContent = '--';
+      }
       return;
     }
 
@@ -1355,7 +1363,7 @@ class SolarDashboard extends HTMLElement {
     // Overlay estimated solar line on solar chart
     // For Live: use current weather conditions for fair comparison
     // For historical (1D/7D/30D): use clear-sky (no weather) since past weather is unknown
-    // For 7D/30D: data points are daily averages at midnight — calculate daily peak (solar noon) instead
+    // For 7D/30D: data points are daily averages — calculate daily estimated kWh
     if (canvases.solar && result.powerData?.length && this._engine && this._solarEngineReady) {
       const panelConfig = this._getPanelConfig();
       const actualPts = result.powerData.map(d => (d.v !== null && d.v > 0) ? d.v : 0);
@@ -1365,19 +1373,27 @@ class SolarDashboard extends HTMLElement {
       const ambientC = isLive ? this._weatherAmbientC : null;
       const estPts = result.powerData.map(d => {
         if (isMultiDay) {
-          // For daily data points, estimate peak output at solar noon
-          const noon = new Date(d.t);
-          noon.setHours(12, 0, 0, 0);
-          const out = this._engine.calcSolarOutput(noon, panelConfig, cloudPct, ambientC);
-          return out.watts;
+          // For daily data points, estimate total kWh for that day
+          const dayStart = new Date(d.t);
+          dayStart.setHours(0, 0, 0, 0);
+          const dayEnd = new Date(dayStart);
+          dayEnd.setDate(dayEnd.getDate() + 1);
+          let totalKWh = 0;
+          // Sample every 15 minutes for accuracy
+          for (let t = dayStart.getTime(); t < dayEnd.getTime(); t += 15 * 60 * 1000) {
+            const out = this._engine.calcSolarOutput(new Date(t), panelConfig, cloudPct, ambientC);
+            totalKWh += out.watts * (15 / 60) / 1000;
+          }
+          return totalKWh;
         }
         const out = this._engine.calcSolarOutput(d.t, panelConfig, cloudPct, ambientC);
         return out.watts;
       });
+      const yFormat = isMultiDay ? v => v.toFixed(1) + ' kWh' : v => Math.round(v) + ' W';
       this._charts.drawChart(canvases.solar, [
-        { points: actualPts, color: 'rgb(34,197,94)', label: 'W', fill: true },
-        { points: estPts, color: 'rgb(249,115,22)', label: 'W est', fill: false },
-      ], { minY: 0, xLabel: result.timeXLabel(result.powerData), yFormat: v => Math.round(v) + ' W' }, false);
+        { points: actualPts, color: 'rgb(34,197,94)', label: isMultiDay ? 'kWh' : 'W', fill: true },
+        { points: estPts, color: 'rgb(249,115,22)', label: isMultiDay ? 'kWh est' : 'W est', fill: false },
+      ], { minY: 0, xLabel: result.timeXLabel(result.powerData), yFormat }, false);
       this._charts.attachCrosshair(canvases.solar);
     }
 
