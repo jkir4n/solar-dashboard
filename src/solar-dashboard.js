@@ -228,9 +228,8 @@ class SolarDashboard extends HTMLElement {
 
     // Init weather FX
     const weatherCanvas = root.getElementById('weatherParticles');
-    const rootEl = root.querySelector('.dashboard-root');
-    if (weatherCanvas && rootEl) {
-      this._weatherFx = new WeatherFX(weatherCanvas, rootEl);
+    if (weatherCanvas) {
+      this._weatherFx = new WeatherFX(weatherCanvas);
       this._weatherFx.resize(window.innerWidth, window.innerHeight);
     }
 

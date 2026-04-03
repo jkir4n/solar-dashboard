@@ -1,39 +1,5 @@
-// weather-fx.js — Weather particle system and backdrop effects
+// weather-fx.js — Weather particle system
 // Ported from solar-v9.html lines 792-1230
-
-// ============ WEATHER BACKDROP PALETTES ============
-const WEATHER_PALETTES = {
-  dark: {
-    sunny:        ['rgba(255,180,50,0.2)',  'rgba(255,140,30,0.15)', 'rgba(255,200,80,0.1)'],
-    night:        ['rgba(20,20,80,0.3)',    'rgba(40,30,100,0.2)',   'rgba(60,20,120,0.15)'],
-    partlycloudy: ['rgba(180,170,140,0.15)','rgba(140,150,180,0.1)', 'rgba(200,190,160,0.1)'],
-    cloudy:       ['rgba(120,130,150,0.15)','rgba(100,110,130,0.1)', 'rgba(140,150,170,0.1)'],
-    rainy:        ['rgba(50,60,90,0.25)',   'rgba(40,50,80,0.2)',    'rgba(70,80,110,0.15)'],
-    snowy:        ['rgba(180,190,210,0.2)', 'rgba(160,170,200,0.15)','rgba(200,210,230,0.1)'],
-    fog:          ['rgba(140,140,140,0.2)', 'rgba(120,120,130,0.15)','rgba(150,150,160,0.1)'],
-    storm:        ['rgba(40,30,70,0.3)',    'rgba(60,40,90,0.25)',   'rgba(30,20,60,0.2)'],
-  },
-  light: {
-    sunny:        ['rgba(255,200,80,0.15)', 'rgba(255,170,50,0.1)',  'rgba(255,220,120,0.08)'],
-    night:        ['rgba(60,60,120,0.12)',  'rgba(80,70,140,0.08)',  'rgba(100,80,160,0.06)'],
-    partlycloudy: ['rgba(180,190,200,0.1)', 'rgba(160,170,190,0.08)','rgba(200,200,210,0.06)'],
-    cloudy:       ['rgba(150,160,170,0.1)', 'rgba(130,140,155,0.08)','rgba(170,175,185,0.06)'],
-    rainy:        ['rgba(80,90,120,0.12)',  'rgba(70,80,110,0.1)',   'rgba(100,110,140,0.08)'],
-    snowy:        ['rgba(200,210,230,0.1)', 'rgba(180,190,215,0.08)','rgba(220,225,240,0.06)'],
-    fog:          ['rgba(170,170,175,0.1)', 'rgba(150,150,160,0.08)','rgba(185,185,190,0.06)'],
-    storm:        ['rgba(70,60,100,0.15)',  'rgba(90,70,120,0.12)',  'rgba(60,50,90,0.1)'],
-  }
-};
-
-const CONDITION_PALETTE_MAP = {
-  'sunny': 'sunny', 'clear-night': 'night',
-  'partlycloudy': 'partlycloudy',
-  'cloudy': 'cloudy',
-  'rainy': 'rainy', 'pouring': 'rainy',
-  'snowy': 'snowy', 'hail': 'snowy',
-  'fog': 'fog',
-  'lightning': 'storm', 'lightning-rainy': 'storm',
-};
 
 const CONDITION_PARTICLE_MAP = {
   'sunny': 'sunny', 'clear-night': 'night',
@@ -45,40 +11,27 @@ const CONDITION_PARTICLE_MAP = {
 };
 
 export class WeatherFX {
-  constructor(canvas, rootEl) {
+  constructor(canvas) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
-    this._rootEl = rootEl;     // Shadow DOM root div for backdrop CSS vars
+    this._theme = 'dark';
     this._particles = [];
     this._animFrameId = null;
     this._currentType = null;
     this._alpha = 1;
     this._fading = false;
     this._nextType = null;
-    this._theme = 'dark';
     this._lastFrame = 0;
   }
 
   /**
-   * Start weather effects for a given HA weather condition.
+   * Start weather particle effects for a given HA weather condition.
    * @param {string} weatherCondition - HA condition string (e.g. 'sunny', 'rainy')
    * @param {boolean} isNight - whether it is currently nighttime
-   * @param {string} theme - 'dark' or 'light'
+   * @param {string} theme - 'dark' or 'light' (affects particle colors)
    */
   start(weatherCondition, isNight, theme = 'dark') {
     this._theme = theme;
-
-    // Determine palette key
-    let paletteKey = CONDITION_PALETTE_MAP[weatherCondition] || null;
-    if (isNight && (!paletteKey || paletteKey === 'sunny')) paletteKey = 'night';
-
-    // Apply backdrop colors
-    if (paletteKey) {
-      const palettes = WEATHER_PALETTES[theme] || WEATHER_PALETTES.dark;
-      const colors = palettes[paletteKey];
-      if (colors) this._applyBackdrop(colors);
-    }
-
     // Determine particle type
     let particleType = CONDITION_PARTICLE_MAP[weatherCondition] || null;
     if (isNight && (!particleType || particleType === 'sunny')) particleType = 'night';
@@ -96,7 +49,9 @@ export class WeatherFX {
     this._particles = [];
     this._alpha = 1;
     this._fading = false;
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    if (this.ctx && this.canvas) {
+      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    }
   }
 
   /** Resize the particle canvas (call on container resize). */
@@ -113,22 +68,11 @@ export class WeatherFX {
   /** Full cleanup — call from disconnectedCallback. */
   destroy() {
     this.stop();
-    this._rootEl = null;
     this.canvas = null;
     this.ctx = null;
   }
 
-  // ---- Private: backdrop ----
-
-  _applyBackdrop(colors) {
-    const el = this._rootEl;
-    if (!el || !el.style) return;
-    el.style.setProperty('--mesh-1', colors[0]);
-    el.style.setProperty('--mesh-2', colors[1]);
-    el.style.setProperty('--mesh-3', colors[2]);
-  }
-
-  // ---- Private: particle lifecycle (from v9 startWeatherParticles) ----
+  // ---- Private: particle lifecycle ----
 
   _startParticles(type) {
     const canvas = this.canvas;
