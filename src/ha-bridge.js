@@ -100,6 +100,8 @@ export class HABridge {
       VOLTAGE:      `sensor.${prefix}_total_voltage`,
       CURRENT:      `sensor.${prefix}_current`,
       POWER:        `sensor.${prefix}_power`,
+      CHG_POWER:    `sensor.${prefix}_charging_power`,
+      DISCHG_POWER: `sensor.${prefix}_discharging_power`,
       REMAINING:    `sensor.${prefix}_capacity_remaining_derived`,
       CYCLES:       `sensor.${prefix}_charging_cycles`,
       RUNTIME:      `sensor.${prefix}_total_runtime`,

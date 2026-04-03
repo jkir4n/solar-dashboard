@@ -564,7 +564,12 @@ class SolarDashboard extends HTMLElement {
 
   // ============ ANIMATION ENGINE ============
   _animateValue(el, from, to, duration, formatter) {
-    if (!el || from === to) return;
+    if (!el) return;
+    if (from === to) {
+      // Still update text if element shows placeholder
+      if (el.textContent === '--' || el.textContent === '') el.textContent = formatter(to);
+      return;
+    }
     const existing = this._activeAnimations.get(el);
     if (existing) cancelAnimationFrame(existing);
 
