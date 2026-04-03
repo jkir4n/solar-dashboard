@@ -364,7 +364,7 @@ export class ChartManager {
       if (socData?.length) {
         const pts = socData.map(d => d.v ?? 0);
         this.drawChart(canvases.soc, [{ points: pts, color: 'rgb(249,115,22)' }], {
-          minY: 0, maxY: 100, yFormat: v => v + '%', xLabel: timeXLabel(socData)
+          minY: 0, maxY: 100, yFormat: v => Math.round(v) + '%', xLabel: timeXLabel(socData)
         }, true);
       } else {
         this.showPlaceholder(canvases.soc, 'No data available');
