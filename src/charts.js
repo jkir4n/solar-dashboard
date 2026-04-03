@@ -118,6 +118,8 @@ export class ChartManager {
     };
 
     // Store chart data for overlay / crosshair
+    // Compute overall min/max across ALL datasets for correct overlay positioning
+    const overlayVals = datasets.flatMap(d => d.points.filter(v => v != null));
     this._chartData[canvasId] = {
       datasets, opts,
       padding: { left: 40, right: 10, top: 10, bottom: 25 },
@@ -125,7 +127,9 @@ export class ChartManager {
       cH: rect.height - 35,  // H - pad.top - pad.bottom
       padLeft: 40,
       padTop: 10,
-      dpr
+      dpr,
+      minVal: opts.minY ?? (overlayVals.length ? Math.min(...overlayVals) : 0),
+      maxVal: opts.maxY ?? (overlayVals.length ? Math.max(...overlayVals) : 1),
     };
 
     if (!animate) { drawFrame(1); return; }
@@ -149,8 +153,9 @@ export class ChartManager {
     const canvasId = canvas.id || canvas.dataset.chartId || 'anon';
     const cd = this._chartData[canvasId];
     if (!cd) return;
-    const { datasets, opts, cW, cH, padLeft, padTop, dpr } = cd;
+    const { datasets, opts, cW, cH, padLeft, padTop, dpr, minVal, maxVal } = cd;
     const ctx = canvas.getContext('2d');
+    const yRange = maxVal - minVal || 1;
 
     // Re-render the clean chart (no animation)
     this.drawChart(canvas, datasets, opts, false);
@@ -177,14 +182,11 @@ export class ChartManager {
     ctx.lineTo(pointX, padTop + cH);
     ctx.stroke();
 
-    // Data-point dots
+    // Data-point dots — use chart-wide minVal/maxVal for correct Y positioning
     datasets.forEach(ds => {
       if (ds.points[idx] == null) return;
       const val = ds.points[idx];
-      const minY = opts.minY || 0;
-      const maxY = opts.maxY != null ? opts.maxY : Math.max(...ds.points.filter(v => v != null));
-      const yRange = maxY - minY || 1;
-      const py = padTop + cH - ((val - minY) / yRange) * cH;
+      const py = padTop + cH - ((val - minVal) / yRange) * cH;
       ctx.fillStyle = ds.color;
       ctx.beginPath();
       ctx.arc(pointX, py, 4, 0, Math.PI * 2);
@@ -216,10 +218,7 @@ export class ChartManager {
     const topDataY = Math.min(...datasets.map(ds => {
       if (ds.points[idx] == null) return padTop + cH;
       const val = ds.points[idx];
-      const minY = opts.minY || 0;
-      const maxY = opts.maxY != null ? opts.maxY : Math.max(...ds.points.filter(v => v != null));
-      const yRange = maxY - minY || 1;
-      return padTop + cH - ((val - minY) / yRange) * cH;
+      return padTop + cH - ((val - minVal) / yRange) * cH;
     }));
     let tipY = topDataY - tipH - 8;
     if (tipY < 2) tipY = topDataY + 12;

@@ -1309,12 +1309,25 @@ class SolarDashboard extends HTMLElement {
     const result = await this._charts.loadRange(range, canvases, entityIds, this._bridge.timezone);
 
     // Overlay estimated solar line on solar chart
+    // For Live: use current weather conditions for fair comparison
+    // For historical (1D/7D/30D): use clear-sky (no weather) since past weather is unknown
+    // For 7D/30D: data points are daily averages at midnight — calculate daily peak (solar noon) instead
     if (canvases.solar && result.powerData?.length && this._engine && this._solarEngineReady) {
       const panelConfig = this._getPanelConfig();
       const actualPts = result.powerData.map(d => (d.v !== null && d.v > 0) ? d.v : 0);
-      const cloudPct = (1 - this._weatherCloudFactor) * 100;
+      const isLive = range === 'Live';
+      const isMultiDay = range === '7D' || range === '30D';
+      const cloudPct = isLive ? (1 - this._weatherCloudFactor) * 100 : 0;
+      const ambientC = isLive ? this._weatherAmbientC : null;
       const estPts = result.powerData.map(d => {
-        const out = this._engine.calcSolarOutput(d.t, panelConfig, cloudPct, this._weatherAmbientC);
+        if (isMultiDay) {
+          // For daily data points, estimate peak output at solar noon
+          const noon = new Date(d.t);
+          noon.setHours(12, 0, 0, 0);
+          const out = this._engine.calcSolarOutput(noon, panelConfig, cloudPct, ambientC);
+          return out.watts;
+        }
+        const out = this._engine.calcSolarOutput(d.t, panelConfig, cloudPct, ambientC);
         return out.watts;
       });
       this._charts.drawChart(canvases.solar, [
