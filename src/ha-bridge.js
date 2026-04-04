@@ -20,6 +20,7 @@ const SENSOR_KEYWORDS = {
   MOSFET_TEMP:  ['power_tube_temperature', 'mosfet_temp'],
   STRINGS:      ['battery_strings', 'cell_count'],
   MANUFACTURER: ['manufacturer'],
+  BATTERY_TYPE: ['battery_type'],
 };
 
 // Keywords to exclude from POWER matching (too specific entities that contain "power")
@@ -38,7 +39,7 @@ const SWITCH_KEYWORDS = {
 };
 
 // Dynamic battery specs — updated from BMS entities (v9 line 748)
-const BATT_SPEC = { fullAh: 215, strings: 16, nomV: 51.2 };
+const BATT_SPEC = { fullAh: 215, strings: 16, nomV: 51.2, voltsPerCell: 3.2, chemistry: 'LiFePO₄' };
 
 // Helper definitions for auto-creation
 const HELPER_DEFS = [
@@ -95,6 +96,36 @@ export class HABridge {
         this._helperCreated = true;
       }
     }
+    // Resolve battery chemistry (runs every update to catch late-arriving entities)
+    this._resolveChemistry();
+  }
+
+  _resolveChemistry() {
+    // Primary: battery_type entity
+    const batteryType = this.getStrVal(this.E.BATTERY_TYPE);
+    if (batteryType) {
+      const bt = batteryType.toLowerCase();
+      if (bt.includes('iron phosphate') || bt.includes('lifepo4') || bt.includes('lfp')) {
+        BATT_SPEC.voltsPerCell = 3.2; BATT_SPEC.chemistry = 'LiFePO₄'; return;
+      }
+      if (bt.includes('nmc') || bt.includes('li-ion') || bt.includes('lithium') || bt.includes('ternary')) {
+        BATT_SPEC.voltsPerCell = 3.7; BATT_SPEC.chemistry = 'NMC'; return;
+      }
+      if (bt.includes('titanate') || bt.includes('lto')) {
+        BATT_SPEC.voltsPerCell = 2.3; BATT_SPEC.chemistry = 'LTO'; return;
+      }
+    }
+    // Fallback: voltage-based detection
+    const totalV = this.getVal(this.E.VOLTAGE);
+    const strings = this.getVal(this.E.STRINGS);
+    if (totalV > 0 && strings > 0) {
+      const vpc = totalV / strings;
+      if (vpc >= 3.0 && vpc <= 3.4) { BATT_SPEC.voltsPerCell = 3.2; BATT_SPEC.chemistry = 'LiFePO₄'; return; }
+      if (vpc >= 3.5 && vpc <= 3.9) { BATT_SPEC.voltsPerCell = 3.7; BATT_SPEC.chemistry = 'NMC'; return; }
+      if (vpc >= 2.1 && vpc <= 2.5) { BATT_SPEC.voltsPerCell = 2.3; BATT_SPEC.chemistry = 'LTO'; return; }
+    }
+    // Default
+    BATT_SPEC.voltsPerCell = 3.2; BATT_SPEC.chemistry = 'LiFePO₄';
   }
 
   _buildFallbacks(prefix) {
@@ -123,6 +154,7 @@ export class HABridge {
       BAL_SWITCH:   `binary_sensor.${prefix}_balancing_switch`,
       CHG_SWITCH:   `switch.${prefix}_charging`,
       DISCHG_SWITCH:`switch.${prefix}_discharging`,
+      BATTERY_TYPE: `sensor.${prefix}_battery_type`,
     };
   }
 

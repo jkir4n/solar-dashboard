@@ -386,7 +386,7 @@ class SolarDashboard extends HTMLElement {
         <div class="inf"><div class="inf-v" id="battMosfetTemp">--</div><div class="inf-k">MOSFET</div></div>
         <div class="inf"><div class="inf-v" id="sysBmsModel">--</div><div class="inf-k">BMS Model</div></div>
         <div class="inf"><div class="inf-v" id="sysFirmware">--</div><div class="inf-k">Firmware</div></div>
-        <div class="inf"><div class="inf-v">LiFePO\u2084</div><div class="inf-k">Chemistry</div></div>
+        <div class="inf"><div class="inf-v" id="sysChemistry">LiFePO\u2084</div><div class="inf-k">Chemistry</div></div>
       </div>
     </div>
     <div class="right-col">
@@ -814,7 +814,7 @@ class SolarDashboard extends HTMLElement {
     const strings = this._bridge.getVal(E.STRINGS);
     if (strings > 0) {
       this._bridge.battSpec.strings = strings;
-      this._bridge.battSpec.nomV = strings * 3.2;
+      this._bridge.battSpec.nomV = strings * this._bridge.battSpec.voltsPerCell;
       root.getElementById('sysConfig').textContent = strings + 'S';
       const nomEl = root.getElementById('sysNominal');
       const oldNom = parseFloat(nomEl.textContent) || 0;
@@ -827,6 +827,10 @@ class SolarDashboard extends HTMLElement {
       const oldCap = parseFloat(capEl.textContent) || 0;
       this._animateValue(capEl, oldCap, this._bridge.battSpec.fullAh, 600, v => Math.round(v) + ' Ah');
     }
+
+    // Update chemistry display
+    const chemEl = root.getElementById('sysChemistry');
+    if (chemEl) chemEl.textContent = this._bridge.battSpec.chemistry;
   }
 
   // ============ POWER FLOW ============
