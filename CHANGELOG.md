@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.5.1 (2026-04-04)
+
+### Bug Fixes
+- fix: remove debug logging and fix hasKeyEntities boolean check
+- docs: update README with battery chemistry detection and new entity roles
+
+
 ## v0.5.0 (2026-04-04)
 
 ### Features
