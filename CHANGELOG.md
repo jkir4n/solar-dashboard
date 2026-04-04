@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.4.8 (2026-04-04)
+
+### Bug Fixes
+- fix: retry chart loading after entity discovery completes
+
+
 ## v0.4.7 (2026-04-04)
 
 ### Bug Fixes
