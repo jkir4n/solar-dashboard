@@ -309,6 +309,12 @@ export class ChartManager {
     const tz = timezone || 'UTC';
     let powerData = null, socData = null;
 
+    // Validate entity IDs before fetching
+    if (!entityIds?.power || !entityIds?.soc) {
+      console.warn('[Solar] Chart loadRange skipped — missing entity IDs:', entityIds);
+      return { powerData, socData, timeXLabel: () => '' };
+    }
+
     try {
       if (range === 'Live') {
         // Today from midnight (in supplied timezone) to now

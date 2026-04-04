@@ -1370,6 +1370,11 @@ class SolarDashboard extends HTMLElement {
     if (!this._charts) return;
     const root = this.shadowRoot;
     const E = this._bridge.E;
+    // Guard: wait for entity discovery to complete
+    if (!E || !E.POWER || !E.SOC) {
+      console.warn('[Solar] Chart load skipped — entity discovery not complete');
+      return;
+    }
     const canvases = {
       power: root.getElementById('chartPower'),
       soc: root.getElementById('chartSOC'),
