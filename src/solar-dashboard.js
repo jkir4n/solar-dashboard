@@ -1388,11 +1388,12 @@ class SolarDashboard extends HTMLElement {
     const entityIds = {
       power: E.DISCHG_POWER || E.POWER,
       soc: E.SOC,
+      _signed: !E.DISCHG_POWER,
     };
     const result = await this._charts.loadRange(range, canvases, entityIds, this._bridge.timezone);
 
     // Load solar chart data from CHG_POWER
-    const solarEntityIds = { power: E.CHG_POWER || E.POWER };
+    const solarEntityIds = { power: E.CHG_POWER || E.POWER, _signed: !E.CHG_POWER };
     const solarResult = await this._charts.loadRange(range, { solar: canvases.solar }, solarEntityIds, this._bridge.timezone);
 
     // Overlay estimated solar line on solar chart

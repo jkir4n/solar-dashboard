@@ -315,6 +315,10 @@ export class ChartManager {
       return { powerData, socData, timeXLabel: () => '' };
     }
 
+    // Determine if power entity is signed (POWER fallback has negative=discharge, positive=charge)
+    // vs unsigned (DISCHG_POWER/CHG_POWER are always positive)
+    const powerIsSigned = !!(entityIds._signed);
+
     try {
       if (range === 'Live') {
         // Today from midnight (in supplied timezone) to now
@@ -373,10 +377,12 @@ export class ChartManager {
         : (d.getMonth() + 1) + '/' + d.getDate();
     };
 
-    // Render power chart (discharging power — always positive from DISCHG_POWER)
+    // Render power chart (discharging power)
     if (canvases.power) {
       if (powerData?.length) {
-        const pts = powerData.map(d => (d.v !== null && d.v > 0) ? d.v : 0);
+        const pts = powerIsSigned
+          ? powerData.map(d => (d.v !== null && d.v < 0) ? Math.abs(d.v) : 0)
+          : powerData.map(d => (d.v !== null && d.v > 0) ? d.v : 0);
         this.drawChart(canvases.power, [{ points: pts, color: 'rgb(59,130,246)' }], {
           minY: 0, xLabel: timeXLabel(powerData), yFormat: v => Math.round(v) + ' W'
         }, true);
