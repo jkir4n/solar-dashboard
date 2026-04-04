@@ -310,8 +310,8 @@ export class ChartManager {
     let powerData = null, socData = null;
 
     // Validate entity IDs before fetching
-    if (!entityIds?.power || !entityIds?.soc) {
-      console.warn('[Solar] Chart loadRange skipped — missing entity IDs:', entityIds);
+    if (!entityIds?.power) {
+      console.warn('[Solar] Chart loadRange skipped — missing power entity ID:', entityIds);
       return { powerData, socData, timeXLabel: () => '' };
     }
 
@@ -323,10 +323,14 @@ export class ChartManager {
         midnightLocal.setHours(0, 0, 0, 0);
         const offsetMs = now.getTime() - new Date(now.toLocaleString('en-US', { timeZone: tz })).getTime();
         const start = new Date(midnightLocal.getTime() + offsetMs);
-        [powerData, socData] = await Promise.all([
-          this._bridge.fetchHistoryRange(entityIds.power, start, now),
-          this._bridge.fetchHistoryRange(entityIds.soc, start, now)
-        ]);
+        if (entityIds.soc) {
+          [powerData, socData] = await Promise.all([
+            this._bridge.fetchHistoryRange(entityIds.power, start, now),
+            this._bridge.fetchHistoryRange(entityIds.soc, start, now)
+          ]);
+        } else {
+          powerData = await this._bridge.fetchHistoryRange(entityIds.power, start, now);
+        }
       } else if (range === '1D') {
         // Yesterday — use statistics for regular 5-min intervals (history only returns state changes)
         const now = new Date();
@@ -336,17 +340,25 @@ export class ChartManager {
         const endMidnight = new Date(todayLocal.getTime() + offsetMs);
         const startMidnight = new Date(endMidnight.getTime() - 24 * 60 * 60 * 1000);
         // Use stats for yesterday (1 day) to get regular intervals
-        [powerData, socData] = await Promise.all([
-          this._bridge.fetchStatsRange(entityIds.power, 1, startMidnight, endMidnight),
-          this._bridge.fetchStatsRange(entityIds.soc, 1, startMidnight, endMidnight)
-        ]);
+        if (entityIds.soc) {
+          [powerData, socData] = await Promise.all([
+            this._bridge.fetchStatsRange(entityIds.power, 1, startMidnight, endMidnight),
+            this._bridge.fetchStatsRange(entityIds.soc, 1, startMidnight, endMidnight)
+          ]);
+        } else {
+          powerData = await this._bridge.fetchStatsRange(entityIds.power, 1, startMidnight, endMidnight);
+        }
       } else {
         // 7D or 30D — use statistics endpoint
         const days = range === '7D' ? 7 : 30;
-        [powerData, socData] = await Promise.all([
-          this._bridge.fetchStatsRange(entityIds.power, days),
-          this._bridge.fetchStatsRange(entityIds.soc, days)
-        ]);
+        if (entityIds.soc) {
+          [powerData, socData] = await Promise.all([
+            this._bridge.fetchStatsRange(entityIds.power, days),
+            this._bridge.fetchStatsRange(entityIds.soc, days)
+          ]);
+        } else {
+          powerData = await this._bridge.fetchStatsRange(entityIds.power, days);
+        }
       }
     } catch (e) {
       console.warn('Chart fetch failed', e);
