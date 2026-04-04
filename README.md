@@ -123,11 +123,29 @@ The dashboard re-discovers entities when `input_text.bms_entity_prefix` changes,
 | MOSFET Temperature | sensor | `power_tube_temperature` |
 | Battery Strings | sensor | `battery_strings`, `cell_count` |
 | Manufacturer | sensor | `manufacturer` |
+| Battery Type | sensor | `battery_type` |
 | Cell Voltages (1–N) | sensor | `cell_voltage_1` through `cell_voltage_N` |
 | Balancing | binary_sensor | `balancing` |
 | Balancing Switch | binary_sensor | `balancing_switch` |
 | Charging Switch | switch | `charging` |
 | Discharging Switch | switch | `discharging` |
+| Charging Power | sensor | `charging_power` |
+| Discharging Power | sensor | `discharging_power` |
+
+### Battery Chemistry Detection
+
+The dashboard automatically detects battery chemistry using two methods:
+
+1. **Primary**: `battery_type` entity from the BMS (available on JK BMS)
+2. **Fallback**: Voltage-per-cell calculation (`total_voltage / strings`)
+
+| Detected Chemistry | Volts/Cell | Example (16S) |
+|-------------------|------------|---------------|
+| LiFePO₄ | 3.2V | 51.2V |
+| NMC / Li-ion | 3.7V | 59.2V |
+| LTO | 2.3V | 36.8V |
+
+The detected chemistry is displayed in the battery card and used to calculate the correct nominal voltage.
 
 ## Required Entities
 
