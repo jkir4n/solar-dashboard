@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.4.6 (2026-04-04)
+
+### Bug Fixes
+- fix: align solar chart estimated line units with actual data for 7D/30D views
+
+
 ## v0.4.5 (2026-04-03)
 
 ### Bug Fixes
