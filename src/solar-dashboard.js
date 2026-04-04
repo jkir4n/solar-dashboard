@@ -658,8 +658,9 @@ class SolarDashboard extends HTMLElement {
       </div>
     </div>
   </div>
-  <div class="card" style="margin-bottom:16px">
-    <div class="cells-grid">
+  <div class="card" style="margin-bottom:16px;position:relative">
+    <canvas id="balCanvas" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1"></canvas>
+    <div class="cells-grid" style="position:relative;z-index:2">
       <div id="pack1Card">
         <h2 class="section-title">Cells C1\u2013C8</h2>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
@@ -677,9 +678,8 @@ class SolarDashboard extends HTMLElement {
         <div id="pack2"></div>
       </div>
     </div>
-    <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--glass-border);position:relative">
-      <canvas id="balCanvas" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1"></canvas>
-      <div id="balStatus" style="text-align:center;font-size:13px;font-weight:600;color:var(--text2);position:relative;z-index:2"></div>
+    <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--glass-border)">
+      <div id="balStatus" style="text-align:center;font-size:13px;font-weight:600;color:var(--text2)"></div>
     </div>
   </div>
   <div class="bottom-row">
