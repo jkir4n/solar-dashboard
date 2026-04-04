@@ -79,6 +79,7 @@ export class HABridge {
     // Dynamic re-discovery: re-run until key entities are found
     const hasKeyEntities = this._entities && this._entities.POWER && this._entities.SOC;
     const currentPrefix = this.getStrVal('input_text.bms_entity_prefix');
+    console.log('[Solar] Discovery check — hasKeyEntities:', hasKeyEntities, 'prefix:', currentPrefix, 'discoveryRun:', this._discoveryRun);
     if (!hasKeyEntities || this._discoveryRun === 0 || (currentPrefix && currentPrefix !== this._prefixBeforeChange)) {
       this._entities = this._discoverEntities(hass);
       this._discoveryRun++;
@@ -88,6 +89,7 @@ export class HABridge {
         const v = this._entities[k];
         return v && this.getState(v);
       }).length;
+      console.log('[Solar] Discovery complete — found', found, 'entities');
       if (found < 5 && !this._helperCreated) {
         this._createBmsPrefixHelper();
         this._helperCreated = true;
@@ -127,6 +129,8 @@ export class HABridge {
   _discoverEntities(hass) {
     const discovered = {};
     const states = hass.states;
+    const stateCount = Object.keys(states).length;
+    console.log(`[Solar] Discovery running — ${stateCount} entities in hass.states`);
 
     for (const [entityId, state] of Object.entries(states)) {
       const domain = entityId.split('.')[0];
@@ -177,6 +181,7 @@ export class HABridge {
       if (!discovered[role]) discovered[role] = fallbackId;
     }
 
+    console.log('[Solar] Discovery result — POWER:', discovered.POWER, 'SOC:', discovered.SOC);
     return discovered;
   }
 
