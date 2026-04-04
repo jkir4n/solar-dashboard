@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.6.0 (2026-04-04)
+
+### Features
+- feat: add canvas-based balancing energy flow animation between highest and lowest cells
+
+
 ## v0.5.2 (2026-04-04)
 
 ### Bug Fixes
