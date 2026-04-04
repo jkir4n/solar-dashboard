@@ -1388,37 +1388,33 @@ class SolarDashboard extends HTMLElement {
     // Overlay estimated solar line on solar chart
     // For Live: use current weather conditions for fair comparison
     // For historical (1D/7D/30D): use clear-sky (no weather) since past weather is unknown
-    // For 7D/30D: data points are daily averages — calculate daily estimated kWh
     if (canvases.solar && solarResult.powerData?.length && this._engine && this._solarEngineReady) {
       const panelConfig = this._getPanelConfig();
       const actualPts = solarResult.powerData.map(d => (d.v !== null) ? Math.max(d.v, 0) : 0);
       const isLive = range === 'Live';
-      const isMultiDay = range === '7D' || range === '30D';
+      const is30D = range === '30D';
       const cloudPct = isLive ? (1 - this._weatherCloudFactor) * 100 : 0;
       const ambientC = isLive ? this._weatherAmbientC : null;
       const estPts = solarResult.powerData.map(d => {
-        if (isMultiDay) {
-          // For daily data points, estimate total kWh for that day
+        if (is30D) {
+          // For daily data points, calculate mean watts by sampling throughout the day
           const dayStart = new Date(d.t);
           dayStart.setHours(0, 0, 0, 0);
-          const dayEnd = new Date(dayStart);
-          dayEnd.setDate(dayEnd.getDate() + 1);
-          let totalKWh = 0;
-          // Sample every 15 minutes for accuracy
-          for (let t = dayStart.getTime(); t < dayEnd.getTime(); t += 15 * 60 * 1000) {
+          const samples = [];
+          // Sample every 15 minutes
+          for (let t = dayStart.getTime(); t < dayStart.getTime() + 24 * 60 * 60 * 1000; t += 15 * 60 * 1000) {
             const out = this._engine.calcSolarOutput(new Date(t), panelConfig, cloudPct, ambientC);
-            totalKWh += out.watts * (15 / 60) / 1000;
+            samples.push(out.watts);
           }
-          return totalKWh;
+          return samples.length ? samples.reduce((a, b) => a + b, 0) / samples.length : 0;
         }
         const out = this._engine.calcSolarOutput(d.t, panelConfig, cloudPct, ambientC);
         return out.watts;
       });
-      const yFormat = isMultiDay ? v => v.toFixed(1) + ' kWh' : v => Math.round(v) + ' W';
       this._charts.drawChart(canvases.solar, [
-        { points: actualPts, color: 'rgb(34,197,94)', label: isMultiDay ? 'kWh' : 'W', fill: true },
-        { points: estPts, color: 'rgb(249,115,22)', label: isMultiDay ? 'kWh est' : 'W est', fill: false },
-      ], { minY: 0, xLabel: solarResult.timeXLabel(solarResult.powerData), yFormat }, false);
+        { points: actualPts, color: 'rgb(34,197,94)', label: 'W', fill: true },
+        { points: estPts, color: 'rgb(249,115,22)', label: 'W est', fill: false },
+      ], { minY: 0, xLabel: solarResult.timeXLabel(solarResult.powerData), yFormat: v => Math.round(v) + ' W' }, false);
       this._charts.attachCrosshair(canvases.solar);
     }
 
