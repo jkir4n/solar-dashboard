@@ -298,6 +298,15 @@ export const STYLES = `
   .cell-row-item.cell-low .cell-val { color: var(--blue); }
   @keyframes pulseHigh { from { background: rgba(255, 59, 48, 0.06); box-shadow: 0 0 8px rgba(255, 59, 48, 0.08); } to { background: rgba(255, 59, 48, 0.18); box-shadow: 0 0 16px rgba(255, 59, 48, 0.22); } }
   @keyframes pulseLow { from { background: rgba(0, 122, 255, 0.06); box-shadow: 0 0 8px rgba(0, 122, 255, 0.08); } to { background: rgba(0, 122, 255, 0.18); box-shadow: 0 0 16px rgba(0, 122, 255, 0.22); } }
+  /* Balancing animation highlights */
+  .cell-row-item.cell-high-balancing { background: rgba(255, 59, 48, 0.2); box-shadow: 0 0 16px rgba(255, 59, 48, 0.3); animation: balPulseSrc 1s ease-in-out infinite alternate; }
+  .cell-row-item.cell-high-balancing .cell-id { color: var(--red); }
+  .cell-row-item.cell-high-balancing .cell-val { color: var(--red); }
+  .cell-row-item.cell-low-balancing { background: rgba(34, 197, 94, 0.2); box-shadow: 0 0 16px rgba(34, 197, 94, 0.3); animation: balPulseDst 1s ease-in-out infinite alternate; }
+  .cell-row-item.cell-low-balancing .cell-id { color: var(--green); }
+  .cell-row-item.cell-low-balancing .cell-val { color: var(--green); }
+  @keyframes balPulseSrc { from { background: rgba(255, 59, 48, 0.1); box-shadow: 0 0 8px rgba(255, 59, 48, 0.15); } to { background: rgba(255, 59, 48, 0.25); box-shadow: 0 0 20px rgba(255, 59, 48, 0.4); } }
+  @keyframes balPulseDst { from { background: rgba(34, 197, 94, 0.1); box-shadow: 0 0 8px rgba(34, 197, 94, 0.15); } to { background: rgba(34, 197, 94, 0.25); box-shadow: 0 0 20px rgba(34, 197, 94, 0.4); } }
   .supercap-flow { text-align: center; font-size: 12px; font-weight: 600; color: var(--green); padding: 8px 0; animation: scFlow 1.5s ease-in-out infinite; }
   @keyframes scFlow { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
 

@@ -162,6 +162,140 @@ class FlowParticles {
   }
 }
 
+// ============ BALANCING ENERGY FLOW ANIMATION ============
+class BalancingFX {
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.ctx = canvas?.getContext('2d');
+    this.active = false;
+    this.rafId = null;
+    this.particles = [];
+    this.srcRect = null;
+    this.dstRect = null;
+    this.delta = 0;
+    this._tick = this._animate.bind(this);
+  }
+
+  start(srcCellEl, dstCellEl, deltaMv) {
+    if (!this.ctx || !this.canvas) return;
+    this.active = true;
+    this.delta = deltaMv;
+    this.srcRect = srcCellEl?.getBoundingClientRect();
+    this.dstRect = dstCellEl?.getBoundingClientRect();
+    const canvasRect = this.canvas.getBoundingClientRect();
+
+    // Calculate positions relative to canvas
+    if (this.srcRect && this.dstRect) {
+      this.srcX = this.srcRect.left + this.srcRect.width / 2 - canvasRect.left;
+      this.srcY = this.srcRect.top + this.srcRect.height / 2 - canvasRect.top;
+      this.dstX = this.dstRect.left + this.dstRect.width / 2 - canvasRect.left;
+      this.dstY = this.dstRect.top + this.dstRect.height / 2 - canvasRect.top;
+    }
+
+    // Resize canvas to match display size
+    const dpr = window.devicePixelRatio || 1;
+    this.canvas.width = canvasRect.width * dpr;
+    this.canvas.height = canvasRect.height * dpr;
+    this.ctx.scale(dpr, dpr);
+    this._canvasW = canvasRect.width;
+    this._canvasH = canvasRect.height;
+
+    // Create particles
+    const count = Math.min(8, Math.max(3, Math.round(deltaMv / 5)));
+    this.particles = [];
+    for (let i = 0; i < count; i++) {
+      this.particles.push({ t: i / count, speed: 0.003 + Math.min(deltaMv, 50) / 50 * 0.008 });
+    }
+
+    if (!this.rafId) this.rafId = requestAnimationFrame(this._tick);
+  }
+
+  stop() {
+    this.active = false;
+    if (this.rafId) { cancelAnimationFrame(this.rafId); this.rafId = null; }
+    if (this.ctx && this._canvasW) {
+      this.ctx.clearRect(0, 0, this._canvasW, this._canvasH);
+    }
+    this.particles = [];
+  }
+
+  _animate() {
+    if (!this.active || !this.ctx) return;
+    this.ctx.clearRect(0, 0, this._canvasW, this._canvasH);
+
+    if (!this.srcRect || !this.dstRect) {
+      this.rafId = requestAnimationFrame(this._tick);
+      return;
+    }
+
+    // Draw arc path
+    const midX = (this.srcX + this.dstX) / 2;
+    const midY = Math.min(this.srcY, this.dstY) - 30;
+    const cp1x = this.srcX + (midX - this.srcX) * 0.5;
+    const cp1y = this.srcY + (midY - this.srcY) * 0.3;
+    const cp2x = midX + (this.dstX - midX) * 0.5;
+    const cp2y = midY + (this.dstY - midY) * 0.3;
+
+    // Draw glow line
+    this.ctx.beginPath();
+    this.ctx.moveTo(this.srcX, this.srcY);
+    this.ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, this.dstX, this.dstY);
+    this.ctx.strokeStyle = 'rgba(255,165,0,0.15)';
+    this.ctx.lineWidth = 6;
+    this.ctx.stroke();
+
+    // Draw core line
+    this.ctx.beginPath();
+    this.ctx.moveTo(this.srcX, this.srcY);
+    this.ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, this.dstX, this.dstY);
+    this.ctx.strokeStyle = 'rgba(255,165,0,0.4)';
+    this.ctx.lineWidth = 2;
+    this.ctx.stroke();
+
+    // Animate particles along the bezier curve
+    for (const p of this.particles) {
+      p.t += p.speed;
+      if (p.t > 1) p.t -= 1;
+
+      const t = p.t;
+      const mt = 1 - t;
+      const x = mt*mt*mt*this.srcX + 3*mt*mt*t*cp1x + 3*mt*t*t*cp2x + t*t*t*this.dstX;
+      const y = mt*mt*mt*this.srcY + 3*mt*mt*t*cp1y + 3*mt*t*t*cp2y + t*t*t*this.dstY;
+
+      // Particle glow
+      const grad = this.ctx.createRadialGradient(x, y, 0, x, y, 8);
+      grad.addColorStop(0, 'rgba(255,200,50,0.9)');
+      grad.addColorStop(0.5, 'rgba(255,165,0,0.4)');
+      grad.addColorStop(1, 'rgba(255,165,0,0)');
+      this.ctx.beginPath();
+      this.ctx.arc(x, y, 8, 0, Math.PI * 2);
+      this.ctx.fillStyle = grad;
+      this.ctx.fill();
+
+      // Particle core
+      this.ctx.beginPath();
+      this.ctx.arc(x, y, 2.5, 0, Math.PI * 2);
+      this.ctx.fillStyle = '#FFD700';
+      this.ctx.fill();
+    }
+
+    // Draw source cell pulse (red glow)
+    const pulse = 0.5 + 0.5 * Math.sin(Date.now() / 300);
+    this.ctx.beginPath();
+    this.ctx.arc(this.srcX, this.srcY, 12 + pulse * 4, 0, Math.PI * 2);
+    this.ctx.fillStyle = `rgba(255,69,58,${0.15 + pulse * 0.1})`;
+    this.ctx.fill();
+
+    // Draw destination cell pulse (green glow)
+    this.ctx.beginPath();
+    this.ctx.arc(this.dstX, this.dstY, 12 + pulse * 4, 0, Math.PI * 2);
+    this.ctx.fillStyle = `rgba(34,197,94,${0.15 + pulse * 0.1})`;
+    this.ctx.fill();
+
+    this.rafId = requestAnimationFrame(this._tick);
+  }
+}
+
 // ============ MAIN COMPONENT ============
 class SolarDashboard extends HTMLElement {
   constructor() {
@@ -191,6 +325,7 @@ class SolarDashboard extends HTMLElement {
     this._cachedForecastKWh = 0;
     this._resizeHandler = null;
     this._activeChartRange = 'Live';
+    this._balFx = null;
   }
 
   set hass(hass) {
@@ -249,6 +384,10 @@ class SolarDashboard extends HTMLElement {
     // Init flow particles
     this._flowPS1 = new FlowParticles(root, 'flowWrap1', 'flowParticles1', 'flowLine1', '#00F0FF');
     this._flowPS2 = new FlowParticles(root, 'flowWrap2', 'flowParticles2', 'flowLine2', '#FF453A');
+
+    // Init balancing FX
+    const balCanvas = root.getElementById('balCanvas');
+    if (balCanvas) this._balFx = new BalancingFX(balCanvas);
 
     // Wire chart tab handlers
     const tabs = root.querySelectorAll('.chart-tab');
@@ -314,6 +453,7 @@ class SolarDashboard extends HTMLElement {
     this._intervals = [];
     if (this._flowPS1) this._flowPS1.stop();
     if (this._flowPS2) this._flowPS2.stop();
+    if (this._balFx) this._balFx.stop();
     if (this._weatherFx) this._weatherFx.destroy();
     if (this._resizeHandler) window.removeEventListener('resize', this._resizeHandler);
     this._stopBattArcs();
@@ -537,11 +677,9 @@ class SolarDashboard extends HTMLElement {
         <div id="pack2"></div>
       </div>
     </div>
-    <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--glass-border)">
-      <div id="balIndicator" class="supercap-flow" style="display:none">
-        <span id="balSrc">C1</span> \u25B2 \u2192 \u203A \u203A \u203A \u2192 Supercap \u2192 \u203A \u203A \u203A \u2192 <span id="balDst">C12</span> \u25BC
-      </div>
-      <div id="balStatus" style="text-align:center;font-size:13px;font-weight:600;color:var(--text2)"></div>
+    <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--glass-border);position:relative">
+      <canvas id="balCanvas" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1"></canvas>
+      <div id="balStatus" style="text-align:center;font-size:13px;font-weight:600;color:var(--text2);position:relative;z-index:2"></div>
     </div>
   </div>
   <div class="bottom-row">
@@ -1298,9 +1436,27 @@ class SolarDashboard extends HTMLElement {
     const delta = (Math.max(...allV) - Math.min(...allV)) * 1000;
     const balancing = this._bridge.getStrVal(this._bridge.E.BALANCING) === 'on';
 
-    root.getElementById('balSrc').textContent = 'C' + (maxI + 1);
-    root.getElementById('balDst').textContent = 'C' + (minI + 1);
-    root.getElementById('balIndicator').style.display = balancing ? 'block' : 'none';
+    // Remove old balancing classes
+    root.querySelectorAll('.cell-high-balancing, .cell-low-balancing').forEach(el => {
+      el.classList.remove('cell-high-balancing', 'cell-low-balancing');
+    });
+
+    if (balancing && this._balFx) {
+      // Find the cell bar elements for source and destination
+      const pack1Rows = root.querySelectorAll('#pack1 .cell-row-item');
+      const pack2Rows = root.querySelectorAll('#pack2 .cell-row-item');
+      const allRows = [...pack1Rows, ...pack2Rows];
+      const srcCell = allRows[maxI];
+      const dstCell = allRows[minI];
+
+      if (srcCell && dstCell) {
+        srcCell.classList.add('cell-high-balancing');
+        dstCell.classList.add('cell-low-balancing');
+        this._balFx.start(srcCell, dstCell, delta);
+      }
+    } else {
+      this._balFx?.stop();
+    }
 
     const balStatusEl = root.getElementById('balStatus');
     const oldDelta = parseFloat(balStatusEl.textContent.replace(/[^0-9.]/g, '')) || 0;
