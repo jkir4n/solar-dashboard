@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.5.0 (2026-04-04)
+
+### Features
+- feat: add dynamic battery chemistry detection from BMS entity with voltage-based fallback
+
+
 ## v0.4.11 (2026-04-04)
 
 ### Bug Fixes
