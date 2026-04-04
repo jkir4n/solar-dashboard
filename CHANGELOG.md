@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.5.2 (2026-04-04)
+
+### Bug Fixes
+- fix: widen LFP voltage detection range to 3.65V to avoid false NMC detection at full charge
+
+
 ## v0.5.1 (2026-04-04)
 
 ### Bug Fixes
