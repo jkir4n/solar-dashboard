@@ -8,7 +8,7 @@ const SENSOR_KEYWORDS = {
   DISCHG_POWER: ['discharging_power'],
   REMAINING:    ['capacity_remaining_derived', 'remaining_capacity'],
   CYCLES:       ['charging_cycles'],
-  RUNTIME:      ['total_runtime'],
+  RUNTIME:      ['total_runtime_formatted'],
   THROUGHPUT:   ['total_charging_cycle_capacity'],
   MIN_CELL_V:   ['min_cell_voltage'],
   MAX_CELL_V:   ['max_cell_voltage'],
