@@ -76,9 +76,10 @@ export class HABridge {
       this._ensureHelpers();
       this._helpersChecked = true;
     }
-    // Dynamic re-discovery: detect prefix change or first run
+    // Dynamic re-discovery: re-run until key entities are found
+    const hasKeyEntities = this._entities && this._entities.POWER && this._entities.SOC;
     const currentPrefix = this.getStrVal('input_text.bms_entity_prefix');
-    if (this._discoveryRun === 0 || (currentPrefix && currentPrefix !== this._prefixBeforeChange)) {
+    if (!hasKeyEntities || this._discoveryRun === 0 || (currentPrefix && currentPrefix !== this._prefixBeforeChange)) {
       this._entities = this._discoverEntities(hass);
       this._discoveryRun++;
       this._prefixBeforeChange = currentPrefix;
