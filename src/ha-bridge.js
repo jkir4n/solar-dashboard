@@ -118,9 +118,10 @@ export class HABridge {
     const strings = this.getVal(this.E.STRINGS);
     if (totalV > 0 && strings > 0) {
       const vpc = totalV / strings;
-      if (vpc >= 3.0 && vpc <= 3.4) { BATT_SPEC.voltsPerCell = 3.2; BATT_SPEC.chemistry = 'LiFePO₄'; return; }
-      if (vpc >= 3.5 && vpc <= 3.9) { BATT_SPEC.voltsPerCell = 3.7; BATT_SPEC.chemistry = 'NMC'; return; }
-      if (vpc >= 2.1 && vpc <= 2.5) { BATT_SPEC.voltsPerCell = 2.3; BATT_SPEC.chemistry = 'LTO'; return; }
+      // LFP can reach 3.5-3.55V at full charge, so range extends to 3.65V
+      if (vpc >= 2.5 && vpc <= 3.65) { BATT_SPEC.voltsPerCell = 3.2; BATT_SPEC.chemistry = 'LiFePO₄'; return; }
+      if (vpc > 3.65) { BATT_SPEC.voltsPerCell = 3.7; BATT_SPEC.chemistry = 'NMC'; return; }
+      if (vpc >= 2.1 && vpc < 2.5) { BATT_SPEC.voltsPerCell = 2.3; BATT_SPEC.chemistry = 'LTO'; return; }
     }
     // Default
     BATT_SPEC.voltsPerCell = 3.2; BATT_SPEC.chemistry = 'LiFePO₄';
