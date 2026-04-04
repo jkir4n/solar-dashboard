@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.4.10 (2026-04-04)
+
+### Bug Fixes
+- fix: allow solar chart to load without SOC entity; make SOC fetch optional in loadRange
+- debug: add logging to trace entity discovery and chart loading
+
+
 ## v0.4.9 (2026-04-04)
 
 ### Bug Fixes
