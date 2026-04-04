@@ -199,6 +199,12 @@ class SolarDashboard extends HTMLElement {
       this._init();
       this._initialized = true;
     }
+    // Retry chart loading once entity discovery is complete
+    const E = this._bridge.E;
+    if (E && E.POWER && E.SOC && !this._chartsLoaded) {
+      this._chartsLoaded = true;
+      this._loadChartRange(this._activeChartRange || 'Live');
+    }
     const changed = this._bridge.getChangedEntities();
     if (changed.length > 0) {
       this._updateUI(changed);
@@ -1372,7 +1378,6 @@ class SolarDashboard extends HTMLElement {
     const E = this._bridge.E;
     // Guard: wait for entity discovery to complete
     if (!E || !E.POWER || !E.SOC) {
-      console.warn('[Solar] Chart load skipped — entity discovery not complete');
       return;
     }
     const canvases = {
