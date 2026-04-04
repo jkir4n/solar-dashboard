@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.6.1 (2026-04-04)
+
+### Bug Fixes
+- fix: move balancing canvas to cover cells grid instead of status bar
+
+
 ## v0.6.0 (2026-04-04)
 
 ### Features
