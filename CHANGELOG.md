@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.8.2 (2026-04-05)
+
+### Bug Fixes
+- fix: align night backdrop gradient with particle behavior
+
+
 ## v0.8.1 (2026-04-05)
 
 ### Bug Fixes
