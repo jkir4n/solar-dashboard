@@ -538,8 +538,8 @@ class SolarDashboard extends HTMLElement {
       </div>
     </div>
     <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--glass-border)">
-      <div id="balIndicator" style="text-align:center;font-size:14px;font-weight:600;color:var(--orange);display:none;animation:balPulse 1.5s ease-in-out infinite">
-        <span id="balSrc">C1</span> <span style="color:var(--red)">\u25B2</span> \u2192 \u2192 \u2192 <span style="color:var(--text3)">\u21C4</span> \u2192 \u2192 \u2192 <span id="balDst">C12</span> <span style="color:var(--green)">\u25BC</span>
+      <div id="balIndicator" style="text-align:center;font-size:14px;font-weight:600;color:var(--orange);display:none">
+        <span id="balSrc">C1</span> <span style="color:var(--red)">\u25B2</span> <span class="bal-arrow">\u2192</span> <span class="bal-arrow">\u2192</span> <span class="bal-arrow">\u2192</span> <span style="color:var(--text3)">\u21C4</span> <span class="bal-arrow">\u2192</span> <span class="bal-arrow">\u2192</span> <span class="bal-arrow">\u2192</span> <span id="balDst">C12</span> <span style="color:var(--green)">\u25BC</span>
       </div>
       <div id="balStatus" style="text-align:center;font-size:13px;font-weight:600;color:var(--text2)"></div>
     </div>

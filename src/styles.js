@@ -284,7 +284,7 @@ export const STYLES = `
   .cell-row-item { display: flex; align-items: center; gap: 8px; padding: 4px 0; margin: 0 -8px; padding-left: 8px; padding-right: 8px; border-radius: 8px; background: transparent; transition: background 0.8s ease, box-shadow 0.8s ease; }
   .cell-id { font-size: 11px; font-weight: 600; color: var(--text2); width: 28px; transition: color 0.8s ease; }
   .cell-bar-bg { flex: 1; height: 14px; border-radius: 7px; background: var(--glass-border); position: relative; overflow: hidden; }
-  .cell-bar { height: 100%; border-radius: 7px; background: linear-gradient(90deg, var(--orange), var(--green)); transition: width 0.5s ease; position: relative; }
+  .cell-bar { height: 100%; border-radius: 7px; background: linear-gradient(90deg, var(--orange), var(--green)); transition: width 0.5s ease, background 0.8s ease, opacity 0.8s ease; position: relative; }
   .cell-bar::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 50%; background: linear-gradient(180deg, rgba(255,255,255,0.25) 0%, transparent 100%); border-radius: 7px 7px 0 0; }
   .cell-val { font-size: 12px; font-weight: 600; width: 50px; text-align: right; transition: color 0.8s ease; }
   .cell-tag { font-size: 10px; font-weight: 700; margin-left: 2px; }
@@ -299,19 +299,31 @@ export const STYLES = `
   @keyframes pulseHigh { from { background: rgba(255, 59, 48, 0.06); box-shadow: 0 0 8px rgba(255, 59, 48, 0.08); } to { background: rgba(255, 59, 48, 0.18); box-shadow: 0 0 16px rgba(255, 59, 48, 0.22); } }
   @keyframes pulseLow { from { background: rgba(0, 122, 255, 0.06); box-shadow: 0 0 8px rgba(0, 122, 255, 0.08); } to { background: rgba(0, 122, 255, 0.18); box-shadow: 0 0 16px rgba(0, 122, 255, 0.22); } }
   /* Balancing animation highlights */
-  .cell-row-item.cell-high-balancing { background: rgba(255, 59, 48, 0.2); box-shadow: 0 0 16px rgba(255, 59, 48, 0.3); animation: balPulseSrc 1s ease-in-out infinite alternate; }
-  .cell-row-item.cell-high-balancing .cell-id { color: var(--red); }
-  .cell-row-item.cell-high-balancing .cell-val { color: var(--red); }
-  .cell-row-item.cell-high-balancing .cell-bar { background: linear-gradient(90deg, var(--red), rgba(255,59,48,0.6)); animation: balDrain 2s ease-in-out infinite alternate; }
-  .cell-row-item.cell-low-balancing { background: rgba(34, 197, 94, 0.2); box-shadow: 0 0 16px rgba(34, 197, 94, 0.3); animation: balPulseDst 1s ease-in-out infinite alternate; }
-  .cell-row-item.cell-low-balancing .cell-id { color: var(--green); }
-  .cell-row-item.cell-low-balancing .cell-val { color: var(--green); }
-  .cell-row-item.cell-low-balancing .cell-bar { background: linear-gradient(90deg, var(--green), rgba(34,197,94,0.6)); animation: balFill 2s ease-in-out infinite alternate; }
+  .cell-row-item.cell-high-balancing { background: rgba(255, 59, 48, 0.2); box-shadow: 0 0 16px rgba(255, 59, 48, 0.3); animation: balPulseSrc 1s ease-in-out infinite alternate; transition: background 0.6s ease, box-shadow 0.6s ease; }
+  .cell-row-item.cell-high-balancing .cell-id { color: var(--red); transition: color 0.6s ease; }
+  .cell-row-item.cell-high-balancing .cell-val { color: var(--red); transition: color 0.6s ease; }
+  .cell-row-item.cell-high-balancing .cell-bar { background: linear-gradient(90deg, var(--red), rgba(255,59,48,0.6)); animation: balDrain 2s ease-in-out infinite alternate; transition: background 0.6s ease, opacity 0.6s ease; }
+  .cell-row-item.cell-low-balancing { background: rgba(34, 197, 94, 0.2); box-shadow: 0 0 16px rgba(34, 197, 94, 0.3); animation: balPulseDst 1s ease-in-out infinite alternate; transition: background 0.6s ease, box-shadow 0.6s ease; }
+  .cell-row-item.cell-low-balancing .cell-id { color: var(--green); transition: color 0.6s ease; }
+  .cell-row-item.cell-low-balancing .cell-val { color: var(--green); transition: color 0.6s ease; }
+  .cell-row-item.cell-low-balancing .cell-bar { background: linear-gradient(90deg, var(--green), rgba(34,197,94,0.6)); animation: balFill 2s ease-in-out infinite alternate; transition: background 0.6s ease, opacity 0.6s ease; }
   @keyframes balPulseSrc { from { background: rgba(255, 59, 48, 0.1); box-shadow: 0 0 8px rgba(255, 59, 48, 0.15); } to { background: rgba(255, 59, 48, 0.25); box-shadow: 0 0 20px rgba(255, 59, 48, 0.4); } }
   @keyframes balPulseDst { from { background: rgba(34, 197, 94, 0.1); box-shadow: 0 0 8px rgba(34, 197, 94, 0.15); } to { background: rgba(34, 197, 94, 0.25); box-shadow: 0 0 20px rgba(34, 197, 94, 0.4); } }
   @keyframes balDrain { from { opacity: 1; } to { opacity: 0.6; } }
   @keyframes balFill { from { opacity: 0.6; } to { opacity: 1; } }
   @keyframes balPulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+  /* Balancing arrow animation — staggered charge flow */
+  .bal-arrow { display: inline-block; animation: balArrowFlow 1.2s ease-in-out infinite; }
+  .bal-arrow:nth-child(1) { animation-delay: 0s; }
+  .bal-arrow:nth-child(2) { animation-delay: 0.15s; }
+  .bal-arrow:nth-child(3) { animation-delay: 0.3s; }
+  .bal-arrow:nth-child(4) { animation-delay: 0.45s; }
+  .bal-arrow:nth-child(5) { animation-delay: 0.6s; }
+  .bal-arrow:nth-child(6) { animation-delay: 0.75s; }
+  @keyframes balArrowFlow {
+    0%, 100% { opacity: 0.3; transform: translateX(0); }
+    50% { opacity: 1; transform: translateX(3px); color: var(--orange); }
+  }
 
   .ctrl { display: flex; justify-content: space-between; align-items: center; padding: 18px 0; border-bottom: 1px solid var(--glass-border); }
   .ctrl:last-child { border-bottom: none; }
