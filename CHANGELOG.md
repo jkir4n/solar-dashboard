@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.11.1 (2026-04-05)
+
+### Bug Fixes
+- fix(battery): show cycle rate as per-day average from 7-day rolling window
+
+
 ## v0.11.0 (2026-04-05)
 
 ### Features
