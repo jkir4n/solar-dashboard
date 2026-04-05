@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.10.0 (2026-04-05)
+
+### Features
+- feat: add day/night variants for all weather conditions and overlays
+
+
 ## v0.9.0 (2026-04-05)
 
 ### Features
