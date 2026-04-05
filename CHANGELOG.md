@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.7.0 (2026-04-05)
+
+### Features
+- feat: replace canvas balancing animation with cell bar level animation
+
+
 ## v0.6.2 (2026-04-04)
 
 ### Bug Fixes
