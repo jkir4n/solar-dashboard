@@ -50,6 +50,9 @@ export class ChartManager {
     const minVal = opts.minY ?? Math.min(...allVals);
     const maxVal = opts.maxY ?? Math.max(...allVals);
     const range = maxVal - minVal || 1;
+    // When all data equals minVal (e.g. all-zero at night), anchor the axis
+    // upward from minVal rather than letting the fallback range go negative.
+    const yGridTop = (maxVal === minVal) ? minVal + range : maxVal;
     const n = datasets[0].points.length;
     if (n === 0) return;
     const labelFn = opts.xLabel || (i => i);
@@ -70,7 +73,7 @@ export class ChartManager {
         ctx.moveTo(pad.left, y);
         ctx.lineTo(W - pad.right, y);
         ctx.stroke();
-        const val = maxVal - (range * i / gridN);
+        const val = yGridTop - (range * i / gridN);
         ctx.fillText(opts.yFormat ? opts.yFormat(val) : val.toFixed(0), pad.left - 4, y + 4);
       }
 
@@ -139,7 +142,11 @@ export class ChartManager {
       padTop: 10,
       dpr,
       minVal: opts.minY ?? (overlayVals.length ? Math.min(...overlayVals) : 0),
-      maxVal: opts.maxY ?? (overlayVals.length ? Math.max(...overlayVals) : 1),
+      maxVal: (() => {
+        const mn = opts.minY ?? (overlayVals.length ? Math.min(...overlayVals) : 0);
+        const mx = opts.maxY ?? (overlayVals.length ? Math.max(...overlayVals) : 1);
+        return mx === mn ? mn + 1 : mx;
+      })(),
     };
 
     if (!animate) { drawFrame(1); return; }
@@ -371,15 +378,20 @@ export class ChartManager {
           powerData = await this._bridge.fetchStatsRange(entityIds.power, 1, startMidnight, endMidnight);
         }
       } else {
-        // 7D or 30D — use statistics endpoint
+        // 7D or 30D — use statistics endpoint, end at today's local midnight to exclude partial day
         const days = range === '7D' ? 7 : 30;
+        const nowD = new Date();
+        const todayLocal = new Date(nowD.toLocaleString('en-US', { timeZone: tz }));
+        todayLocal.setHours(0, 0, 0, 0);
+        const offsetMs = nowD.getTime() - new Date(nowD.toLocaleString('en-US', { timeZone: tz })).getTime();
+        const todayMidnight = new Date(todayLocal.getTime() + offsetMs);
         if (entityIds.soc) {
           [powerData, socData] = await Promise.all([
-            this._bridge.fetchStatsRange(entityIds.power, days),
-            this._bridge.fetchStatsRange(entityIds.soc, days)
+            this._bridge.fetchStatsRange(entityIds.power, days, null, todayMidnight),
+            this._bridge.fetchStatsRange(entityIds.soc, days, null, todayMidnight)
           ]);
         } else {
-          powerData = await this._bridge.fetchStatsRange(entityIds.power, days);
+          powerData = await this._bridge.fetchStatsRange(entityIds.power, days, null, todayMidnight);
         }
       }
     } catch (e) {

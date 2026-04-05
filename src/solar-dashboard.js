@@ -217,6 +217,7 @@ class SolarDashboard extends HTMLElement {
 
   set hass(hass) {
     this._bridge.update(hass);
+    this._applyTheme();
     if (!this._initialized) {
       this._init();
       this._initialized = true;
@@ -348,9 +349,10 @@ class SolarDashboard extends HTMLElement {
   // ============ THEME ============
   _applyTheme() {
     const root = this.shadowRoot.querySelector('.dashboard-root');
-    if (root) {
-      root.dataset.theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    }
+    if (!root) return;
+    const hass = this._bridge._hass;
+    const darkMode = hass?.themes?.darkMode ?? window.matchMedia('(prefers-color-scheme: dark)').matches;
+    root.dataset.theme = darkMode ? 'dark' : 'light';
   }
 
   // ============ HTML TEMPLATE ============
@@ -537,7 +539,7 @@ class SolarDashboard extends HTMLElement {
         <canvas id="chartSolar"></canvas>
         <div style="display:flex;gap:12px;margin-top:6px;font-size:11px;">
           <span style="color:var(--green);font-weight:600;">&#9632; Actual</span>
-          <span style="color:var(--orange);font-weight:600;">&#9632; Estimated</span>
+          <span id="solarOverlayLabel" style="color:var(--orange);font-weight:600;">&#9632; Estimated</span>
         </div>
       </div>
     </div>
@@ -1454,27 +1456,28 @@ class SolarDashboard extends HTMLElement {
       const is30D = range === '30D';
       const cloudPct = isLive ? (1 - this._weatherCloudFactor) * 100 : 0;
       const ambientC = isLive ? this._weatherAmbientC : null;
-      const estPts = solarResult.powerData.map(d => {
-        if (is30D) {
-          // For daily data points, calculate mean watts by sampling throughout the day
-          const dayStart = new Date(d.t);
-          dayStart.setHours(0, 0, 0, 0);
-          const samples = [];
-          // Sample every 15 minutes
-          for (let t = dayStart.getTime(); t < dayStart.getTime() + 24 * 60 * 60 * 1000; t += 15 * 60 * 1000) {
-            const out = this._engine.calcSolarOutput(new Date(t), panelConfig, cloudPct, ambientC);
-            samples.push(out.watts);
-          }
-          return samples.length ? samples.reduce((a, b) => a + b, 0) / samples.length : 0;
-        }
-        const out = this._engine.calcSolarOutput(d.t, panelConfig, cloudPct, ambientC);
-        return out.watts;
-      });
+      let overlayPts, overlayLabel;
+      if (is30D) {
+        // 30D: show 7-day rolling average of actual as trend line
+        overlayPts = actualPts.map((_, i) => {
+          const window = actualPts.slice(Math.max(0, i - 6), i + 1);
+          return window.reduce((a, b) => a + b, 0) / window.length;
+        });
+        overlayLabel = '7d avg';
+      } else {
+        overlayPts = solarResult.powerData.map(d => {
+          const out = this._engine.calcSolarOutput(d.t, panelConfig, cloudPct, ambientC);
+          return out.watts;
+        });
+        overlayLabel = 'W est';
+      }
       this._charts.drawChart(canvases.solar, [
         { points: actualPts, color: 'rgb(34,197,94)', label: 'W', fill: true },
-        { points: estPts, color: 'rgb(249,115,22)', label: 'W est', fill: false },
+        { points: overlayPts, color: 'rgb(249,115,22)', label: overlayLabel, fill: false },
       ], { minY: 0, xLabel: solarResult.timeXLabel(solarResult.powerData), yFormat: v => Math.round(v) + ' W' }, false);
       this._charts.attachCrosshair(canvases.solar);
+      const overlayLabelEl = root.getElementById('solarOverlayLabel');
+      if (overlayLabelEl) overlayLabelEl.textContent = '\u25A0 ' + (is30D ? '7d avg' : 'Estimated');
     }
 
     // Update chart value displays with last data point
