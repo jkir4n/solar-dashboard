@@ -213,6 +213,7 @@ class SolarDashboard extends HTMLElement {
     this._cachedForecastKWh = 0;
     this._resizeHandler = null;
     this._activeChartRange = 'Live';
+    this._lastLiveChartFetch = 0;
   }
 
   set hass(hass) {
@@ -231,6 +232,16 @@ class SolarDashboard extends HTMLElement {
     const changed = this._bridge.getChangedEntities();
     if (changed.length > 0) {
       this._updateUI(changed);
+      // Refresh Live chart when relevant entities change, throttled to once per 2 minutes
+      if (this._activeChartRange === 'Live' && this._chartsLoaded) {
+        const E = this._bridge.E;
+        const liveEntities = new Set([E.POWER, E.CHG_POWER, E.DISCHG_POWER, E.SOC].filter(Boolean));
+        const relevant = changed.some(id => liveEntities.has(id));
+        if (relevant && Date.now() - this._lastLiveChartFetch > 60000) {
+          this._lastLiveChartFetch = Date.now();
+          this._loadChartRange('Live');
+        }
+      }
     }
   }
 
@@ -316,6 +327,7 @@ class SolarDashboard extends HTMLElement {
     // Start solar degradation UI (hourly)
     this._updateSolarUI();
     this._intervals.push(setInterval(() => this._updateSolarUI(), 3600000));
+
 
     // Resize handler
     this._resizeHandler = () => {
@@ -809,7 +821,7 @@ class SolarDashboard extends HTMLElement {
     if (minCellV != null) {
       const el = root.getElementById('sysMinCell');
       const old = parseFloat(el.textContent) || 0;
-      const cellNum = this._bridge.getStrVal(E.MIN_V_CELL) || '?';
+      const cellNum = parseInt(this._bridge.getStrVal(E.MIN_V_CELL)) || '?';
       this._animateValue(el, old, minCellV, 600, v => v.toFixed(3) + ' V (C' + cellNum + ')');
     } else root.getElementById('sysMinCell').textContent = '-- V';
 
@@ -817,7 +829,7 @@ class SolarDashboard extends HTMLElement {
     if (maxCellV != null) {
       const el = root.getElementById('sysMaxCell');
       const old = parseFloat(el.textContent) || 0;
-      const cellNum = this._bridge.getStrVal(E.MAX_V_CELL) || '?';
+      const cellNum = parseInt(this._bridge.getStrVal(E.MAX_V_CELL)) || '?';
       this._animateValue(el, old, maxCellV, 600, v => v.toFixed(3) + ' V (C' + cellNum + ')');
     } else root.getElementById('sysMaxCell').textContent = '-- V';
 

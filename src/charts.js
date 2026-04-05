@@ -67,6 +67,7 @@ export class ChartManager {
       ctx.fillStyle = getCS('--chart-text') || 'rgba(255,255,255,0.35)';
       ctx.font = '10px Inter, sans-serif';
       ctx.textAlign = 'right';
+      let lastYLabel = null;
       for (let i = 0; i <= gridN; i++) {
         const y = pad.top + (cH * i / gridN);
         ctx.beginPath();
@@ -74,7 +75,11 @@ export class ChartManager {
         ctx.lineTo(W - pad.right, y);
         ctx.stroke();
         const val = yGridTop - (range * i / gridN);
-        ctx.fillText(opts.yFormat ? opts.yFormat(val) : val.toFixed(0), pad.left - 4, y + 4);
+        const label = opts.yFormat ? opts.yFormat(val) : val.toFixed(0);
+        if (label !== lastYLabel) {
+          ctx.fillText(label, pad.left - 4, y + 4);
+          lastYLabel = label;
+        }
       }
 
       // X labels
@@ -403,7 +408,7 @@ export class ChartManager {
       if (!data?.[i]) return '';
       const d = data[i].t;
       return (range === 'Live' || range === '1D')
-        ? d.getHours() + ':00'
+        ? d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0')
         : (d.getMonth() + 1) + '/' + d.getDate();
     };
 
