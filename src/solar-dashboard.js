@@ -14,7 +14,7 @@ const CONDITION_CLOUD_MAP = {
   'snowy': 80, 'fog': 70,
   'hail': 90, 'lightning': 90, 'lightning-rainy': 90,
   'windy': 15, 'windy-variant': 15,
-  'exceptional': 50,
+  'exceptional': 50, 'snowy-rainy': 75,
 };
 
 const COND_LABELS = {
@@ -33,6 +33,8 @@ const CONDITION_PALETTE_MAP = {
   'snowy': 'snowy', 'hail': 'snowy',
   'fog': 'fog',
   'lightning': 'storm', 'lightning-rainy': 'storm',
+  'windy': 'windy', 'windy-variant': 'windy',
+  'exceptional': 'cloudy', 'snowy-rainy': 'snowy',
 };
 
 const WEATHER_PALETTES = {
@@ -45,6 +47,7 @@ const WEATHER_PALETTES = {
     snowy:        ['rgba(140,160,200,0.15)','rgba(120,140,180,0.1)', 'rgba(100,120,160,0.08)'],
     fog:          ['rgba(100,100,110,0.15)','rgba(80,80,90,0.1)',    'rgba(60,60,70,0.08)'],
     storm:        ['rgba(60,20,80,0.2)',    'rgba(40,10,60,0.15)',   'rgba(80,30,100,0.1)'],
+    windy:        ['rgba(60,160,200,0.12)', 'rgba(40,140,180,0.08)', 'rgba(80,180,220,0.06)'],
   },
   light: {
     sunny:        ['rgba(255,200,80,0.2)',  'rgba(255,170,50,0.15)', 'rgba(255,220,100,0.1)'],
@@ -55,6 +58,7 @@ const WEATHER_PALETTES = {
     snowy:        ['rgba(180,200,230,0.2)', 'rgba(160,180,210,0.15)','rgba(140,160,190,0.1)'],
     fog:          ['rgba(140,140,150,0.2)', 'rgba(120,120,130,0.15)','rgba(100,100,110,0.1)'],
     storm:        ['rgba(80,40,100,0.2)',   'rgba(60,30,80,0.15)',   'rgba(100,50,120,0.1)'],
+    windy:        ['rgba(80,180,220,0.15)', 'rgba(60,160,200,0.10)', 'rgba(100,200,230,0.08)'],
   },
 };
 

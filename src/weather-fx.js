@@ -8,6 +8,8 @@ const CONDITION_PARTICLE_MAP = {
   'snowy': 'snowy', 'hail': 'snowy',
   'fog': 'fog',
   'lightning': 'storm', 'lightning-rainy': 'storm',
+  'windy': 'cloudy', 'windy-variant': 'cloudy',
+  'exceptional': 'cloudy', 'snowy-rainy': 'sleet',
 };
 
 export class WeatherFX {
@@ -22,6 +24,10 @@ export class WeatherFX {
     this._fading = false;
     this._nextType = null;
     this._lastFrame = 0;
+    // Night overlay — stars/aurora rendered behind weather particles
+    this._overlayParticles = [];
+    this._overlayType = null;
+    this._overlayAlpha = 0;
   }
 
   /**
@@ -36,6 +42,25 @@ export class WeatherFX {
     let particleType = CONDITION_PARTICLE_MAP[weatherCondition] || null;
     if (isNight && (!particleType || particleType === 'sunny')) particleType = 'night';
 
+    // Night overlay: show stars/aurora behind semi-transparent weather effects.
+    // Alpha varies by how much sky is visible through the condition.
+    const OVERLAY_ALPHA = {
+      'partlycloudy': 0.5, 'windy': 0.45, 'windy-variant': 0.45,
+      'cloudy': 0.3, 'exceptional': 0.3, 'fog': 0.15,
+    };
+    const overlayAlpha = isNight && particleType !== 'night' ? (OVERLAY_ALPHA[weatherCondition] ?? 0) : 0;
+    if (overlayAlpha > 0) {
+      if (this._overlayType !== 'night') {
+        this._overlayParticles = this._createParticles('night', this.canvas);
+      }
+      this._overlayType = 'night';
+      this._overlayAlpha = overlayAlpha;
+    } else {
+      this._overlayParticles = [];
+      this._overlayType = null;
+      this._overlayAlpha = 0;
+    }
+
     this._startParticles(particleType);
   }
 
@@ -49,6 +74,9 @@ export class WeatherFX {
     this._particles = [];
     this._alpha = 1;
     this._fading = false;
+    this._overlayParticles = [];
+    this._overlayType = null;
+    this._overlayAlpha = 0;
     if (this.ctx && this.canvas) {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
@@ -62,6 +90,9 @@ export class WeatherFX {
     // Recreate particles for new dimensions
     if (this._currentType) {
       this._particles = this._createParticles(this._currentType, this.canvas);
+    }
+    if (this._overlayType) {
+      this._overlayParticles = this._createParticles(this._overlayType, this.canvas);
     }
   }
 
@@ -184,6 +215,37 @@ export class WeatherFX {
           bolt: null, flashAlpha: 0, flickerPhase: 0
         });
       }
+    } else if (type === 'sleet') {
+      // Rain streaks — denser, shorter, steeper than pure rain
+      for (let i = 0; i < 40; i++) {
+        const depth = Math.random();
+        particles.push({
+          kind: 'drop', x: Math.random() * w, y: Math.random() * h,
+          len: (5 + Math.random() * 8) * (0.5 + depth * 0.5),
+          speed: (4 + Math.random() * 4) * (0.5 + depth * 0.5),
+          o: (0.05 + Math.random() * 0.08) * (0.4 + depth * 0.6),
+          wind: 0.2
+        });
+      }
+      // Ice pellets — small solid circles with slight horizontal drift
+      for (let i = 0; i < 25; i++) {
+        const depth = Math.random();
+        particles.push({
+          kind: 'pellet', x: Math.random() * w, y: Math.random() * h,
+          r: (1 + Math.random() * 1.5) * (0.5 + depth * 0.5),
+          speed: (3 + Math.random() * 4) * (0.5 + depth * 0.5),
+          vx: (Math.random() - 0.5) * 1.5,
+          o: (0.15 + Math.random() * 0.2) * (0.4 + depth * 0.6),
+        });
+      }
+      // Splash ripples at bottom
+      for (let i = 0; i < 6; i++) {
+        particles.push({
+          kind: 'ripple', x: Math.random() * w, y: h * (0.85 + Math.random() * 0.15),
+          r: 0, maxR: 5 + Math.random() * 8, o: 0.12, life: 0,
+          lifespan: 50 + Math.random() * 30
+        });
+      }
     } else if (type === 'night') {
       // Twinkling stars with depth
       for (let i = 0; i < 80; i++) {
@@ -263,6 +325,75 @@ export class WeatherFX {
     return left.concat(right.slice(1));
   }
 
+  // ---- Private: night overlay (stars + aurora behind weather particles) ----
+
+  _renderNightOverlay(now) {
+    const canvas = this.canvas;
+    const ctx = this.ctx;
+    const w = canvas.width, h = canvas.height;
+    const scale = this._alpha * this._overlayAlpha;
+    if (scale <= 0 || !this._overlayParticles.length) return;
+
+    // Aurora bands
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    this._overlayParticles.filter(p => p.kind === 'aurora').forEach(p => {
+      p.phase += p.speed;
+      ctx.globalAlpha = scale * p.o;
+      ctx.beginPath();
+      for (let x = 0; x <= w; x += 4) {
+        const y = p.yBase + Math.sin(x * p.freq + p.phase) * p.amplitude
+          + Math.sin(x * p.freq * 2.3 + p.phase * 1.7) * p.amplitude * 0.3;
+        if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.strokeStyle = `hsla(${p.hue}, 80%, 60%, 1)`;
+      ctx.lineWidth = p.thickness;
+      ctx.shadowBlur = p.thickness * 1.5;
+      ctx.shadowColor = `hsla(${p.hue}, 80%, 50%, 0.5)`;
+      ctx.stroke();
+    });
+    ctx.restore();
+    ctx.shadowBlur = 0;
+
+    // Twinkling stars
+    this._overlayParticles.filter(p => p.kind === 'star').forEach(p => {
+      p.phase += p.speed * 0.02;
+      const twinkle = 0.2 + 0.8 * ((Math.sin(p.phase) + 1) / 2);
+      ctx.globalAlpha = scale * twinkle * p.brightness * 0.5;
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // Shooting star
+    const ss = this._overlayParticles.find(p => p.kind === 'shootingStar');
+    if (ss) {
+      ss.timer++;
+      if (ss.active) {
+        ss.x += ss.vx; ss.y += ss.vy; ss.life++;
+        ss.trail.push({ x: ss.x, y: ss.y });
+        if (ss.trail.length > 12) ss.trail.shift();
+        ss.trail.forEach((pt, i) => {
+          const fade = (i + 1) / ss.trail.length;
+          ctx.globalAlpha = scale * fade * 0.6;
+          ctx.fillStyle = '#fff';
+          ctx.beginPath();
+          ctx.arc(pt.x, pt.y, 1.5 * fade, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        if (ss.life > 40 || ss.x > w || ss.y > h) { ss.active = false; ss.trail = []; }
+      } else if (ss.timer > ss.interval) {
+        ss.timer = 0; ss.interval = 400 + Math.random() * 800;
+        ss.active = true; ss.life = 0;
+        ss.x = Math.random() * w * 0.7; ss.y = Math.random() * h * 0.3;
+        ss.vx = 4 + Math.random() * 4; ss.vy = 2 + Math.random() * 2;
+      }
+    }
+
+    ctx.globalAlpha = this._alpha;
+  }
+
   // ---- Private: render loop (from v9 renderWeatherParticles) ----
 
   _render(now) {
@@ -273,6 +404,10 @@ export class WeatherFX {
     const light = this._theme === 'light';
 
     ctx.clearRect(0, 0, w, h);
+
+    // Draw night overlay (stars/aurora) behind weather particles
+    if (state._overlayType) state._renderNightOverlay(now);
+
     ctx.globalAlpha = state._alpha;
 
     if (state._currentType === 'sunny') {
@@ -501,6 +636,54 @@ export class WeatherFX {
         ctx.beginPath();
         ctx.ellipse(p.x, p.y, p.rx, p.ry, 0, 0, Math.PI * 2);
         ctx.fill();
+      });
+      ctx.globalAlpha = state._alpha;
+
+    } else if (state._currentType === 'sleet') {
+      // Rain streaks
+      const dropColor = light ? 'rgba(100,130,180,1)' : 'rgba(160,190,230,1)';
+      state._particles.filter(p => p.kind === 'drop').forEach(p => {
+        p.x -= p.speed * p.wind;
+        p.y += p.speed;
+        if (p.y > h + 20) { p.y = -20; p.x = Math.random() * w; }
+        if (p.x < -20) p.x = w + 20;
+        ctx.globalAlpha = state._alpha * p.o;
+        ctx.strokeStyle = dropColor;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(p.x + p.len * p.wind, p.y - p.len);
+        ctx.stroke();
+      });
+      // Ice pellets
+      const pelletColor = light ? 'rgba(180,200,230,1)' : 'rgba(220,235,255,1)';
+      state._particles.filter(p => p.kind === 'pellet').forEach(p => {
+        p.x += p.vx;
+        p.y += p.speed;
+        if (p.y > h + 10) { p.y = -10; p.x = Math.random() * w; }
+        if (p.x < -10) p.x = w + 10;
+        if (p.x > w + 10) p.x = -10;
+        ctx.globalAlpha = state._alpha * p.o;
+        ctx.fillStyle = pelletColor;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      // Splash ripples
+      state._particles.filter(p => p.kind === 'ripple').forEach(p => {
+        p.life++;
+        if (p.life > p.lifespan) {
+          p.life = 0; p.r = 0; p.x = Math.random() * w;
+          p.y = h * (0.85 + Math.random() * 0.15); p.o = 0.12;
+        }
+        p.r = (p.life / p.lifespan) * p.maxR;
+        const fade = 1 - p.life / p.lifespan;
+        ctx.globalAlpha = state._alpha * p.o * fade;
+        ctx.strokeStyle = dropColor;
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        ctx.ellipse(p.x, p.y, p.r, p.r * 0.4, 0, 0, Math.PI * 2);
+        ctx.stroke();
       });
       ctx.globalAlpha = state._alpha;
     }
