@@ -4,7 +4,7 @@
 const CONDITION_PARTICLE_MAP = {
   'sunny': 'sunny', 'clear-night': 'night',
   'partlycloudy': 'cloudy', 'cloudy': 'cloudy',
-  'rainy': 'rainy', 'pouring': 'storm',
+  'rainy': 'rainy', 'pouring': 'pouring',
   'snowy': 'snowy', 'hail': 'snowy',
   'fog': 'fog',
   'lightning': 'storm', 'lightning-rainy': 'storm',
@@ -17,6 +17,7 @@ export class WeatherFX {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     this._theme = 'dark';
+    this._isNight = false;
     this._particles = [];
     this._animFrameId = null;
     this._currentType = null;
@@ -24,7 +25,7 @@ export class WeatherFX {
     this._fading = false;
     this._nextType = null;
     this._lastFrame = 0;
-    // Night overlay — stars/aurora rendered behind weather particles
+    // Ambient overlay — stars/aurora at night, sun rays/glow by day
     this._overlayParticles = [];
     this._overlayType = null;
     this._overlayAlpha = 0;
@@ -38,23 +39,47 @@ export class WeatherFX {
    */
   start(weatherCondition, isNight, theme = 'dark') {
     this._theme = theme;
+    this._isNight = isNight;
     // Determine particle type
     let particleType = CONDITION_PARTICLE_MAP[weatherCondition] || null;
     if (isNight && (!particleType || particleType === 'sunny')) particleType = 'night';
 
-    // Night overlay: show stars/aurora behind semi-transparent weather effects.
-    // Alpha varies by how much sky is visible through the condition.
-    const OVERLAY_ALPHA = {
+    // Overlay: render ambient effects behind weather particles.
+    // Night = stars/aurora. Day = sun rays or diffuse warm glow.
+    const NIGHT_OVERLAY_ALPHA = {
       'partlycloudy': 0.5, 'windy': 0.45, 'windy-variant': 0.45,
-      'cloudy': 0.3, 'exceptional': 0.3, 'fog': 0.15,
+      'cloudy': 0.3, 'exceptional': 0.3, 'fog': 0.15, 'rainy': 0.2,
+      'pouring': 0.07, 'snowy': 0.18, 'hail': 0.12, 'snowy-rainy': 0.10,
     };
-    const overlayAlpha = isNight && particleType !== 'night' ? (OVERLAY_ALPHA[weatherCondition] ?? 0) : 0;
-    if (overlayAlpha > 0) {
-      if (this._overlayType !== 'night') {
-        this._overlayParticles = this._createParticles('night', this.canvas);
+    const DAY_OVERLAY = {
+      'partlycloudy':  { type: 'sunrays', alpha: 0.45 },
+      'windy':         { type: 'sunrays', alpha: 0.40 },
+      'windy-variant': { type: 'sunrays', alpha: 0.40 },
+      'cloudy':        { type: 'diffuse', alpha: 0.20 },
+      'exceptional':   { type: 'diffuse', alpha: 0.15 },
+      'fog':           { type: 'diffuse', alpha: 0.28 },
+      'rainy':         { type: 'diffuse', alpha: 0.12 },
+      'pouring':       { type: 'diffuse', alpha: 0.07 },
+      'snowy':         { type: 'diffuse', alpha: 0.18 },
+      'hail':          { type: 'diffuse', alpha: 0.12 },
+      'snowy-rainy':   { type: 'diffuse', alpha: 0.10 },
+    };
+
+    let newOverlayType = null, newOverlayAlpha = 0;
+    if (isNight && particleType !== 'night') {
+      newOverlayAlpha = NIGHT_OVERLAY_ALPHA[weatherCondition] ?? 0;
+      if (newOverlayAlpha > 0) newOverlayType = 'night';
+    } else if (!isNight) {
+      const d = DAY_OVERLAY[weatherCondition];
+      if (d) { newOverlayType = d.type; newOverlayAlpha = d.alpha; }
+    }
+
+    if (newOverlayType) {
+      if (this._overlayType !== newOverlayType) {
+        this._overlayParticles = this._createParticles(newOverlayType, this.canvas);
       }
-      this._overlayType = 'night';
-      this._overlayAlpha = overlayAlpha;
+      this._overlayType = newOverlayType;
+      this._overlayAlpha = newOverlayAlpha;
     } else {
       this._overlayParticles = [];
       this._overlayType = null;
@@ -187,6 +212,26 @@ export class WeatherFX {
           speed: 0.2 + Math.random() * 0.3
         });
       }
+    } else if (type === 'pouring') {
+      // Heavy downpour — dense, long, fast streaks with strong wind
+      for (let i = 0; i < 110; i++) {
+        const depth = Math.random();
+        particles.push({
+          kind: 'drop', x: Math.random() * w, y: Math.random() * h,
+          len: (14 + Math.random() * 18) * (0.5 + depth * 0.5),
+          speed: (7 + Math.random() * 8) * (0.5 + depth * 0.5),
+          o: (0.1 + Math.random() * 0.15) * (0.4 + depth * 0.6),
+          wind: 0.45
+        });
+      }
+      // More frequent, larger splash ripples
+      for (let i = 0; i < 16; i++) {
+        particles.push({
+          kind: 'ripple', x: Math.random() * w, y: h * (0.82 + Math.random() * 0.18),
+          r: 0, maxR: 10 + Math.random() * 14, o: 0.18, life: 0,
+          lifespan: 45 + Math.random() * 30
+        });
+      }
     } else if (type === 'rainy' || type === 'storm') {
       // Streak rain with depth layers
       const count = type === 'storm' ? 80 : 50;
@@ -309,6 +354,36 @@ export class WeatherFX {
           vx: 0.1 + Math.random() * 0.3, o: 0.03 + Math.random() * 0.03
         });
       }
+    } else if (type === 'sunrays') {
+      // Soft god rays peeking through cloud gaps
+      for (let i = 0; i < 4; i++) {
+        particles.push({
+          kind: 'ray', angle: -0.5 + i * 0.18, width: 0.05 + Math.random() * 0.07,
+          o: 0.025 + Math.random() * 0.025, phase: Math.random() * Math.PI * 2,
+          speed: 0.15 + Math.random() * 0.2
+        });
+      }
+      // Golden motes drifting slowly upward
+      for (let i = 0; i < 12; i++) {
+        particles.push({
+          kind: 'mote', x: Math.random() * w, y: Math.random() * h,
+          r: 1 + Math.random() * 2,
+          vy: -(0.1 + Math.random() * 0.2), vx: (Math.random() - 0.5) * 0.2,
+          o: 0.08 + Math.random() * 0.12, phase: Math.random() * Math.PI * 2
+        });
+      }
+    } else if (type === 'diffuse') {
+      // Large soft warm-light halos — ambient sky glow behind overcast conditions
+      for (let i = 0; i < 5; i++) {
+        particles.push({
+          kind: 'halo', x: Math.random() * w, y: h * (0.05 + Math.random() * 0.4),
+          rx: 120 + Math.random() * 180, ry: 60 + Math.random() * 80,
+          vx: (Math.random() - 0.5) * 0.15,
+          o: 0.04 + Math.random() * 0.04,
+          phase: Math.random() * Math.PI * 2,
+          breatheSpeed: 0.003 + Math.random() * 0.004
+        });
+      }
     }
 
     return particles;
@@ -325,15 +400,73 @@ export class WeatherFX {
     return left.concat(right.slice(1));
   }
 
-  // ---- Private: night overlay (stars + aurora behind weather particles) ----
+  // ---- Private: ambient overlay (night: stars/aurora, day: sunrays/diffuse glow) ----
 
-  _renderNightOverlay(now) {
+  _renderOverlay(now) {
     const canvas = this.canvas;
     const ctx = this.ctx;
     const w = canvas.width, h = canvas.height;
     const scale = this._alpha * this._overlayAlpha;
+    const light = this._theme === 'light';
     if (scale <= 0 || !this._overlayParticles.length) return;
 
+    // ---- Day overlays ----
+    if (this._overlayType === 'sunrays') {
+      const rayColor = light ? 'rgba(255,190,50,1)' : 'rgba(255,220,100,1)';
+      this._overlayParticles.filter(p => p.kind === 'ray').forEach(p => {
+        const pulse = 0.7 + 0.3 * Math.sin(now * 0.001 * p.speed + p.phase);
+        const cx = w * 0.85, cy = 0;
+        const a1 = p.angle - p.width / 2, a2 = p.angle + p.width / 2;
+        const rayLen = Math.max(w, h) * 1.5;
+        ctx.globalAlpha = scale * p.o * pulse * (light ? 0.7 : 1);
+        ctx.fillStyle = rayColor;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + Math.cos(a1) * rayLen, cy + Math.sin(a1) * rayLen);
+        ctx.lineTo(cx + Math.cos(a2) * rayLen, cy + Math.sin(a2) * rayLen);
+        ctx.closePath();
+        ctx.fill();
+      });
+      const moteColor = light ? 'rgba(200,160,40,' : 'rgba(255,200,80,';
+      this._overlayParticles.filter(p => p.kind === 'mote').forEach(p => {
+        p.phase += 0.01;
+        p.x += p.vx + Math.sin(p.phase) * 0.2;
+        p.y += p.vy;
+        if (p.y < -10) { p.y = h + 10; p.x = Math.random() * w; }
+        if (p.x < -10) p.x = w + 10;
+        if (p.x > w + 10) p.x = -10;
+        ctx.globalAlpha = scale * p.o;
+        ctx.fillStyle = moteColor + p.o + ')';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.globalAlpha = this._alpha;
+      return;
+    }
+
+    if (this._overlayType === 'diffuse') {
+      const haloColor = light ? 'rgba(240,215,130,1)' : 'rgba(255,225,160,1)';
+      this._overlayParticles.forEach(p => {
+        p.x += p.vx;
+        p.phase += p.breatheSpeed;
+        if (p.x > w + p.rx) p.x = -p.rx;
+        if (p.x < -p.rx) p.x = w + p.rx;
+        const breathe = 0.6 + 0.4 * Math.sin(p.phase);
+        ctx.globalAlpha = scale * p.o * breathe;
+        ctx.fillStyle = haloColor;
+        ctx.shadowBlur = 80;
+        ctx.shadowColor = haloColor;
+        ctx.beginPath();
+        ctx.ellipse(p.x, p.y, p.rx, p.ry, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      });
+      ctx.globalAlpha = this._alpha;
+      return;
+    }
+
+    // ---- Night overlay (stars + aurora) ----
     // Aurora bands
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
@@ -402,11 +535,12 @@ export class WeatherFX {
     const w = canvas.width, h = canvas.height;
     const state = this;
     const light = this._theme === 'light';
+    const night = this._isNight;
 
     ctx.clearRect(0, 0, w, h);
 
-    // Draw night overlay (stars/aurora) behind weather particles
-    if (state._overlayType) state._renderNightOverlay(now);
+    // Draw ambient overlay (stars/aurora at night; sun rays/glow by day) behind weather particles
+    if (state._overlayType) state._renderOverlay(now);
 
     ctx.globalAlpha = state._alpha;
 
@@ -447,10 +581,47 @@ export class WeatherFX {
         ctx.shadowBlur = 0;
       });
 
+    } else if (state._currentType === 'pouring') {
+      // Heavy downpour streaks — darker, denser, more angled
+      const dropColor = light
+        ? (night ? 'rgba(30,50,105,1)' : 'rgba(55,80,145,1)')
+        : (night ? 'rgba(85,115,175,1)' : 'rgba(120,155,210,1)');
+      state._particles.filter(p => p.kind === 'drop').forEach(p => {
+        p.x -= p.speed * p.wind;
+        p.y += p.speed;
+        if (p.y > h + 20) { p.y = -20; p.x = Math.random() * w; }
+        if (p.x < -20) p.x = w + 20;
+        ctx.globalAlpha = state._alpha * p.o;
+        ctx.strokeStyle = dropColor;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(p.x + p.len * p.wind, p.y - p.len);
+        ctx.stroke();
+      });
+      state._particles.filter(p => p.kind === 'ripple').forEach(p => {
+        p.life++;
+        if (p.life > p.lifespan) {
+          p.life = 0; p.r = 0; p.x = Math.random() * w;
+          p.y = h * (0.82 + Math.random() * 0.18); p.o = 0.18;
+        }
+        p.r = (p.life / p.lifespan) * p.maxR;
+        const fade = 1 - p.life / p.lifespan;
+        ctx.globalAlpha = state._alpha * p.o * fade;
+        ctx.strokeStyle = dropColor;
+        ctx.lineWidth = 0.9;
+        ctx.beginPath();
+        ctx.ellipse(p.x, p.y, p.r, p.r * 0.4, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      });
+      ctx.globalAlpha = state._alpha;
+
     } else if (state._currentType === 'rainy' || state._currentType === 'storm') {
       // Rain streaks
-      const dropColor = light ? 'rgba(80,110,160,1)' : 'rgba(150,180,220,1)';
-      const rippleColor = light ? 'rgba(80,110,160,1)' : 'rgba(150,180,220,1)';
+      const dropColor = light
+        ? (night ? 'rgba(50,70,120,1)' : 'rgba(80,110,160,1)')
+        : (night ? 'rgba(100,130,190,1)' : 'rgba(150,180,220,1)');
+      const rippleColor = dropColor;
       state._particles.filter(p => p.kind === 'drop').forEach(p => {
         p.x -= p.speed * p.wind;
         p.y += p.speed;
@@ -587,7 +758,9 @@ export class WeatherFX {
       ctx.globalAlpha = state._alpha;
 
     } else if (state._currentType === 'snowy') {
-      const flakeColor = light ? 'rgba(140,150,170,' : 'rgba(255,255,255,';
+      const flakeColor = light
+        ? (night ? 'rgba(100,110,140,' : 'rgba(140,150,170,')
+        : (night ? 'rgba(180,195,230,' : 'rgba(255,255,255,');
       state._particles.filter(p => p.kind === 'flake').forEach(p => {
         p.y += p.vy;
         p.sway += p.swaySpeed * 0.02;
@@ -602,9 +775,13 @@ export class WeatherFX {
         p.x += p.vx; p.y += p.vy;
         if (p.y > h + 30) { p.y = -30; p.x = Math.random() * w; }
         ctx.globalAlpha = state._alpha * p.o;
-        ctx.fillStyle = light ? 'rgba(140,150,170,1)' : 'rgba(255,255,255,1)';
+        ctx.fillStyle = light
+          ? (night ? 'rgba(100,110,140,1)' : 'rgba(140,150,170,1)')
+          : (night ? 'rgba(180,195,230,1)' : 'rgba(255,255,255,1)');
         ctx.shadowBlur = 20;
-        ctx.shadowColor = light ? 'rgba(140,150,170,0.2)' : 'rgba(255,255,255,0.3)';
+        ctx.shadowColor = light
+          ? (night ? 'rgba(100,110,140,0.2)' : 'rgba(140,150,170,0.2)')
+          : (night ? 'rgba(180,195,230,0.3)' : 'rgba(255,255,255,0.3)');
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
         ctx.fill();
@@ -613,7 +790,9 @@ export class WeatherFX {
       ctx.globalAlpha = state._alpha;
 
     } else if (state._currentType === 'fog') {
-      const fogColor = light ? 'rgba(160,160,170,1)' : 'rgba(200,200,210,1)';
+      const fogColor = light
+        ? (night ? 'rgba(90,90,110,1)' : 'rgba(160,160,170,1)')
+        : (night ? 'rgba(120,120,140,1)' : 'rgba(200,200,210,1)');
       state._particles.forEach(p => {
         p.x += p.vx;
         if (p.x > w + p.rx) p.x = -p.rx;
@@ -627,7 +806,9 @@ export class WeatherFX {
       ctx.globalAlpha = state._alpha;
 
     } else if (state._currentType === 'cloudy') {
-      const cloudColor = light ? 'rgba(140,145,165,1)' : 'rgba(180,185,200,1)';
+      const cloudColor = light
+        ? (night ? 'rgba(80,85,110,1)' : 'rgba(140,145,165,1)')
+        : (night ? 'rgba(110,115,145,1)' : 'rgba(180,185,200,1)');
       state._particles.forEach(p => {
         p.x += p.vx;
         if (p.x > w + p.rx) p.x = -p.rx;
@@ -641,7 +822,9 @@ export class WeatherFX {
 
     } else if (state._currentType === 'sleet') {
       // Rain streaks
-      const dropColor = light ? 'rgba(100,130,180,1)' : 'rgba(160,190,230,1)';
+      const dropColor = light
+        ? (night ? 'rgba(60,85,130,1)' : 'rgba(100,130,180,1)')
+        : (night ? 'rgba(110,140,190,1)' : 'rgba(160,190,230,1)');
       state._particles.filter(p => p.kind === 'drop').forEach(p => {
         p.x -= p.speed * p.wind;
         p.y += p.speed;
@@ -656,7 +839,9 @@ export class WeatherFX {
         ctx.stroke();
       });
       // Ice pellets
-      const pelletColor = light ? 'rgba(180,200,230,1)' : 'rgba(220,235,255,1)';
+      const pelletColor = light
+        ? (night ? 'rgba(120,140,170,1)' : 'rgba(180,200,230,1)')
+        : (night ? 'rgba(160,180,220,1)' : 'rgba(220,235,255,1)');
       state._particles.filter(p => p.kind === 'pellet').forEach(p => {
         p.x += p.vx;
         p.y += p.speed;
