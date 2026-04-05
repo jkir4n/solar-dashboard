@@ -214,6 +214,7 @@ class SolarDashboard extends HTMLElement {
     this._resizeHandler = null;
     this._activeChartRange = 'Live';
     this._lastLiveChartFetch = 0;
+    this._cycleRatePer7d = null;
   }
 
   set hass(hass) {
@@ -327,6 +328,10 @@ class SolarDashboard extends HTMLElement {
     // Start solar degradation UI (hourly)
     this._updateSolarUI();
     this._intervals.push(setInterval(() => this._updateSolarUI(), 3600000));
+
+    // Cycle rate (7-day rolling) — fetch once on load, refresh hourly
+    this._updateCycleRate();
+    this._intervals.push(setInterval(() => this._updateCycleRate(), 3600000));
 
 
     // Resize handler
@@ -804,7 +809,10 @@ class SolarDashboard extends HTMLElement {
     if (cycles != null) {
       const el = root.getElementById('sysCycles');
       const old = parseFloat(el.textContent) || 0;
-      this._animateValue(el, old, cycles, 600, v => Math.round(v).toString());
+      this._animateValue(el, old, cycles, 600, v => {
+        const rate = this._cycleRatePer7d;
+        return Math.round(v) + (rate != null ? ` (${rate}/7d)` : '');
+      });
     }
 
     const runtime = this._bridge.getStrVal(E.RUNTIME);
@@ -1508,6 +1516,21 @@ class SolarDashboard extends HTMLElement {
       const el = root.getElementById(id);
       if (el) { el.classList.remove('chart-value-pulse'); void el.offsetWidth; el.classList.add('chart-value-pulse'); }
     });
+  }
+
+  // ============ CYCLE RATE ============
+  async _updateCycleRate() {
+    const E = this._bridge.E;
+    if (!E?.CYCLES) return;
+    try {
+      const data = await this._bridge.fetchStatsRange(E.CYCLES, 7);
+      if (data?.length >= 2) {
+        const delta = data[data.length - 1].v - data[0].v;
+        this._cycleRatePer7d = Math.max(0, delta).toFixed(1);
+      }
+    } catch (e) {
+      // non-critical, leave null
+    }
   }
 
   // ============ REFRESH ALL ============
