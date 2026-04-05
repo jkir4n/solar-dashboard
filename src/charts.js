@@ -18,6 +18,7 @@ export class ChartManager {
     this._bridge = bridge;       // HABridge instance for history/stats fetching
     this._chartData = {};        // canvasId -> { datasets, opts, ... }
     this._chartAnimIds = {};     // canvasId -> requestAnimationFrame id
+    this._crosshairHandlers = new Map(); // canvas -> { handlers } for cleanup
     this._lastUpdate = 0;
     this._throttleMs = 5000;
   }
@@ -50,6 +51,7 @@ export class ChartManager {
     const maxVal = opts.maxY ?? Math.max(...allVals);
     const range = maxVal - minVal || 1;
     const n = datasets[0].points.length;
+    if (n === 0) return;
     const labelFn = opts.xLabel || (i => i);
 
     const drawFrame = (progress) => {
@@ -74,8 +76,9 @@ export class ChartManager {
 
       // X labels
       ctx.textAlign = 'center';
-      for (let i = 0; i < n; i += Math.ceil(n / 6)) {
-        const x = pad.left + (cW * i / (n - 1));
+      const nSpan = Math.max(n - 1, 1);
+      for (let i = 0; i < n; i += Math.max(1, Math.ceil(n / 6))) {
+        const x = pad.left + (cW * i / nSpan);
         ctx.fillText(labelFn(i), x, H - 4);
       }
 
@@ -91,9 +94,10 @@ export class ChartManager {
         const pts = ds.points;
         ctx.beginPath();
         let started = false;
+        const ptsSpan = Math.max(pts.length - 1, 1);
         pts.forEach((v, i) => {
           if (v == null) return;
-          const x = pad.left + (cW * i / (pts.length - 1));
+          const x = pad.left + (cW * i / ptsSpan);
           const y = pad.top + cH - (cH * (v - minVal) / range);
           if (!started) { ctx.moveTo(x, y); started = true; }
           else ctx.lineTo(x, y);
@@ -108,8 +112,14 @@ export class ChartManager {
           ctx.lineTo(pad.left, pad.top + cH);
           ctx.closePath();
           const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + cH);
-          grad.addColorStop(0, ds.color.replace(')', ',0.3)').replace('rgb', 'rgba'));
-          grad.addColorStop(1, ds.color.replace(')', ',0)').replace('rgb', 'rgba'));
+          const toRgba = (color, alpha) => {
+            const m = color.match(/rgba?\(([^)]+)\)/);
+            if (!m) return color;
+            const parts = m[1].split(',').map(s => s.trim());
+            return `rgba(${parts[0]},${parts[1]},${parts[2]},${alpha})`;
+          };
+          grad.addColorStop(0, toRgba(ds.color, 0.3));
+          grad.addColorStop(1, toRgba(ds.color, 0));
           ctx.fillStyle = grad;
           ctx.fill();
         }
@@ -258,6 +268,16 @@ export class ChartManager {
   attachCrosshair(canvas) {
     if (!canvas) return;
 
+    // Remove previous listeners to prevent leaks on repeated calls
+    const prev = this._crosshairHandlers.get(canvas);
+    if (prev) {
+      canvas.removeEventListener('mousemove', prev.onMouseMove);
+      canvas.removeEventListener('mouseleave', prev.onLeave);
+      canvas.removeEventListener('touchstart', prev.onTouchStart);
+      canvas.removeEventListener('touchmove', prev.onTouchMove);
+      canvas.removeEventListener('touchend', prev.onLeave);
+    }
+
     const handleMove = (clientX) => {
       const rect = canvas.getBoundingClientRect();
       const mouseX = clientX - rect.left;
@@ -270,19 +290,17 @@ export class ChartManager {
       if (cd) this.drawChart(canvas, cd.datasets, cd.opts, false);
     };
 
-    canvas.addEventListener('mousemove', (e) => handleMove(e.clientX));
-    canvas.addEventListener('mouseleave', handleLeave);
+    const onMouseMove = (e) => handleMove(e.clientX);
+    const onTouchStart = (e) => { e.preventDefault(); handleMove(e.touches[0].clientX); };
+    const onTouchMove = (e) => { e.preventDefault(); handleMove(e.touches[0].clientX); };
 
-    // Touch support
-    canvas.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      handleMove(e.touches[0].clientX);
-    }, { passive: false });
-    canvas.addEventListener('touchmove', (e) => {
-      e.preventDefault();
-      handleMove(e.touches[0].clientX);
-    }, { passive: false });
+    canvas.addEventListener('mousemove', onMouseMove);
+    canvas.addEventListener('mouseleave', handleLeave);
+    canvas.addEventListener('touchstart', onTouchStart, { passive: false });
+    canvas.addEventListener('touchmove', onTouchMove, { passive: false });
     canvas.addEventListener('touchend', handleLeave);
+
+    this._crosshairHandlers.set(canvas, { onMouseMove, onLeave: handleLeave, onTouchStart, onTouchMove });
   }
 
   // ─── showPlaceholder ─────────────────────────────────────────

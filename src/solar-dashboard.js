@@ -219,8 +219,10 @@ class SolarDashboard extends HTMLElement {
     const root = this.shadowRoot;
     root.innerHTML = `<style>${STYLES}</style>${this._getHTML()}`;
 
-    // Apply theme
+    // Apply theme and enable JS-dependent animations
     this._applyTheme();
+    const dashRoot = root.querySelector('.dashboard-root');
+    if (dashRoot) dashRoot.classList.add('js-ready');
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
     mq.addEventListener('change', () => this._applyTheme());
 
@@ -731,9 +733,11 @@ class SolarDashboard extends HTMLElement {
     let tte = '--';
     const tteLabel = root.getElementById('battTTELabel');
     const fmtDHM = (hours) => {
-      const d = Math.floor(hours / 24);
-      const h = Math.floor(hours % 24);
-      const m = Math.round((hours % 1) * 60);
+      let totalMin = Math.round(hours * 60);
+      const d = Math.floor(totalMin / 1440);
+      totalMin %= 1440;
+      const h = Math.floor(totalMin / 60);
+      const m = totalMin % 60;
       return (d > 0 ? d + ':' : '') + String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
     };
     if (cur < -0.5 && remaining > 0) {
@@ -1160,14 +1164,10 @@ class SolarDashboard extends HTMLElement {
     rootEl.style.setProperty('--mesh-2', colors[1]);
     rootEl.style.setProperty('--mesh-3', colors[2]);
 
-    // Update weather FX particles
-    const particleTypes = {
-      sunny: 'sunny', night: 'night', snowy: 'snowy',
-      rainy: 'rainy', storm: 'storm', fog: 'fog',
-      cloudy: 'cloudy', partlycloudy: 'cloudy',
-    };
+    // Update weather FX particles — pass original HA condition, not the palette key,
+    // because WeatherFX.start() does its own condition-to-particle mapping
     if (this._weatherFx) {
-      this._weatherFx.start(particleTypes[key] || null, isNight, theme);
+      this._weatherFx.start(condition, isNight, theme);
     }
   }
 
