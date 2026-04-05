@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.11.0 (2026-04-05)
+
+### Features
+- feat(battery): show 7-day rolling cycle rate inline with cycle count
+
+
 ## v0.10.2 (2026-04-05)
 
 ### Bug Fixes
