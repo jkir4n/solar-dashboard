@@ -1155,7 +1155,7 @@ class SolarDashboard extends HTMLElement {
     }
 
     let key = CONDITION_PALETTE_MAP[condition] || null;
-    if (isNight && key !== 'storm' && key !== 'rainy') key = 'night';
+    if (isNight && (!key || key === 'sunny')) key = 'night';
 
     const colors = palettes[key];
     if (!colors) return;
