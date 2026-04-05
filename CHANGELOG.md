@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.10.1 (2026-04-05)
+
+### Bug Fixes
+- fix(charts): exclude partial current day from 30D/7D and replace flat solar estimate with 7d rolling avg
+
+
 ## v0.10.0 (2026-04-05)
 
 ### Features
