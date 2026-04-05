@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.8.1 (2026-04-05)
+
+### Bug Fixes
+- fix: resolve 6 bugs — weather particles, listener leak, card reveal, time display, chart edge cases
+
+
 ## v0.8.0 (2026-04-05)
 
 ### Features
