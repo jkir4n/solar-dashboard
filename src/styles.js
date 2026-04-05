@@ -302,13 +302,16 @@ export const STYLES = `
   .cell-row-item.cell-high-balancing { background: rgba(255, 59, 48, 0.2); box-shadow: 0 0 16px rgba(255, 59, 48, 0.3); animation: balPulseSrc 1s ease-in-out infinite alternate; }
   .cell-row-item.cell-high-balancing .cell-id { color: var(--red); }
   .cell-row-item.cell-high-balancing .cell-val { color: var(--red); }
+  .cell-row-item.cell-high-balancing .cell-bar { background: linear-gradient(90deg, var(--red), rgba(255,59,48,0.6)); animation: balDrain 2s ease-in-out infinite alternate; }
   .cell-row-item.cell-low-balancing { background: rgba(34, 197, 94, 0.2); box-shadow: 0 0 16px rgba(34, 197, 94, 0.3); animation: balPulseDst 1s ease-in-out infinite alternate; }
   .cell-row-item.cell-low-balancing .cell-id { color: var(--green); }
   .cell-row-item.cell-low-balancing .cell-val { color: var(--green); }
+  .cell-row-item.cell-low-balancing .cell-bar { background: linear-gradient(90deg, var(--green), rgba(34,197,94,0.6)); animation: balFill 2s ease-in-out infinite alternate; }
   @keyframes balPulseSrc { from { background: rgba(255, 59, 48, 0.1); box-shadow: 0 0 8px rgba(255, 59, 48, 0.15); } to { background: rgba(255, 59, 48, 0.25); box-shadow: 0 0 20px rgba(255, 59, 48, 0.4); } }
   @keyframes balPulseDst { from { background: rgba(34, 197, 94, 0.1); box-shadow: 0 0 8px rgba(34, 197, 94, 0.15); } to { background: rgba(34, 197, 94, 0.25); box-shadow: 0 0 20px rgba(34, 197, 94, 0.4); } }
-  .supercap-flow { text-align: center; font-size: 12px; font-weight: 600; color: var(--green); padding: 8px 0; animation: scFlow 1.5s ease-in-out infinite; }
-  @keyframes scFlow { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+  @keyframes balDrain { from { opacity: 1; } to { opacity: 0.6; } }
+  @keyframes balFill { from { opacity: 0.6; } to { opacity: 1; } }
+  @keyframes balPulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
 
   .ctrl { display: flex; justify-content: space-between; align-items: center; padding: 18px 0; border-bottom: 1px solid var(--glass-border); }
   .ctrl:last-child { border-bottom: none; }
