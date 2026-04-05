@@ -214,7 +214,7 @@ class SolarDashboard extends HTMLElement {
     this._resizeHandler = null;
     this._activeChartRange = 'Live';
     this._lastLiveChartFetch = 0;
-    this._cycleRatePer7d = null;
+    this._cycleRatePerDay = null;
   }
 
   set hass(hass) {
@@ -810,8 +810,8 @@ class SolarDashboard extends HTMLElement {
       const el = root.getElementById('sysCycles');
       const old = parseFloat(el.textContent) || 0;
       this._animateValue(el, old, cycles, 600, v => {
-        const rate = this._cycleRatePer7d;
-        return Math.round(v) + (rate != null ? ` (${rate}/7d)` : '');
+        const rate = this._cycleRatePerDay;
+        return Math.round(v) + (rate != null ? ` (${rate}/d)` : '');
       });
     }
 
@@ -1526,7 +1526,7 @@ class SolarDashboard extends HTMLElement {
       const data = await this._bridge.fetchStatsRange(E.CYCLES, 7);
       if (data?.length >= 2) {
         const delta = data[data.length - 1].v - data[0].v;
-        this._cycleRatePer7d = Math.max(0, delta).toFixed(1);
+        this._cycleRatePerDay = (Math.max(0, delta) / 7).toFixed(2);
       }
     } catch (e) {
       // non-critical, leave null
