@@ -47,8 +47,8 @@ export class ChartManager {
     const cH = H - pad.top - pad.bottom;
 
     const allVals = datasets.flatMap(d => d.points.filter(v => v != null));
-    const minVal = opts.minY ?? Math.min(...allVals);
-    const maxVal = opts.maxY ?? Math.max(...allVals);
+    const minVal = opts.minY ?? (allVals.length ? Math.min(...allVals) : 0);
+    const maxVal = opts.maxY ?? (allVals.length ? Math.max(...allVals) : 1);
     const range = maxVal - minVal || 1;
     // When all data equals minVal (e.g. all-zero at night), anchor the axis
     // upward from minVal rather than letting the fallback range go negative.

@@ -29,6 +29,7 @@ export class WeatherFX {
     this._overlayParticles = [];
     this._overlayType = null;
     this._overlayAlpha = 0;
+    this._fadeGen = 0;
   }
 
   /**
@@ -94,6 +95,7 @@ export class WeatherFX {
 
   /** Stop all weather effects and clear canvas. */
   stop() {
+    this._fadeGen++;
     if (this._animFrameId) {
       cancelAnimationFrame(this._animFrameId);
       this._animFrameId = null;
@@ -147,7 +149,9 @@ export class WeatherFX {
     if (state._currentType && state._currentType !== type) {
       state._fading = true;
       state._nextType = type;
+      const gen = ++state._fadeGen;
       const fadeStep = () => {
+        if (state._fadeGen !== gen) return; // cancelled by stop() or a newer transition
         state._alpha -= 0.02;
         if (state._alpha <= 0) {
           state._alpha = 0;
@@ -157,6 +161,7 @@ export class WeatherFX {
             ? state._createParticles(state._currentType, canvas) : [];
           if (state._currentType) {
             const fadeIn = () => {
+              if (state._fadeGen !== gen) return;
               state._alpha = Math.min(state._alpha + 0.02, 1);
               if (state._alpha < 1) requestAnimationFrame(fadeIn);
             };
