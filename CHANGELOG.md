@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.11.3 (2026-04-06)
+
+### Bug Fixes
+- fix(weather): Fix backdrop and overlay consistency for day/night conditions
+
+
 ## v0.11.2 (2026-04-06)
 
 ### Bug Fixes
