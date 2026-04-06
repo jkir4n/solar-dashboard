@@ -20,7 +20,7 @@ A real-time solar monitoring dashboard for Home Assistant, built as a HACS-compa
 
 - **Home Assistant 2025.1.0+**
 - **BMS integration** — JK BMS (ESPHome), JBD, Daly, BatMON, or any integration providing BMS sensor data
-- **Weather integration** — PirateWeather (preferred) or Met.no for cloud cover and conditions
+- **Weather integration** — Any HA weather integration (Google Weather, PirateWeather, Met.no, etc.) for cloud cover and conditions. The dashboard auto-selects the freshest available source.
 - **HACS** (optional) — for automated installation and updates
 
 ## Installation
@@ -152,7 +152,7 @@ The detected chemistry is displayed in the battery card and used to calculate th
 The dashboard reads from these entity groups:
 
 - **BMS entities** — Auto-discovered via keyword matching (see table above). No hardcoded entity IDs required.
-- **`weather.*`** — Cloud cover and weather condition (for solar forecast adjustment and weather effects)
+- **`weather.*`** — Cloud cover and weather condition (for solar forecast adjustment and weather effects). The dashboard automatically selects the most recently updated `weather.*` entity, skipping unavailable ones — no manual configuration needed.
 - **`input_number.solar_*`** — Panel configuration helpers (auto-created)
 - **`zone.home`** — Location for solar position calculations (uses `hass.config` lat/lon as primary)
 
@@ -173,8 +173,9 @@ The dashboard reads from these entity groups:
 - If using a non-standard BMS integration, set `input_text.bms_entity_prefix` to match your entity naming pattern
 
 **Weather effects not showing:**
-- Ensure a weather integration is configured (PirateWeather or Met.no)
-- Check that a `weather.*` entity exists in Developer Tools -> States
+- Ensure at least one weather integration is configured and has a non-unavailable `weather.*` entity
+- Check Developer Tools -> States for any `weather.*` entity — the dashboard picks the freshest one automatically
+- If all weather entities show `unavailable`, check the integration's API key or connectivity
 
 **Console errors:**
 - Open browser Developer Tools (F12) -> Console tab
