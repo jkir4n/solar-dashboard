@@ -76,8 +76,9 @@ export const STYLES = `
     z-index: -2; pointer-events: none;
   }
 
-  /* Mesh gradient */
-  :host::before {
+  /* Mesh gradient — must be on .dashboard-root so it inherits --mesh-1/2/3 vars
+     set on that element (CSS vars don't propagate from shadow DOM up to :host::before) */
+  .dashboard-root::before {
     content: ''; position: fixed;
     top: 0; left: 0; right: 0; bottom: 0; z-index: -1;
     transition: background 3s ease;
