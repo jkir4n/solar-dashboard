@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.12.1 (2026-04-06)
+
+### Bug Fixes
+- fix(weather): fix fog backdrop mismap and increase cloudy particle opacity
+- docs: update README to reflect auto weather entity selection
+
+
 ## v0.12.0 (2026-04-06)
 
 ### Features
