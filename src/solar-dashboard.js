@@ -31,7 +31,7 @@ const CONDITION_PALETTE_MAP = {
   'partlycloudy': 'partlycloudy', 'cloudy': 'cloudy',
   'rainy': 'rainy', 'pouring': 'pouring',
   'snowy': 'snowy', 'hail': 'snowy',
-  'fog': 'sunny',
+  'fog': 'fog',
   'lightning': 'storm', 'lightning-rainy': 'storm',
   'windy': 'windy', 'windy-variant': 'windy',
   'exceptional': 'cloudy', 'snowy-rainy': 'snowy',

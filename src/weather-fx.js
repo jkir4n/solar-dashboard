@@ -359,7 +359,7 @@ export class WeatherFX {
         particles.push({
           kind: 'cloud', x: Math.random() * w, y: h * (0.1 + Math.random() * 0.5),
           rx: 100 + Math.random() * 200, ry: 40 + Math.random() * 60,
-          vx: 0.1 + Math.random() * 0.3, o: 0.03 + Math.random() * 0.03
+          vx: 0.1 + Math.random() * 0.3, o: 0.06 + Math.random() * 0.04
         });
       }
     } else if (type === 'sunrays') {
