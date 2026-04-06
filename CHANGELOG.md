@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.11.4 (2026-04-06)
+
+### Bug Fixes
+- fix(bugs): fix chart NaN crash on empty data and weather fade zombie RAF
+
+
 ## v0.11.3 (2026-04-06)
 
 ### Bug Fixes
