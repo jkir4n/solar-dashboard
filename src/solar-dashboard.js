@@ -1119,16 +1119,20 @@ class SolarDashboard extends HTMLElement {
   // ============ WEATHER UPDATE ============
   _discoverWeatherEntity() {
     if (!this._bridge._hass) return null;
-    const ids = Object.keys(this._bridge._hass.states).filter(id => id.startsWith('weather.'));
-    if (ids.includes('weather.pirateweather')) return 'weather.pirateweather';
-    if (ids.includes('weather.forecast_home')) return 'weather.forecast_home';
-    return ids[0] || null;
+    const states = this._bridge._hass.states;
+    const candidates = Object.keys(states)
+      .filter(id => id.startsWith('weather.') && !['unavailable', 'unknown'].includes(states[id].state));
+    if (!candidates.length) return null;
+    // Pick the entity whose state was most recently changed
+    return candidates.reduce((best, id) => {
+      const t = new Date(states[id].last_changed).getTime();
+      const bestT = new Date(states[best].last_changed).getTime();
+      return t > bestT ? id : best;
+    });
   }
 
   _updateWeather() {
-    if (!this._weatherEntityId) {
-      this._weatherEntityId = this._discoverWeatherEntity();
-    }
+    this._weatherEntityId = this._discoverWeatherEntity();
     if (!this._weatherEntityId) return;
 
     const state = this._bridge.getState(this._weatherEntityId);
