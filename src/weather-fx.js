@@ -50,19 +50,22 @@ export class WeatherFX {
       'partlycloudy': 0.5, 'windy': 0.45, 'windy-variant': 0.45,
       'cloudy': 0.3, 'exceptional': 0.3, 'fog': 0.15, 'rainy': 0.2,
       'pouring': 0.07, 'snowy': 0.18, 'hail': 0.12, 'snowy-rainy': 0.10,
+      'lightning': 0.03, 'lightning-rainy': 0.03,
     };
     const DAY_OVERLAY = {
-      'partlycloudy':  { type: 'sunrays', alpha: 0.45 },
-      'windy':         { type: 'sunrays', alpha: 0.40 },
-      'windy-variant': { type: 'sunrays', alpha: 0.40 },
-      'cloudy':        { type: 'diffuse', alpha: 0.20 },
-      'exceptional':   { type: 'diffuse', alpha: 0.15 },
-      'fog':           { type: 'diffuse', alpha: 0.28 },
-      'rainy':         { type: 'diffuse', alpha: 0.12 },
-      'pouring':       { type: 'diffuse', alpha: 0.07 },
-      'snowy':         { type: 'diffuse', alpha: 0.18 },
-      'hail':          { type: 'diffuse', alpha: 0.12 },
-      'snowy-rainy':   { type: 'diffuse', alpha: 0.10 },
+      'partlycloudy':    { type: 'sunrays', alpha: 0.45 },
+      'windy':           { type: 'sunrays', alpha: 0.40 },
+      'windy-variant':   { type: 'sunrays', alpha: 0.40 },
+      'cloudy':          { type: 'sunrays', alpha: 0.20 },
+      'exceptional':     { type: 'sunrays', alpha: 0.15 },
+      'fog':             { type: 'sunrays', alpha: 0.25 },
+      'rainy':           { type: 'sunrays', alpha: 0.12 },
+      'pouring':         { type: 'sunrays', alpha: 0.07 },
+      'snowy':           { type: 'sunrays', alpha: 0.18 },
+      'hail':            { type: 'sunrays', alpha: 0.12 },
+      'snowy-rainy':     { type: 'sunrays', alpha: 0.10 },
+      'lightning':       { type: 'sunrays', alpha: 0.05 },
+      'lightning-rainy': { type: 'sunrays', alpha: 0.05 },
     };
 
     let newOverlayType = null, newOverlayAlpha = 0;
