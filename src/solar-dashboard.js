@@ -39,18 +39,18 @@ const CONDITION_PALETTE_MAP = {
 
 const WEATHER_PALETTES = {
   dark: {
-    sunny:              ['rgba(255,180,50,0.2)',  'rgba(255,140,30,0.15)', 'rgba(255,200,80,0.1)'],
+    sunny:              ['rgba(255,180,50,0.40)', 'rgba(255,140,30,0.30)', 'rgba(255,200,80,0.20)'],
     night:              ['rgba(20,20,80,0.3)',    'rgba(40,30,100,0.2)',   'rgba(60,20,120,0.15)'],
-    partlycloudy:       ['rgba(180,170,140,0.15)','rgba(140,150,180,0.1)', 'rgba(100,120,160,0.08)'],
-    cloudy:             ['rgba(120,120,140,0.15)','rgba(100,100,120,0.1)', 'rgba(80,85,100,0.08)'],
-    rainy:              ['rgba(40,60,120,0.2)',   'rgba(30,50,100,0.15)',  'rgba(20,40,80,0.1)'],
-    snowy:              ['rgba(140,160,200,0.15)','rgba(120,140,180,0.1)', 'rgba(100,120,160,0.08)'],
-    fog:                ['rgba(100,100,110,0.15)','rgba(80,80,90,0.1)',    'rgba(60,60,70,0.08)'],
-    storm:              ['rgba(60,20,80,0.2)',    'rgba(40,10,60,0.15)',   'rgba(80,30,100,0.1)'],
-    windy:              ['rgba(60,160,200,0.12)', 'rgba(40,140,180,0.08)', 'rgba(80,180,220,0.06)'],
+    partlycloudy:       ['rgba(180,170,140,0.30)','rgba(140,150,180,0.20)','rgba(100,120,160,0.15)'],
+    cloudy:             ['rgba(120,120,140,0.22)','rgba(100,100,120,0.16)','rgba(80,85,100,0.12)'],
+    rainy:              ['rgba(40,60,120,0.25)',  'rgba(30,50,100,0.20)',  'rgba(20,40,80,0.14)'],
+    snowy:              ['rgba(140,160,200,0.22)','rgba(120,140,180,0.16)','rgba(100,120,160,0.12)'],
+    fog:                ['rgba(100,100,110,0.22)','rgba(80,80,90,0.16)',   'rgba(60,60,70,0.12)'],
+    storm:              ['rgba(60,20,80,0.28)',   'rgba(40,10,60,0.22)',   'rgba(80,30,100,0.16)'],
+    windy:              ['rgba(60,160,200,0.22)', 'rgba(40,140,180,0.16)', 'rgba(80,180,220,0.12)'],
     night_partlycloudy: ['rgba(30,40,90,0.25)',   'rgba(50,50,110,0.18)',  'rgba(40,60,100,0.12)'],
     night_cloudy:       ['rgba(25,25,50,0.25)',   'rgba(30,30,60,0.18)',   'rgba(20,25,55,0.12)'],
-    pouring:            ['rgba(20,35,100,0.28)',  'rgba(15,28,85,0.22)',   'rgba(10,22,70,0.16)'],
+    pouring:            ['rgba(20,35,100,0.32)',  'rgba(15,28,85,0.26)',   'rgba(10,22,70,0.20)'],
     night_rainy:        ['rgba(15,25,70,0.3)',    'rgba(10,20,60,0.22)',   'rgba(20,30,80,0.15)'],
     night_pouring:      ['rgba(8,15,55,0.35)',    'rgba(5,12,45,0.28)',    'rgba(10,18,60,0.2)'],
     night_snowy:        ['rgba(30,40,80,0.25)',   'rgba(40,50,90,0.18)',   'rgba(50,60,100,0.12)'],
@@ -59,15 +59,15 @@ const WEATHER_PALETTES = {
     night_windy:        ['rgba(10,60,90,0.2)',    'rgba(8,50,80,0.15)',    'rgba(15,70,100,0.1)'],
   },
   light: {
-    sunny:              ['rgba(255,200,80,0.2)',  'rgba(255,170,50,0.15)', 'rgba(255,220,100,0.1)'],
+    sunny:              ['rgba(255,200,80,0.35)', 'rgba(255,170,50,0.25)', 'rgba(255,220,100,0.18)'],
     night:              ['rgba(40,40,100,0.15)',  'rgba(60,50,120,0.1)',   'rgba(80,40,140,0.08)'],
-    partlycloudy:       ['rgba(180,190,210,0.2)', 'rgba(160,170,190,0.15)','rgba(140,150,170,0.1)'],
-    cloudy:             ['rgba(150,155,170,0.2)', 'rgba(130,135,150,0.15)','rgba(110,115,130,0.1)'],
-    rainy:              ['rgba(60,80,140,0.2)',   'rgba(50,70,120,0.15)',  'rgba(40,60,100,0.1)'],
-    snowy:              ['rgba(180,200,230,0.2)', 'rgba(160,180,210,0.15)','rgba(140,160,190,0.1)'],
-    fog:                ['rgba(140,140,150,0.2)', 'rgba(120,120,130,0.15)','rgba(100,100,110,0.1)'],
-    storm:              ['rgba(80,40,100,0.2)',   'rgba(60,30,80,0.15)',   'rgba(100,50,120,0.1)'],
-    windy:              ['rgba(80,180,220,0.15)', 'rgba(60,160,200,0.10)', 'rgba(100,200,230,0.08)'],
+    partlycloudy:       ['rgba(180,190,210,0.30)','rgba(160,170,190,0.22)','rgba(140,150,170,0.16)'],
+    cloudy:             ['rgba(150,155,170,0.28)','rgba(130,135,150,0.20)','rgba(110,115,130,0.15)'],
+    rainy:              ['rgba(60,80,140,0.25)',  'rgba(50,70,120,0.20)',  'rgba(40,60,100,0.14)'],
+    snowy:              ['rgba(180,200,230,0.28)','rgba(160,180,210,0.20)','rgba(140,160,190,0.15)'],
+    fog:                ['rgba(140,140,150,0.28)','rgba(120,120,130,0.20)','rgba(100,100,110,0.15)'],
+    storm:              ['rgba(80,40,100,0.28)',  'rgba(60,30,80,0.20)',   'rgba(100,50,120,0.15)'],
+    windy:              ['rgba(80,180,220,0.22)', 'rgba(60,160,200,0.16)', 'rgba(100,200,230,0.12)'],
     night_partlycloudy: ['rgba(60,70,120,0.15)',  'rgba(70,80,130,0.1)',   'rgba(50,60,110,0.08)'],
     night_cloudy:       ['rgba(50,50,80,0.15)',   'rgba(40,45,75,0.1)',    'rgba(35,40,70,0.08)'],
     pouring:            ['rgba(40,55,120,0.28)',  'rgba(30,45,100,0.22)',  'rgba(50,65,130,0.16)'],
@@ -520,7 +520,7 @@ class SolarDashboard extends HTMLElement {
           <div class="stat-item"><div class="stat-val" id="solNextYr">--</div><div class="stat-label">Next Year</div></div>
         </div>
         <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--glass-border)">
-          <div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:1px;margin-bottom:8px">WEATHER</div>
+          <div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:1px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center"><span>WEATHER</span><span id="wxSource" style="font-size:9px;font-weight:500;letter-spacing:0.4px;opacity:0.45;text-transform:none"></span></div>
           <div class="stat-grid">
             <div class="stat-item"><div class="stat-val" id="wxCondition">--</div><div class="stat-label">Condition</div></div>
             <div class="stat-item"><div class="stat-val" id="wxTemp">--</div><div class="stat-label">Temp</div></div>
@@ -1156,6 +1156,21 @@ class SolarDashboard extends HTMLElement {
     // Temperature for solar engine
     if (attrs.temperature != null) {
       this._weatherAmbientC = parseFloat(attrs.temperature);
+    }
+
+    // Update weather source indicator — dynamic, works with any integration
+    const sourceEl = root.getElementById('wxSource');
+    if (sourceEl) {
+      const att = attrs.attribution || '';
+      const friendly = attrs.friendly_name || '';
+      const src = (
+        att.replace(/^(data from|powered by|weather forecast from|forecast from)\s+/i, '')
+           .replace(/,.*$/, '')
+           .trim()
+        || friendly
+        || this._weatherEntityId.replace('weather.', '').replace(/_/g, ' ')
+      ).slice(0, 30);
+      sourceEl.textContent = 'via ' + src;
     }
 
     // Update weather display

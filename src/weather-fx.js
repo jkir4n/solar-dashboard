@@ -54,9 +54,9 @@ export class WeatherFX {
       'lightning': 0.03, 'lightning-rainy': 0.03,
     };
     const DAY_OVERLAY = {
-      'partlycloudy':    { type: 'sunrays', alpha: 0.45 },
-      'windy':           { type: 'sunrays', alpha: 0.40 },
-      'windy-variant':   { type: 'sunrays', alpha: 0.40 },
+      'partlycloudy':    { type: 'sunrays', alpha: 0.65 },
+      'windy':           { type: 'sunrays', alpha: 0.60 },
+      'windy-variant':   { type: 'sunrays', alpha: 0.60 },
       'cloudy':          { type: 'sunrays', alpha: 0.20 },
       'exceptional':     { type: 'sunrays', alpha: 0.15 },
       'fog':             { type: 'sunrays', alpha: 0.25 },
@@ -367,7 +367,7 @@ export class WeatherFX {
       for (let i = 0; i < 4; i++) {
         particles.push({
           kind: 'ray', angle: -0.5 + i * 0.18, width: 0.05 + Math.random() * 0.07,
-          o: 0.025 + Math.random() * 0.025, phase: Math.random() * Math.PI * 2,
+          o: 0.08 + Math.random() * 0.06, phase: Math.random() * Math.PI * 2,
           speed: 0.15 + Math.random() * 0.2
         });
       }
@@ -377,7 +377,7 @@ export class WeatherFX {
           kind: 'mote', x: Math.random() * w, y: Math.random() * h,
           r: 1 + Math.random() * 2,
           vy: -(0.1 + Math.random() * 0.2), vx: (Math.random() - 0.5) * 0.2,
-          o: 0.08 + Math.random() * 0.12, phase: Math.random() * Math.PI * 2
+          o: 0.15 + Math.random() * 0.15, phase: Math.random() * Math.PI * 2
         });
       }
     } else if (type === 'diffuse') {
