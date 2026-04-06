@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.11.2 (2026-04-06)
+
+### Bug Fixes
+- fix(styles): Fix weather backdrop mesh gradient not rendering
+
+
 ## v0.11.1 (2026-04-05)
 
 ### Bug Fixes
