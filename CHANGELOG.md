@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.12.0 (2026-04-06)
+
+### Features
+- feat(weather): auto-select freshest weather entity by last_changed
+
+
 ## v0.11.4 (2026-04-06)
 
 ### Bug Fixes
