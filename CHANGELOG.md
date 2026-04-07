@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.14.0 (2026-04-07)
+
+### Features
+- feat: add priority-based weather discovery with Google preference and staleness detection
+
+
 ## v0.13.1 (2026-04-07)
 
 ### Bug Fixes
