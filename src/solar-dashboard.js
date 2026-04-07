@@ -1126,15 +1126,37 @@ class SolarDashboard extends HTMLElement {
   _discoverWeatherEntity() {
     if (!this._bridge._hass) return null;
     const states = this._bridge._hass.states;
-    const candidates = Object.keys(states)
-      .filter(id => id.startsWith('weather.') && !['unavailable', 'unknown'].includes(states[id].state));
+    const now = Date.now();
+    const STALE_MS = 30 * 60 * 1000; // 30 minutes
+
+    const candidates = Object.entries(states)
+      .filter(([id, s]) => id.startsWith('weather.') && !['unavailable', 'unknown'].includes(s.state));
     if (!candidates.length) return null;
-    // Pick the entity whose state was most recently changed
-    return candidates.reduce((best, id) => {
-      const t = new Date(states[id].last_changed).getTime();
-      const bestT = new Date(states[best].last_changed).getTime();
-      return t > bestT ? id : best;
+
+    // Identify source and check staleness
+    const scored = candidates.map(([id, s]) => {
+      const att = (s.attributes?.attribution || '').toLowerCase();
+      let source = 'other';
+      if (att.includes('google')) source = 'google';
+      else if (att.includes('pirate')) source = 'pirateweather';
+      else if (att.includes('met.no')) source = 'metno';
+
+      const lastUpdated = new Date(s.last_updated || s.last_changed).getTime();
+      const isStale = (now - lastUpdated) > STALE_MS;
+
+      return { id, source, isStale, lastUpdated };
     });
+
+    // Priority order: google > pirateweather > metno > other
+    const priority = ['google', 'pirateweather', 'metno'];
+    for (const p of priority) {
+      const match = scored.find(s => s.source === p && !s.isStale);
+      if (match) return match.id;
+    }
+
+    // Fallback: any non-stale entity, or stale if nothing fresh
+    const fresh = scored.find(s => !s.isStale);
+    return fresh ? fresh.id : scored[0].id;
   }
 
   _updateWeather() {
