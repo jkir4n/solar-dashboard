@@ -84,6 +84,17 @@ export class HABridge {
       this._entities = this._discoverEntities(hass);
       this._discoveryRun++;
       this._prefixBeforeChange = currentPrefix;
+      // Warn once after first discovery if critical sensors are absent
+      if (this._discoveryRun === 1) {
+        const missing = ['POWER', 'SOC', 'VOLTAGE'].filter(k => {
+          const id = this._entities[k];
+          return !id || !this.getState(id);
+        });
+        if (missing.length) {
+          console.warn(`[Solar] Critical entities not found: ${missing.join(', ')}. ` +
+            'Check BMS integration or set input_text.bms_entity_prefix manually.');
+        }
+      }
       // Lazy helper creation: only if discovery found too few entities
       const found = Object.keys(this._entities).filter(k => {
         const v = this._entities[k];

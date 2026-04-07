@@ -315,6 +315,17 @@ export class ChartManager {
     this._crosshairHandlers.set(canvas, { onMouseMove, onLeave: handleLeave, onTouchStart, onTouchMove });
   }
 
+  detachAll() {
+    this._crosshairHandlers.forEach((handlers, canvas) => {
+      canvas.removeEventListener('mousemove', handlers.onMouseMove);
+      canvas.removeEventListener('mouseleave', handlers.onLeave);
+      canvas.removeEventListener('touchstart', handlers.onTouchStart);
+      canvas.removeEventListener('touchmove', handlers.onTouchMove);
+      canvas.removeEventListener('touchend', handlers.onLeave);
+    });
+    this._crosshairHandlers.clear();
+  }
+
   // ─── showPlaceholder ─────────────────────────────────────────
   // Ported from v9 line 2337-2351
   showPlaceholder(canvas, message) {
@@ -330,6 +341,18 @@ export class ChartManager {
     ctx.font = '13px Inter, sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(message, rect.width / 2, rect.height / 2);
+  }
+
+  // Returns the UTC Date corresponding to 00:00:00 in the given IANA timezone.
+  _tzMidnightUTC(tz, now = new Date()) {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: tz, hourCycle: 'h23',
+      hour: 'numeric', minute: 'numeric', second: 'numeric'
+    }).formatToParts(now);
+    const h = +parts.find(p => p.type === 'hour').value;
+    const m = +parts.find(p => p.type === 'minute').value;
+    const s = +parts.find(p => p.type === 'second').value;
+    return new Date(now.getTime() - (h * 3600 + m * 60 + s) * 1000 - now.getMilliseconds());
   }
 
   // ─── loadRange ───────────────────────────────────────────────
@@ -353,10 +376,7 @@ export class ChartManager {
       if (range === 'Live') {
         // Today from midnight (in supplied timezone) to now
         const now = new Date();
-        const midnightLocal = new Date(now.toLocaleString('en-US', { timeZone: tz }));
-        midnightLocal.setHours(0, 0, 0, 0);
-        const offsetMs = now.getTime() - new Date(now.toLocaleString('en-US', { timeZone: tz })).getTime();
-        const start = new Date(midnightLocal.getTime() + offsetMs);
+        const start = this._tzMidnightUTC(tz, now);
         if (entityIds.soc) {
           [powerData, socData] = await Promise.all([
             this._bridge.fetchHistoryRange(entityIds.power, start, now),
@@ -368,10 +388,7 @@ export class ChartManager {
       } else if (range === '1D') {
         // Yesterday — use statistics for regular 5-min intervals (history only returns state changes)
         const now = new Date();
-        const todayLocal = new Date(now.toLocaleString('en-US', { timeZone: tz }));
-        todayLocal.setHours(0, 0, 0, 0);
-        const offsetMs = now.getTime() - new Date(now.toLocaleString('en-US', { timeZone: tz })).getTime();
-        const endMidnight = new Date(todayLocal.getTime() + offsetMs);
+        const endMidnight = this._tzMidnightUTC(tz, now);
         const startMidnight = new Date(endMidnight.getTime() - 24 * 60 * 60 * 1000);
         // Use stats for yesterday (1 day) to get regular intervals
         if (entityIds.soc) {
@@ -385,11 +402,7 @@ export class ChartManager {
       } else {
         // 7D or 30D — use statistics endpoint, end at today's local midnight to exclude partial day
         const days = range === '7D' ? 7 : 30;
-        const nowD = new Date();
-        const todayLocal = new Date(nowD.toLocaleString('en-US', { timeZone: tz }));
-        todayLocal.setHours(0, 0, 0, 0);
-        const offsetMs = nowD.getTime() - new Date(nowD.toLocaleString('en-US', { timeZone: tz })).getTime();
-        const todayMidnight = new Date(todayLocal.getTime() + offsetMs);
+        const todayMidnight = this._tzMidnightUTC(tz);
         if (entityIds.soc) {
           [powerData, socData] = await Promise.all([
             this._bridge.fetchStatsRange(entityIds.power, days, null, todayMidnight),

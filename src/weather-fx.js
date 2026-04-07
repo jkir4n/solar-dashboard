@@ -163,9 +163,10 @@ export class WeatherFX {
             const fadeIn = () => {
               if (state._fadeGen !== gen) return;
               state._alpha = Math.min(state._alpha + 0.02, 1);
-              if (state._alpha < 1) requestAnimationFrame(fadeIn);
+              if (state._alpha < 1) state._animFrameId = requestAnimationFrame(fadeIn);
+              else state._animFrameId = null;
             };
-            requestAnimationFrame(fadeIn);
+            state._animFrameId = requestAnimationFrame(fadeIn);
           }
           return;
         }

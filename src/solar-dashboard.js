@@ -5,7 +5,6 @@ import { ChartManager } from './charts.js';
 import { STYLES } from './styles.js';
 
 // ============ CONSTANTS ============
-const VMIN = 2.45, VMAX = 3.65, VRNG = VMAX - VMIN;
 
 const CONDITION_CLOUD_MAP = {
   'sunny': 5, 'clear-night': 5,
@@ -36,6 +35,12 @@ const CONDITION_PALETTE_MAP = {
   'windy': 'windy', 'windy-variant': 'windy',
   'exceptional': 'cloudy', 'snowy-rainy': 'snowy',
 };
+
+function cellBounds(chemistry) {
+  if (chemistry === 'NMC')  return { vmin: 3.00, vmax: 4.20 };
+  if (chemistry === 'LTO')  return { vmin: 1.80, vmax: 2.75 };
+  return { vmin: 2.50, vmax: 3.65 }; // LiFePO₄ and unknown — intentional fallthrough
+}
 
 const WEATHER_PALETTES = {
   dark: {
@@ -357,6 +362,7 @@ class SolarDashboard extends HTMLElement {
     if (this._flowPS1) this._flowPS1.stop();
     if (this._flowPS2) this._flowPS2.stop();
     if (this._weatherFx) this._weatherFx.destroy();
+    if (this._charts) this._charts.detachAll();
     if (this._resizeHandler) window.removeEventListener('resize', this._resizeHandler);
     this._stopBattArcs();
     this._activeAnimations.forEach(id => cancelAnimationFrame(id));
@@ -1335,9 +1341,10 @@ class SolarDashboard extends HTMLElement {
       });
     }
     const rows = el.querySelectorAll('.cell-row-item');
+    const { vmin, vmax } = cellBounds(this._bridge.battSpec.chemistry);
     allV.forEach((v, gi) => {
       const globalI = startIdx - 1 + gi;
-      const pct = Math.max(2, Math.min(100, ((v - VMIN) / VRNG) * 100));
+      const pct = Math.max(2, Math.min(100, ((v - vmin) / (vmax - vmin)) * 100));
       const row = rows[gi];
       const isHigh = globalI === globalMaxI;
       const isLow = globalI === globalMinI;
