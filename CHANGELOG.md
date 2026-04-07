@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.13.1 (2026-04-07)
+
+### Bug Fixes
+- fix: DST midnight calc, chemistry cell bounds, WeatherFX rAF, crosshair cleanup, entity warning
+
+
 ## v0.13.0 (2026-04-06)
 
 ### Features
