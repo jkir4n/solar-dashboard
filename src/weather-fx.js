@@ -12,6 +12,42 @@ const CONDITION_PARTICLE_MAP = {
   'exceptional': 'cloudy', 'snowy-rainy': 'sleet',
 };
 
+// How much the sun disc is visible through each condition (0=hidden, 1=full)
+// < 0.3 → diffuse glow only; >= 0.3 → disc + glow
+const SUN_CLOUD_DIM = {
+  'sunny': 1.0,
+  'windy': 0.85, 'windy-variant': 0.80,
+  'partlycloudy': 0.55,
+  'exceptional': 0.20,
+  'cloudy': 0.05,
+  'fog': 0.15,
+  'snowy': 0.15,
+  'hail': 0.05,
+  'snowy-rainy': 0.05,
+  'rainy': 0.02,
+  'pouring': 0.0,
+  'lightning': 0.0,
+  'lightning-rainy': 0.0,
+};
+
+// How much the moon disc is visible through each condition (0=hidden, 1=full)
+// < 0.35 → diffuse glow only (disc edge not drawn); >= 0.35 → disc + glow
+const MOON_CLOUD_DIM = {
+  'clear-night': 1.0,
+  'windy': 0.85, 'windy-variant': 0.80,
+  'partlycloudy': 0.55,
+  'exceptional': 0.30,
+  'cloudy': 0.10,
+  'fog': 0.12,
+  'snowy': 0.20,
+  'hail': 0.05,
+  'snowy-rainy': 0.05,
+  'rainy': 0.0,
+  'pouring': 0.0,
+  'lightning': 0.0,
+  'lightning-rainy': 0.0,
+};
+
 export class WeatherFX {
   constructor(canvas) {
     this.canvas = canvas;
@@ -30,6 +66,13 @@ export class WeatherFX {
     this._overlayType = null;
     this._overlayAlpha = 0;
     this._fadeGen = 0;
+    this._windSpeed = 0;         // km/h
+    this._weatherCondition = null;
+    this._moonBrightness = 0;    // 0=new moon, 1=full moon
+    this._moonElevation = -90;
+    this._moonAzimuth = 180;
+    this._sunElevation = -90;
+    this._sunAzimuth = 180;
   }
 
   /**
@@ -38,9 +81,17 @@ export class WeatherFX {
    * @param {boolean} isNight - whether it is currently nighttime
    * @param {string} theme - 'dark' or 'light' (affects particle colors)
    */
-  start(weatherCondition, isNight, theme = 'dark') {
+  start(weatherCondition, isNight, theme = 'dark', windSpeed = 0, moonBrightness = 0, moonElevation = -90, moonAzimuth = 180, sunElevation = -90, sunAzimuth = 180) {
     this._theme = theme;
     this._isNight = isNight;
+    this._windSpeed = windSpeed;
+    this._weatherCondition = weatherCondition;
+    // Moon values update every call — position changes continuously, no particle rebuild needed
+    this._moonBrightness = moonBrightness;
+    this._moonElevation  = moonElevation;
+    this._moonAzimuth    = moonAzimuth;
+    this._sunElevation   = sunElevation;
+    this._sunAzimuth     = sunAzimuth;
     // Determine particle type
     let particleType = CONDITION_PARTICLE_MAP[weatherCondition] || null;
     if (isNight && (!particleType || particleType === 'sunny')) particleType = 'night';
@@ -202,6 +253,8 @@ export class WeatherFX {
   _createParticles(type, canvas) {
     const w = canvas.width, h = canvas.height;
     const particles = [];
+    // 0 at calm, 1 at ~54 km/h (Beaufort 7 gale)
+    const windFactor = Math.min((this._windSpeed || 0) / 54, 1.0);
 
     if (type === 'sunny') {
       // Dust motes floating upward
@@ -230,7 +283,7 @@ export class WeatherFX {
           len: (14 + Math.random() * 18) * (0.5 + depth * 0.5),
           speed: (7 + Math.random() * 8) * (0.5 + depth * 0.5),
           o: (0.1 + Math.random() * 0.15) * (0.4 + depth * 0.6),
-          wind: 0.45
+          wind: 0.45 + windFactor * 0.55
         });
       }
       // More frequent, larger splash ripples
@@ -246,12 +299,14 @@ export class WeatherFX {
       const count = type === 'storm' ? 80 : 50;
       for (let i = 0; i < count; i++) {
         const depth = Math.random();
+        const baseWind = type === 'storm' ? 0.5 : 0.3;
+        const maxWind = type === 'storm' ? 1.0 : 0.8;
         particles.push({
           kind: 'drop', x: Math.random() * w, y: Math.random() * h,
           len: (8 + Math.random() * 15) * (0.5 + depth * 0.5),
           speed: (3 + Math.random() * 5) * (0.5 + depth * 0.5),
           o: (0.06 + Math.random() * 0.1) * (0.4 + depth * 0.6),
-          wind: type === 'storm' ? 0.5 : 0.3
+          wind: baseWind + windFactor * (maxWind - baseWind)
         });
       }
       // Splash ripples at bottom
@@ -278,17 +333,17 @@ export class WeatherFX {
           len: (5 + Math.random() * 8) * (0.5 + depth * 0.5),
           speed: (4 + Math.random() * 4) * (0.5 + depth * 0.5),
           o: (0.05 + Math.random() * 0.08) * (0.4 + depth * 0.6),
-          wind: 0.2
+          wind: 0.2 + windFactor * 0.5
         });
       }
-      // Ice pellets — small solid circles with slight horizontal drift
+      // Ice pellets — small solid circles with wind-driven horizontal drift
       for (let i = 0; i < 25; i++) {
         const depth = Math.random();
         particles.push({
           kind: 'pellet', x: Math.random() * w, y: Math.random() * h,
           r: (1 + Math.random() * 1.5) * (0.5 + depth * 0.5),
           speed: (3 + Math.random() * 4) * (0.5 + depth * 0.5),
-          vx: (Math.random() - 0.5) * 1.5,
+          vx: (Math.random() - 0.5) * 1.5 - windFactor * 2.5 * (0.5 + depth * 0.5),
           o: (0.15 + Math.random() * 0.2) * (0.4 + depth * 0.6),
         });
       }
@@ -333,7 +388,9 @@ export class WeatherFX {
           r: (1 + Math.random() * 2) * (0.5 + depth * 0.5),
           vy: (0.2 + Math.random() * 0.4) * (0.4 + depth * 0.6),
           sway: Math.random() * Math.PI * 2, swaySpeed: 0.3 + Math.random() * 0.5,
-          swayAmp: 0.3 + depth * 0.7,
+          // Strong wind reduces random sway and replaces with directional drift
+          swayAmp: (0.3 + depth * 0.7) * (1 - windFactor * 0.7),
+          windDrift: windFactor * 2.0 * (0.3 + depth * 0.7),
           o: (0.15 + Math.random() * 0.25) * (0.5 + depth * 0.5)
         });
       }
@@ -342,7 +399,8 @@ export class WeatherFX {
         particles.push({
           kind: 'bokeh', x: Math.random() * w, y: Math.random() * h,
           r: 10 + Math.random() * 15, vy: 0.1 + Math.random() * 0.2,
-          vx: (Math.random() - 0.5) * 0.3, o: 0.04 + Math.random() * 0.04
+          vx: (Math.random() - 0.5) * 0.3 - windFactor * 1.2,
+          o: 0.04 + Math.random() * 0.04
         });
       }
     } else if (type === 'fog') {
@@ -476,12 +534,14 @@ export class WeatherFX {
     }
 
     // ---- Night overlay (stars + aurora) ----
+    const overlayStarDim  = 1 - this._moonBrightness * 0.65;
+    const overlayAurDim   = 1 - this._moonBrightness * 0.3;
     // Aurora bands
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
     this._overlayParticles.filter(p => p.kind === 'aurora').forEach(p => {
       p.phase += p.speed;
-      ctx.globalAlpha = scale * p.o;
+      ctx.globalAlpha = scale * p.o * overlayAurDim;
       ctx.beginPath();
       for (let x = 0; x <= w; x += 4) {
         const y = p.yBase + Math.sin(x * p.freq + p.phase) * p.amplitude
@@ -497,11 +557,11 @@ export class WeatherFX {
     ctx.restore();
     ctx.shadowBlur = 0;
 
-    // Twinkling stars
+    // Twinkling stars — dimmed by moonlight
     this._overlayParticles.filter(p => p.kind === 'star').forEach(p => {
       p.phase += p.speed * 0.02;
       const twinkle = 0.2 + 0.8 * ((Math.sin(p.phase) + 1) / 2);
-      ctx.globalAlpha = scale * twinkle * p.brightness * 0.5;
+      ctx.globalAlpha = scale * twinkle * p.brightness * 0.5 * overlayStarDim;
       ctx.fillStyle = '#fff';
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
@@ -552,6 +612,105 @@ export class WeatherFX {
     if (state._overlayType) state._renderOverlay(now);
 
     ctx.globalAlpha = state._alpha;
+
+    // ---- Sun disc — rendered for all daytime conditions, dimmed by cloud cover ----
+    if (!state._isNight && state._sunElevation > 0) {
+      const cloudDim = SUN_CLOUD_DIM[state._weatherCondition] ?? 0;
+      if (cloudDim > 0) {
+        const elev = state._sunElevation;
+        const sunX = w * (state._sunAzimuth / 360);
+        const sunY = h * (0.8 - elev / 90 * 0.75);
+
+        // Color by elevation — deep orange at horizon, pale yellow-white at zenith
+        let r, g, b;
+        if (elev < 5) {
+          r = 255; g = Math.round(130 + elev * 10); b = Math.round(15 + elev * 5);
+        } else if (elev < 20) {
+          const t = (elev - 5) / 15;
+          r = 255; g = Math.round(180 + t * 35); b = Math.round(65 + t * 45);
+        } else if (elev < 45) {
+          const t = (elev - 20) / 25;
+          r = 255; g = Math.round(215 + t * 20); b = Math.round(110 + t * 60);
+        } else {
+          r = 255; g = 242; b = 180;
+        }
+
+        // Disc slightly larger near horizon (atmospheric refraction / Moon illusion)
+        const sunR = 18 + Math.max(0, (12 - elev) * 0.7);
+        // Glow spreads wider near horizon (more atmosphere to scatter through)
+        const glowMult = 3.5 + Math.max(0, (30 - elev) / 8);
+        const glowR = sunR * glowMult;
+        const glowAlpha = (0.10 + (elev < 15 ? 0.08 : 0)) * cloudDim;
+
+        // Atmospheric glow
+        const sunGrd = ctx.createRadialGradient(sunX, sunY, sunR * 0.4, sunX, sunY, glowR);
+        sunGrd.addColorStop(0, `rgba(${r},${g},${b},${glowAlpha})`);
+        sunGrd.addColorStop(1, `rgba(${r},${g},${b},0)`);
+        ctx.globalAlpha = state._alpha;
+        ctx.fillStyle = sunGrd;
+        ctx.beginPath();
+        ctx.arc(sunX, sunY, glowR, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Disc — only when sky is clear enough
+        if (cloudDim >= 0.3) {
+          const discAlpha = state._alpha * cloudDim;
+          const discGrd = ctx.createRadialGradient(
+            sunX - sunR * 0.25, sunY - sunR * 0.25, sunR * 0.1,
+            sunX, sunY, sunR
+          );
+          discGrd.addColorStop(0,   `rgba(255,255,230,${discAlpha})`);
+          discGrd.addColorStop(0.5, `rgba(${r},${Math.min(255, g + 8)},${b},${discAlpha * 0.95})`);
+          discGrd.addColorStop(1,   `rgba(${r},${g},${Math.max(0, b - 20)},${discAlpha * 0.85})`);
+          ctx.fillStyle = discGrd;
+          ctx.beginPath();
+          ctx.arc(sunX, sunY, sunR, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = state._alpha;
+      }
+    }
+
+    // ---- Moon disc — rendered for all night conditions, dimmed by cloud cover ----
+    if (state._isNight && state._moonElevation > 0) {
+      const cloudDim = MOON_CLOUD_DIM[state._weatherCondition] ?? 0;
+      const mb = state._moonBrightness;
+      const totalBright = mb * cloudDim; // phase × cloud transmittance
+      if (totalBright > 0 || cloudDim > 0) {
+        const moonX = w * (state._moonAzimuth / 360);
+        const moonY = h * (0.8 - state._moonElevation / 90 * 0.75);
+        const moonR  = 12 + mb * 10;
+        const glowR  = moonR * (2.5 + mb * 2) * (1 + (1 - cloudDim) * 1.5);
+
+        // Diffuse glow — always shown when moon is up (even behind clouds)
+        const glowAlpha = state._alpha * Math.max(totalBright * 0.25, cloudDim > 0 ? 0.04 : 0);
+        const grd = ctx.createRadialGradient(moonX, moonY, moonR * 0.3, moonX, moonY, glowR);
+        grd.addColorStop(0, `rgba(220,220,170,${glowAlpha})`);
+        grd.addColorStop(1, 'rgba(220,220,170,0)');
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = grd;
+        ctx.beginPath();
+        ctx.arc(moonX, moonY, glowR, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Sharp disc — only when cloud transmittance is high enough to see it
+        if (cloudDim >= 0.35) {
+          const discAlpha = state._alpha * (0.35 + mb * 0.65) * cloudDim;
+          const discGrd = ctx.createRadialGradient(
+            moonX - moonR * 0.3, moonY - moonR * 0.3, moonR * 0.1,
+            moonX, moonY, moonR
+          );
+          discGrd.addColorStop(0,   `rgba(255,255,245,${discAlpha})`);
+          discGrd.addColorStop(0.7, `rgba(225,225,210,${discAlpha * 0.9})`);
+          discGrd.addColorStop(1,   `rgba(190,190,175,${discAlpha * 0.75})`);
+          ctx.fillStyle = discGrd;
+          ctx.beginPath();
+          ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = state._alpha;
+      }
+    }
 
     if (state._currentType === 'sunny') {
       // God rays
@@ -697,12 +856,16 @@ export class WeatherFX {
       ctx.globalAlpha = state._alpha;
 
     } else if (state._currentType === 'night') {
+      const mb = state._moonBrightness;
+      const starDim  = 1 - mb * 0.65; // full moon washes out stars
+      const auroraDim = 1 - mb * 0.3;
+
       // Aurora borealis
       ctx.save();
       ctx.globalCompositeOperation = 'lighter';
       state._particles.filter(p => p.kind === 'aurora').forEach(p => {
         p.phase += p.speed;
-        ctx.globalAlpha = state._alpha * p.o;
+        ctx.globalAlpha = state._alpha * p.o * auroraDim;
         ctx.beginPath();
         for (let x = 0; x <= w; x += 4) {
           const y = p.yBase + Math.sin(x * p.freq + p.phase) * p.amplitude
@@ -717,17 +880,17 @@ export class WeatherFX {
       });
       ctx.restore();
       ctx.shadowBlur = 0;
-      // Twinkling stars
+      // Twinkling stars — dimmed by moonlight
       state._particles.filter(p => p.kind === 'star').forEach(p => {
         p.phase += p.speed * 0.02;
         const twinkle = 0.2 + 0.8 * ((Math.sin(p.phase) + 1) / 2);
-        ctx.globalAlpha = state._alpha * twinkle * p.brightness * 0.5;
+        ctx.globalAlpha = state._alpha * twinkle * p.brightness * 0.5 * starDim;
         ctx.fillStyle = '#fff';
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
         ctx.fill();
         if (p.r > 1.2) {
-          ctx.globalAlpha = state._alpha * twinkle * p.brightness * 0.15;
+          ctx.globalAlpha = state._alpha * twinkle * p.brightness * 0.15 * starDim;
           ctx.strokeStyle = '#fff';
           ctx.lineWidth = 0.5;
           ctx.beginPath();
@@ -740,7 +903,7 @@ export class WeatherFX {
           ctx.stroke();
         }
       });
-      // Shooting star
+      // Shooting star — less frequent in bright moonlight
       const ss = state._particles.find(p => p.kind === 'shootingStar');
       if (ss) {
         ss.timer++;
@@ -750,7 +913,7 @@ export class WeatherFX {
           if (ss.trail.length > 12) ss.trail.shift();
           ss.trail.forEach((pt, i) => {
             const fade = (i + 1) / ss.trail.length;
-            ctx.globalAlpha = state._alpha * fade * 0.6;
+            ctx.globalAlpha = state._alpha * fade * 0.6 * starDim;
             ctx.fillStyle = '#fff';
             ctx.beginPath();
             ctx.arc(pt.x, pt.y, 1.5 * fade, 0, Math.PI * 2);
@@ -758,7 +921,9 @@ export class WeatherFX {
           });
           if (ss.life > 40 || ss.x > w || ss.y > h) { ss.active = false; ss.trail = []; }
         } else if (ss.timer > ss.interval) {
-          ss.timer = 0; ss.interval = 400 + Math.random() * 800;
+          ss.timer = 0;
+          // Full moon doubles the interval (harder to see shooting stars)
+          ss.interval = (400 + Math.random() * 800) * (1 + mb);
           ss.active = true; ss.life = 0;
           ss.x = Math.random() * w * 0.7; ss.y = Math.random() * h * 0.3;
           ss.vx = 4 + Math.random() * 4; ss.vy = 2 + Math.random() * 2;
@@ -773,8 +938,9 @@ export class WeatherFX {
       state._particles.filter(p => p.kind === 'flake').forEach(p => {
         p.y += p.vy;
         p.sway += p.swaySpeed * 0.02;
-        p.x += Math.sin(p.sway) * p.swayAmp;
+        p.x += Math.sin(p.sway) * p.swayAmp + p.windDrift;
         if (p.y > h + 10) { p.y = -10; p.x = Math.random() * w; }
+        if (p.x > w + 10) p.x = -10;
         ctx.fillStyle = flakeColor + p.o + ')';
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);

@@ -6,6 +6,12 @@ import { STYLES } from './styles.js';
 
 // ============ CONSTANTS ============
 
+const MOON_PHASE_BRIGHTNESS = {
+  'new_moon': 0.0, 'waxing_crescent': 0.15, 'first_quarter': 0.4,
+  'waxing_gibbous': 0.7, 'full_moon': 1.0, 'waning_gibbous': 0.7,
+  'last_quarter': 0.4, 'waning_crescent': 0.15,
+};
+
 const CONDITION_CLOUD_MAP = {
   'sunny': 5, 'clear-night': 5,
   'partlycloudy': 30, 'cloudy': 65,
@@ -1179,7 +1185,8 @@ class SolarDashboard extends HTMLElement {
     this._weatherCloudFactor = cloudTransmission(cloudPct);
 
     // Apply weather backdrop
-    this._applyWeatherBackdrop(state.state);
+    const windSpeed = parseFloat(attrs.wind_speed) || 0;
+    this._applyWeatherBackdrop(state.state, windSpeed);
 
     // Temperature for solar engine
     if (attrs.temperature != null) {
@@ -1231,18 +1238,19 @@ class SolarDashboard extends HTMLElement {
     this._updateSolarEstimate();
   }
 
-  _applyWeatherBackdrop(condition) {
+  _applyWeatherBackdrop(condition, windSpeed = 0) {
     const rootEl = this.shadowRoot.querySelector('.dashboard-root');
     if (!rootEl) return;
     const theme = rootEl.dataset.theme || 'dark';
     const palettes = WEATHER_PALETTES[theme] || WEATHER_PALETTES.dark;
 
     let isNight = false;
+    let sunElevation = -90, sunAzimuth = 180;
     if (this._engine && this._bridge.latitude != null) {
-      const now = new Date();
-      const panelConfig = this._getPanelConfig();
-      const result = this._engine.calcSolarOutput(now, panelConfig, 0, 25);
-      isNight = result.elevation < 0;
+      const sp = this._engine.getPosition(new Date());
+      sunElevation = sp.elevation;
+      sunAzimuth   = sp.azimuth;
+      isNight = sunElevation < 0;
     }
 
     let key = CONDITION_PALETTE_MAP[condition] || null;
@@ -1255,10 +1263,22 @@ class SolarDashboard extends HTMLElement {
     rootEl.style.setProperty('--mesh-2', colors[1]);
     rootEl.style.setProperty('--mesh-3', colors[2]);
 
+    // Moon phase brightness (0=new, 1=full)
+    const moonState = this._bridge.getState('sensor.moon_phase');
+    const moonBrightness = moonState ? (MOON_PHASE_BRIGHTNESS[moonState.state] ?? 0) : 0;
+
+    // Moon position from Meeus algorithm
+    let moonElevation = -90, moonAzimuth = 180;
+    if (this._engine && this._bridge.latitude != null) {
+      const mp = this._engine.getMoonPosition(new Date());
+      moonElevation = mp.elevation;
+      moonAzimuth   = mp.azimuth;
+    }
+
     // Update weather FX particles — pass original HA condition, not the palette key,
     // because WeatherFX.start() does its own condition-to-particle mapping
     if (this._weatherFx) {
-      this._weatherFx.start(condition, isNight, theme);
+      this._weatherFx.start(condition, isNight, theme, windSpeed, moonBrightness, moonElevation, moonAzimuth, sunElevation, sunAzimuth);
     }
   }
 

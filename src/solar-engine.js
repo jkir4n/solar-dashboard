@@ -105,6 +105,73 @@ export class SolarEngine {
     return { elevation, azimuth, zenith };
   }
 
+  // Moon position — Meeus Ch.47 simplified (main perturbation terms only)
+  // Returns { elevation, azimuth } in degrees; elevation < 0 means below horizon.
+  getMoonPosition(date) {
+    const JD = date.getTime() / 86400000 + 2440587.5;
+    const T  = (JD - 2451545.0) / 36525;
+
+    // Fundamental arguments
+    const L0 = (218.3164477 + 481267.88123421 * T) % 360;
+    const M  = toRad((134.9633964 + 477198.8675055 * T) % 360);
+    const Ms = toRad((357.5291092 +  35999.0502909 * T) % 360);
+    const F  = toRad(( 93.2720950 + 483202.0175233 * T) % 360);
+    const D  = toRad((297.8501921 + 445267.1114034 * T) % 360);
+
+    // Longitude perturbations (units: 1e-6 degrees)
+    const dL = 6288774 * Math.sin(M)
+      + 1274027 * Math.sin(2*D - M)
+      +  658314 * Math.sin(2*D)
+      +  213618 * Math.sin(2*M)
+      -  185116 * Math.sin(Ms)
+      -  114332 * Math.sin(2*F)
+      +   58793 * Math.sin(2*D - 2*M)
+      +   57066 * Math.sin(2*D - Ms - M)
+      +   53322 * Math.sin(2*D + M)
+      +   45758 * Math.sin(2*D - Ms);
+
+    // Latitude perturbations (units: 1e-6 degrees)
+    const dB = 5128122 * Math.sin(F)
+      +  280602 * Math.sin(M + F)
+      +  277693 * Math.sin(M - F)
+      +  173237 * Math.sin(2*D - F)
+      +   55413 * Math.sin(2*D - M + F)
+      +   46271 * Math.sin(2*D - M - F)
+      +   32573 * Math.sin(2*D + F);
+
+    // Ecliptic coordinates
+    const lambda = toRad(L0 + dL / 1000000);
+    const beta   = toRad(dB / 1000000);
+
+    // Obliquity of ecliptic
+    const eps = toRad(23.439291 - 0.013004 * T);
+
+    // Ecliptic → equatorial (RA, Dec)
+    const RA  = Math.atan2(
+      Math.sin(lambda) * Math.cos(eps) - Math.tan(beta) * Math.sin(eps),
+      Math.cos(lambda)
+    );
+    const Dec = Math.asin(
+      Math.sin(beta) * Math.cos(eps) + Math.cos(beta) * Math.sin(eps) * Math.sin(lambda)
+    );
+
+    // Greenwich Mean Sidereal Time → Local Hour Angle
+    const GST = toRad((280.46061837 + 360.98564736629 * (JD - 2451545.0)) % 360);
+    const HA  = GST + toRad(this.lon) - RA;
+
+    // Equatorial → horizontal
+    const latR   = toRad(this.lat);
+    const sinAlt = Math.sin(Dec) * Math.sin(latR) + Math.cos(Dec) * Math.cos(latR) * Math.cos(HA);
+    const elevation = toDeg(Math.asin(Math.max(-1, Math.min(1, sinAlt))));
+
+    const cosAz = (Math.sin(Dec) - sinAlt * Math.sin(latR))
+      / (Math.cos(toRad(elevation)) * Math.cos(latR));
+    let azimuth = toDeg(Math.acos(Math.max(-1, Math.min(1, cosAz))));
+    if (Math.sin(HA) > 0) azimuth = 360 - azimuth;
+
+    return { elevation, azimuth };
+  }
+
   // Air mass — Kasten-Young 1989 (v9 line 1870)
   _airMass(zenithDeg) {
     if (zenithDeg >= 90) return Infinity;
