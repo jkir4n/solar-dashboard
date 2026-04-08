@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.16.0 (2026-04-08)
+
+### Features
+- feat: add medium breakpoint (768px) with 2-column grid layout for tablets
+- chore: sync hacs.json version with package.json via npm version lifecycle hook
+- docs: remove hardcoded sensor.moon_phase reference, note auto-discovery
+- refactor: auto-discover moon phase entity instead of hardcoding sensor.moon_phase
+- docs: update README with sun/moon discs, wind-reactive particles, Moon integration
+
+
 ## v0.15.0 (2026-04-08)
 
 ### Features
