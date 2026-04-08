@@ -7,7 +7,10 @@ A real-time solar monitoring dashboard for Home Assistant, built as a HACS-compa
 - Auto-discovering BMS monitoring — works with JK, JBD, Daly, BatMON and other integrations (no hardcoded entity IDs)
 - NOAA/Meeus solar position and irradiance calculations
 - Weather-adjusted solar generation forecasts
-- Procedural weather particle effects (rain, snow, stars, clouds, lightning)
+- Procedural weather particle effects (rain, snow, stars, clouds, lightning, fog)
+- Real-time sun disc with elevation-based colour shift (orange at horizon → white at zenith)
+- Real-time moon disc with Meeus lunar position, phase brightness, and cloud occlusion
+- Wind-reactive rain and snow particles driven by live wind speed from weather entity
 - Custom canvas charts with crosshair/tooltip (Live, Yesterday, 7D, 30D ranges)
 - Power flow animation between solar, battery, and load
 - Animated number transitions
@@ -20,7 +23,8 @@ A real-time solar monitoring dashboard for Home Assistant, built as a HACS-compa
 
 - **Home Assistant 2025.1.0+**
 - **BMS integration** — JK BMS (ESPHome), JBD, Daly, BatMON, or any integration providing BMS sensor data
-- **Weather integration** — Any HA weather integration (Google Weather, PirateWeather, Met.no, etc.) for cloud cover and conditions. The dashboard auto-selects the freshest available source.
+- **Weather integration** — Any HA weather integration (Google Weather, PirateWeather, Met.no, etc.) for cloud cover, conditions, and wind speed. The dashboard auto-selects the freshest available source.
+- **Moon integration** (optional) — Built-in HA integration (`sensor.moon_phase`) for moon phase brightness. Enable via Settings → Devices & Services → Add Integration → "Moon".
 - **HACS** (optional) — for automated installation and updates
 
 ## Installation
@@ -152,7 +156,8 @@ The detected chemistry is displayed in the battery card and used to calculate th
 The dashboard reads from these entity groups:
 
 - **BMS entities** — Auto-discovered via keyword matching (see table above). No hardcoded entity IDs required.
-- **`weather.*`** — Cloud cover and weather condition (for solar forecast adjustment and weather effects). The dashboard automatically selects the most recently updated `weather.*` entity, skipping unavailable ones — no manual configuration needed.
+- **`weather.*`** — Cloud cover, weather condition, and wind speed (for solar forecast adjustment, weather effects, and wind-reactive particles). The dashboard automatically selects the most recently updated `weather.*` entity, skipping unavailable ones — no manual configuration needed.
+- **`sensor.moon_phase`** (optional) — Moon phase for disc brightness. Provided by the built-in Moon integration.
 - **`input_number.solar_*`** — Panel configuration helpers (auto-created)
 - **`zone.home`** — Location for solar position calculations (uses `hass.config` lat/lon as primary)
 
@@ -202,8 +207,8 @@ The project uses Rollup to bundle the ES modules in `src/` into a single distrib
 ```
 src/
   ha-bridge.js        # HA state access, helper management, history fetching
-  solar-engine.js     # NOAA solar position and irradiance calculations
-  weather-fx.js       # Canvas particle systems and weather backdrops
+  solar-engine.js     # NOAA/Meeus solar + lunar position and irradiance calculations
+  weather-fx.js       # Canvas particle systems, weather backdrops, sun/moon discs
   charts.js           # Custom canvas charting with crosshair/tooltip
   styles.js           # All CSS (dark/light themes, glassmorphism)
   solar-dashboard.js  # Main Web Component, DOM, UI updates
