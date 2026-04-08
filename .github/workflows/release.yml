@@ -90,7 +90,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add package.json package-lock.json dist/solar-dashboard.js CHANGELOG.md
+          git add package.json package-lock.json hacs.json dist/solar-dashboard.js CHANGELOG.md
           git commit -m "chore: bump version to ${{ steps.version.outputs.tag }} [skip ci]"
           git push
 
