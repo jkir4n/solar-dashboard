@@ -215,6 +215,7 @@ class SolarDashboard extends HTMLElement {
     this._battArcPowerW = 0;
     this._cardsRevealed = false;
     this._weatherEntityId = null;
+    this._moonPhaseEntityId = null;
     this._weatherCloudFactor = 1.0;
     this._weatherAmbientC = null;
     this._solarEngineReady = false;
@@ -1165,6 +1166,14 @@ class SolarDashboard extends HTMLElement {
     return fresh ? fresh.id : scored[0].id;
   }
 
+  _discoverMoonPhaseEntity() {
+    if (!this._bridge._hass) return null;
+    const knownStates = new Set(Object.keys(MOON_PHASE_BRIGHTNESS));
+    const match = Object.entries(this._bridge._hass.states)
+      .find(([, s]) => knownStates.has(s.state));
+    return match ? match[0] : null;
+  }
+
   _updateWeather() {
     this._weatherEntityId = this._discoverWeatherEntity();
     if (!this._weatherEntityId) return;
@@ -1263,8 +1272,9 @@ class SolarDashboard extends HTMLElement {
     rootEl.style.setProperty('--mesh-2', colors[1]);
     rootEl.style.setProperty('--mesh-3', colors[2]);
 
-    // Moon phase brightness (0=new, 1=full)
-    const moonState = this._bridge.getState('sensor.moon_phase');
+    // Moon phase brightness (0=new, 1=full) — auto-discovered entity
+    if (!this._moonPhaseEntityId) this._moonPhaseEntityId = this._discoverMoonPhaseEntity();
+    const moonState = this._moonPhaseEntityId ? this._bridge.getState(this._moonPhaseEntityId) : null;
     const moonBrightness = moonState ? (MOON_PHASE_BRIGHTNESS[moonState.state] ?? 0) : 0;
 
     // Moon position from Meeus algorithm

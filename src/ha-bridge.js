@@ -310,6 +310,7 @@ export class HABridge {
     for (const eid of Object.keys(this._hass.states)) {
       if (eid.includes('cell_voltage_')) tracked.push(eid);
       if (eid.startsWith('weather.')) tracked.push(eid);
+      if (eid.startsWith('sensor.') && eid.includes('moon')) tracked.push(eid);
     }
     for (const eid of tracked) {
       const s = this._hass.states[eid];
