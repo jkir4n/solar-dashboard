@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.15.0 (2026-04-08)
+
+### Features
+- feat: add sun/moon discs with real positions, wind-reactive particles, moon phase
+- chore: add CLAUDE.md and .claude/ to gitignore
+
+
 ## v0.14.0 (2026-04-07)
 
 ### Features
