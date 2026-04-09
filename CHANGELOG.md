@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.17.1 (2026-04-09)
+
+### Bug Fixes
+- fix: 2-col mobile layout for stat-grid and info-row at 700px
+
+
 ## v0.17.0 (2026-04-09)
 
 ### Features
