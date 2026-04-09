@@ -122,7 +122,7 @@ export const STYLES = `
     .stat-val { font-size: 14px !important; }
     .stat-label { font-size: 10px !important; }
     .stat-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 4px !important; margin-top: 10px !important; }
-    .info-row { grid-template-columns: repeat(2, 1fr) !important; }
+    .info-row { gap: 4px !important; margin-bottom: 4px !important; }
     .section-title { font-size: 14px !important; margin-bottom: 12px !important; }
     /* Solar panels */
     .sol-output { font-size: 24px !important; }
@@ -141,9 +141,9 @@ export const STYLES = `
     .ctrl-desc { font-size: 10px !important; }
     .ctrl { padding: 12px 0 !important; }
     /* System */
-    .inf-v { font-size: 12px !important; }
-    .inf-k { font-size: 9px !important; }
-    .inf { padding: 6px 2px !important; }
+    .inf-v { font-size: 10px !important; }
+    .inf-k { font-size: 8px !important; }
+    .inf { padding: 4px 1px !important; }
     /* Power flow */
     .flow-icon { width: 36px !important; height: 36px !important; }
     .flow-label { font-size: 10px !important; }
@@ -352,7 +352,7 @@ export const STYLES = `
   .slider::before { content: ''; position: absolute; width: 18px; height: 18px; left: 3px; bottom: 3px; background: var(--text); border-radius: 50%; transition: 0.3s; }
   .toggle input:checked + .slider { background: var(--green); box-shadow: 0 0 10px var(--green-glow); }
   .toggle input:checked + .slider::before { transform: translateX(20px); background: #fff; }
-  .info-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 8px; }
+  .info-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 8px; word-break: break-word; }
   .info-row:last-of-type { margin-bottom: 0; }
   .inf { text-align: center; padding: 8px 4px; }
   .inf-v { font-size: 15px; font-weight: 700; }
