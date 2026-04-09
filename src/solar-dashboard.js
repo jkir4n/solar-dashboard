@@ -426,19 +426,19 @@ class SolarDashboard extends HTMLElement {
         <div class="stat-item"><div class="stat-val" id="battTTE">--</div><div class="stat-label" id="battTTELabel">Time to Empty</div></div>
       </div>
       <div class="stat-divider"></div>
-      <div class="info-row" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px">
+      <div class="info-row">
         <div class="inf"><div class="inf-v" id="sysCycles">--</div><div class="inf-k">Cycles</div></div>
         <div class="inf"><div class="inf-v" id="sysCapacity">215 Ah</div><div class="inf-k">Capacity</div></div>
         <div class="inf"><div class="inf-v" id="sysNominal">51.2 V</div><div class="inf-k">Nominal</div></div>
         <div class="inf"><div class="inf-v" id="sysConfig">16S</div><div class="inf-k">Config</div></div>
       </div>
-      <div class="info-row" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px">
+      <div class="info-row">
         <div class="inf"><div class="inf-v" id="sysMinCell">-- V</div><div class="inf-k">Min Cell</div></div>
         <div class="inf"><div class="inf-v" id="sysMaxCell">-- V</div><div class="inf-k">Max Cell</div></div>
         <div class="inf"><div class="inf-v" id="sysRuntime">--</div><div class="inf-k">Runtime</div></div>
         <div class="inf"><div class="inf-v" id="sysThroughput">--</div><div class="inf-k">Throughput</div></div>
       </div>
-      <div class="info-row" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+      <div class="info-row">
         <div class="inf"><div class="inf-v" id="battMosfetTemp">--</div><div class="inf-k">MOSFET</div></div>
         <div class="inf"><div class="inf-v" id="sysBmsModel">--</div><div class="inf-k">BMS Model</div></div>
         <div class="inf"><div class="inf-v" id="sysFirmware">--</div><div class="inf-k">Firmware</div></div>

@@ -121,7 +121,8 @@ export const STYLES = `
     .batt-soc { font-size: 36px !important; }
     .stat-val { font-size: 14px !important; }
     .stat-label { font-size: 10px !important; }
-    .stat-grid { gap: 4px !important; margin-top: 10px !important; }
+    .stat-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 4px !important; margin-top: 10px !important; }
+    .info-row { grid-template-columns: repeat(2, 1fr) !important; }
     .section-title { font-size: 14px !important; margin-bottom: 12px !important; }
     /* Solar panels */
     .sol-output { font-size: 24px !important; }
@@ -351,6 +352,8 @@ export const STYLES = `
   .slider::before { content: ''; position: absolute; width: 18px; height: 18px; left: 3px; bottom: 3px; background: var(--text); border-radius: 50%; transition: 0.3s; }
   .toggle input:checked + .slider { background: var(--green); box-shadow: 0 0 10px var(--green-glow); }
   .toggle input:checked + .slider::before { transform: translateX(20px); background: #fff; }
+  .info-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 8px; }
+  .info-row:last-of-type { margin-bottom: 0; }
   .inf { text-align: center; padding: 8px 4px; }
   .inf-v { font-size: 15px; font-weight: 700; }
   .inf-k { font-size: 10px; font-weight: 500; color: var(--text2); margin-top: 2px; }
