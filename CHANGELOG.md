@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.17.0 (2026-04-09)
+
+### Features
+- feat: increase sun and moon disc sizes
+
+
 ## v0.16.0 (2026-04-08)
 
 ### Features
