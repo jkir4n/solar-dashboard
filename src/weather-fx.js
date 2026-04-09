@@ -636,7 +636,7 @@ export class WeatherFX {
         }
 
         // Disc slightly larger near horizon (atmospheric refraction / Moon illusion)
-        const sunR = 18 + Math.max(0, (12 - elev) * 0.7);
+        const sunR = 28 + Math.max(0, (12 - elev) * 1.2);
         // Glow spreads wider near horizon (more atmosphere to scatter through)
         const glowMult = 3.5 + Math.max(0, (30 - elev) / 8);
         const glowR = sunR * glowMult;
@@ -679,7 +679,7 @@ export class WeatherFX {
       if (totalBright > 0 || cloudDim > 0) {
         const moonX = w * (state._moonAzimuth / 360);
         const moonY = h * (0.8 - state._moonElevation / 90 * 0.75);
-        const moonR  = 12 + mb * 10;
+        const moonR  = 20 + mb * 14;
         const glowR  = moonR * (2.5 + mb * 2) * (1 + (1 - cloudDim) * 1.5);
 
         // Diffuse glow — always shown when moon is up (even behind clouds)
