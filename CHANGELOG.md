@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.17.2 (2026-04-09)
+
+### Bug Fixes
+- fix: compact 4-col info-row on mobile, smaller inf fonts
+
+
 ## v0.17.1 (2026-04-09)
 
 ### Bug Fixes
