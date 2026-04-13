@@ -62,19 +62,25 @@ jobs:
         run: |
           LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
           if [ -z "$LAST_TAG" ]; then
-            COMMITS=$(git log --format="- %s" --no-merges)
+            RAW_COMMITS=$(git log --format="%s" --no-merges)
           else
-            COMMITS=$(git log --format="- %s" --no-merges ${LAST_TAG}..HEAD)
+            RAW_COMMITS=$(git log --format="%s" --no-merges ${LAST_TAG}..HEAD)
           fi
+          # Strip conventional commit prefixes and skip CI bump commits
+          COMMITS=$(echo "$RAW_COMMITS" \
+            | grep -v "^chore: bump version" \
+            | sed 's/^[a-z]*([^)]*): //;s/^[a-z]*!*: //' \
+            | sed 's/\b./\u&/' \
+            | sed 's/^/- /')
           NEW_VERSION=${{ steps.version.outputs.tag }}
           TODAY=$(date +%Y-%m-%d)
-          # Determine section from bump type
           BUMP="${{ steps.version.outputs.bump }}"
           if [ "$BUMP" = "major" ]; then SECTION="Breaking Changes";
           elif [ "$BUMP" = "minor" ]; then SECTION="Features";
           else SECTION="Bug Fixes"; fi
-          # Build changelog block
           ENTRY="## ${NEW_VERSION} (${TODAY})\n\n### ${SECTION}\n${COMMITS}\n"
+          # Save just this entry for the GitHub release body
+          echo -e "${ENTRY}" > RELEASE_NOTES.md
           # Prepend to CHANGELOG.md (after the header line)
           if [ -f CHANGELOG.md ]; then
             head -n 3 CHANGELOG.md > CHANGELOG.tmp
@@ -100,4 +106,4 @@ jobs:
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           files: dist/solar-dashboard.js
-          generate_release_notes: true
+          body_path: RELEASE_NOTES.md
