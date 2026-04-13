@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.17.5 (2026-04-13)
+
+### Bug Fixes
+- Brighter diffuse sun glow for overcast conditions, wider scatter radius
+
+
 ## v0.17.4 (2026-04-13)
 
 ### Bug Fixes
