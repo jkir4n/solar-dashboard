@@ -570,7 +570,7 @@ export class WeatherFX {
 
     // ---- Night overlay (stars + aurora) ----
     const overlayStarDim  = 1 - this._moonBrightness * 0.65;
-    const overlayAurDim   = 1 - this._moonBrightness * 0.3;
+    const overlayAurDim   = 1 - this._moonBrightness * 0.65;
     // Aurora bands
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
@@ -921,7 +921,7 @@ export class WeatherFX {
     } else if (state._currentType === 'night') {
       const mb = state._moonBrightness;
       const starDim  = 1 - mb * 0.65; // full moon washes out stars
-      const auroraDim = 1 - mb * 0.3;
+      const auroraDim = 1 - mb * 0.65;
 
       // Aurora borealis
       ctx.save();
