@@ -537,7 +537,7 @@ export class WeatherFX {
     boltTree.points.forEach((pt, i) => i === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y));
     ctx.stroke();
     for (const branch of boltTree.branches) {
-      this._drawBolt(ctx, branch, alpha * 0.6);
+      this._drawBolt(ctx, branch, alpha * 0.6 / (branch.decayMult || 1));
     }
   }
 
