@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.19.0 (2026-04-13)
+
+### Features
+- Cloud archetypes, procedural lobes, per-lobe shading, wind reactivity, y-bob
+- Exclude docs folder from git tracking
+
+
 ## v0.18.1 (2026-04-13)
 
 ### Bug Fixes
