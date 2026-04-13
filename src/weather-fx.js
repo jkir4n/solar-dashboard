@@ -643,9 +643,10 @@ export class WeatherFX {
         const diffuseSpread = (cloudDim > 0 && cloudDim < 0.3) ? 1.8 : 1.0;
         const glowR = sunR * glowMult * diffuseSpread;
         // Overcast: use a flat base + scaled component so the patch stays visible
+        // Needs higher alpha to show through the semi-transparent mesh gradient backdrop
         const glowAlpha = cloudDim >= 0.3
           ? (0.10 + (elev < 15 ? 0.08 : 0)) * cloudDim
-          : cloudDim > 0 ? 0.02 + cloudDim * 0.15 : 0;
+          : cloudDim > 0 ? 0.08 + cloudDim * 0.20 : 0;
 
         // Atmospheric glow
         const sunGrd = ctx.createRadialGradient(sunX, sunY, sunR * 0.4, sunX, sunY, glowR);
