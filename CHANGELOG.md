@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.18.0 (2026-04-13)
+
+### Features
+- Wind bearing drives actual particle direction
+- Continuous cloud-coverage dimming via sigmoid formula
+- Volumetric multi-lobe cloud rendering
+- Volumetric multi-lobe cloud rendering
+- Rainbow arc for rainy/pouring daytime conditions
+- Solar and lunar 22-degree halo ring
+- Apply decayMult to child bolt branch alpha in _drawBolt
+- Branching lightning bolts with 120ms screen flash
+- Bokeh hexagonal aperture blade lines
+- Stratified fog layers with sine turbulence
+- Hexagonal snowflake geometry with rotating arms
+- Reset aurora shadowBlur inside forEach to prevent canvas state leak
+- Aurora moon brightness dimming factor 0.3 → 0.65
+- Smooth aurora with quadratic curves and vertical oscillation
+- Star colour variance by spectral class
+- Expand plan with 3 new tasks and enhancements to tasks 1/3/7
+- Particle type buckets eliminate per-frame filter calls
+- Add weather effects improvements implementation plan
+- Add weather effects improvements design spec [skip ci]
+- Add missing features and fix helpers table in README
+
+
 ## v0.17.6 (2026-04-13)
 
 ### Bug Fixes
