@@ -475,22 +475,91 @@ export class WeatherFX {
         }
       });
     } else if (type === 'cloudy') {
-      // 2 depth layers: far (small, slow) and near (large, fast)
+      // Archetype inference from condition + cloud_coverage
+      const cond = this._weatherCondition || '';
+      const cov  = this._cloudCoverage != null ? this._cloudCoverage : 50;
+      let archetype;
+      if (cond === 'lightning' || cond === 'hail') {
+        archetype = 'cumulonimbus';
+      } else if (cond === 'rainy' || cond === 'pouring' || cond === 'snowy' || cond === 'snowy-rainy') {
+        archetype = 'nimbostratus';
+      } else if (cov > 85) {
+        archetype = 'stratus';
+      } else if (cov >= 65) {
+        archetype = 'stratocumulus';
+      } else if (cov >= 40) {
+        archetype = 'altocumulus';
+      } else {
+        archetype = 'cumulus';
+      }
+      // Per-archetype lobe constraints (spec §1–§2)
+      const ARCH = {
+        cumulus:       { lobeCount: [5, 8],  spreadX: 0.80, spreadY: -0.70, rsRange: [0.55, 0.90] },
+        altocumulus:   { lobeCount: [5, 9],  spreadX: 1.00, spreadY: -0.30, rsRange: [0.45, 0.75] },
+        stratocumulus: { lobeCount: [7, 11], spreadX: 1.30, spreadY: -0.20, rsRange: [0.40, 0.70] },
+        stratus:       { lobeCount: [8, 14], spreadX: 1.80, spreadY: -0.10, rsRange: [0.35, 0.60] },
+        nimbostratus:  { lobeCount: [7, 12], spreadX: 1.50, spreadY: -0.15, rsRange: [0.40, 0.65] },
+        cumulonimbus:  { lobeCount: [6, 10], spreadX: 0.90, spreadY: -1.00, rsRange: [0.55, 0.85] },
+      };
+      const arch = ARCH[archetype];
+      // 2 depth layers — aggressively differentiated (spec §4)
       const LAYERS = [
-        { count: 4, scale: 0.65, speed: 0.12, alpha: 0.55, yRange: [0.05, 0.45] },
-        { count: 4, scale: 1.0,  speed: 0.22, alpha: 0.80, yRange: [0.10, 0.50] },
+        { count: 3, rMin:  40, rMax:  80, speedRange: [0.07, 0.13], alphaRange: [0.35, 0.50], yRange: [0.03, 0.30], windMult: 0.10 },
+        { count: 4, rMin: 110, rMax: 200, speedRange: [0.20, 0.35], alphaRange: [0.70, 0.90], yRange: [0.15, 0.55], windMult: 0.25 },
       ];
       LAYERS.forEach((layer, li) => {
         for (let ci = 0; ci < layer.count; ci++) {
-          const r = (80 + Math.random() * 60) * layer.scale;
+          const r = layer.rMin + Math.random() * (layer.rMax - layer.rMin);
+          const baseSpeed = layer.speedRange[0] + Math.random() * (layer.speedRange[1] - layer.speedRange[0]);
+          const alpha     = layer.alphaRange[0] + Math.random() * (layer.alphaRange[1] - layer.alphaRange[0]);
+          const yBase     = h * (layer.yRange[0] + Math.random() * (layer.yRange[1] - layer.yRange[0]));
+          // Procedural lobe generation (spec §2)
+          const [loMin, loMax] = arch.lobeCount;
+          const lobeCount = loMin + Math.floor(Math.random() * (loMax - loMin + 1));
+          const [rsMin, rsMax] = arch.rsRange;
+          const lobes = [];
+          // Center lobe
+          lobes.push({ dx: 0, dy: 0, rs: 1.0, phase: Math.random() * Math.PI * 2 });
+          // Crown anchors (1–2 lobes near top)
+          const crownCount = 1 + Math.floor(Math.random() * 2);
+          for (let k = 0; k < crownCount; k++) {
+            lobes.push({
+              dx: (Math.random() - 0.5) * arch.spreadX * 0.6,
+              dy: arch.spreadY * (0.7 + Math.random() * 0.3),
+              rs: 0.7 + Math.random() * 0.2,
+              phase: Math.random() * Math.PI * 2,
+            });
+          }
+          // Fill lobes
+          const fillCount = lobeCount - 1 - crownCount;
+          for (let k = 0; k < fillCount; k++) {
+            lobes.push({
+              dx: (Math.random() - 0.5) * arch.spreadX * 2,
+              dy: arch.spreadY * Math.random(),
+              rs: rsMin + Math.random() * (rsMax - rsMin),
+              phase: Math.random() * Math.PI * 2,
+            });
+          }
+          // Per-lobe shade from vertical position (spec §2): 1.0 = topmost, 0.0 = bottommost
+          const dyVals = lobes.map(l => l.dy);
+          const minDy = Math.min(...dyVals), maxDy = Math.max(...dyVals);
+          lobes.forEach(l => {
+            l.shade = (maxDy === minDy) ? 0.5 : 1.0 - (l.dy - minDy) / (maxDy - minDy);
+          });
           particles.push({
             kind: 'cloud',
             x: Math.random() * w,
-            y: h * (layer.yRange[0] + Math.random() * (layer.yRange[1] - layer.yRange[0])),
-            r,          // base radius — lobes scale from this
-            vx: layer.speed * (0.8 + Math.random() * 0.4),
-            alpha: layer.alpha,
-            layer: li
+            yBase, y: yBase,
+            r,
+            vx: baseSpeed,
+            alpha,
+            layer: li,
+            windMult: layer.windMult,
+            archetype,
+            lobes,
+            phase:    Math.random() * Math.PI * 2,
+            bobSpeed: 0.0003 + Math.random() * 0.0002,
+            bobAmp:   3 + Math.random() * 5,
           });
         }
       });
@@ -1246,30 +1315,37 @@ export class WeatherFX {
       ctx.globalAlpha = state._alpha;
 
     } else if (state._currentType === 'cloudy') {
-      // Lobe offsets relative to cloud center (cumulus silhouette: flat base, bumpy top)
-      const LOBES = [
-        { dx:  0,     dy:  0,    rs: 1.00 }, // center
-        { dx: -0.50,  dy: -0.35, rs: 0.80 }, // left crown
-        { dx:  0.50,  dy: -0.35, rs: 0.80 }, // right crown
-        { dx:  0,     dy:  0.25, rs: 0.60 }, // base bulge
-      ];
+      // Wind variables for cloud movement (spec §5)
+      const windFactor   = Math.min((state._windSpeed || 0) / 54, 1.0);
+      const downwindRad  = ((state._windBearing + 180) % 360) * Math.PI / 180;
+      const windDx       = Math.sin(downwindRad);          // +1 = rightward on canvas
+      const windDy       = -Math.cos(downwindRad);         // +1 = downward on canvas
       // Sort by layer (far → near) for correct depth order
       const clouds = [...(state._particlesByType.cloud || [])].sort((a, b) => a.layer - b.layer);
       clouds.forEach(p => {
-        p.x += p.vx;
-        if (p.x > w + p.r * 2) p.x = -p.r * 2;
+        // Advance position — baseSpeed always rightward, wind adds true directional component (spec §5)
+        p.x     += p.vx + windFactor * p.windMult * windDx;
+        p.yBase += windFactor * p.windMult * windDy * 0.15;
+        // Y-bob — p.y derived from yBase so vertical error never accumulates (spec §6)
+        p.y = p.yBase + Math.sin(now * p.bobSpeed + p.phase) * p.bobAmp;
+        // 4-edge wrapping (spec §5)
+        if (p.x     >  w + p.r * 2) { p.x = -p.r * 2;      p.yBase = Math.random() * h; }
+        if (p.x     < -p.r * 2)     { p.x =  w + p.r * 2;  p.yBase = Math.random() * h; }
+        if (p.yBase >  h + p.r)     { p.yBase = -p.r;       p.x = Math.random() * w; }
+        if (p.yBase < -p.r)         { p.yBase =  h + p.r;   p.x = Math.random() * w; }
         const baseAlpha = state._alpha * p.alpha;
         if (night) {
-          // Night clouds: dark blue-grey shapes — lighter blend+white creates unnatural glowing blobs on dark bg
-          // Pass 1 (source-over): dark blue-grey cloud body, opaque center fading to transparent edge
+          // Night clouds: dark blue-grey — top lobes lighter (city-glow hint), bottom very dark (spec §3)
           ctx.save();
           ctx.globalCompositeOperation = 'source-over';
-          LOBES.forEach(lobe => {
+          p.lobes.forEach(lobe => {
             const lx = p.x + lobe.dx * p.r, ly = p.y + lobe.dy * p.r, lr = p.r * lobe.rs;
+            const s = lobe.shade; // 1=top, 0=bottom
+            const cR = Math.round(22 + s * 48), cG = Math.round(28 + s * 52), cB = Math.round(45 + s * 60);
             const grd = ctx.createRadialGradient(lx, ly, 0, lx, ly, lr);
-            grd.addColorStop(0,    `rgba(55,65,90,${baseAlpha * 0.85})`);
-            grd.addColorStop(0.45, `rgba(45,55,78,${baseAlpha * 0.60})`);
-            grd.addColorStop(0.80, `rgba(30,40,60,${baseAlpha * 0.22})`);
+            grd.addColorStop(0,    `rgba(${cR},${cG},${cB},${baseAlpha * 0.85})`);
+            grd.addColorStop(0.45, `rgba(${cR},${cG},${cB},${baseAlpha * 0.60})`);
+            grd.addColorStop(0.80, `rgba(${cR},${cG},${cB},${baseAlpha * 0.22})`);
             grd.addColorStop(1,    'rgba(0,0,0,0)');
             ctx.fillStyle = grd;
             ctx.beginPath();
@@ -1277,7 +1353,7 @@ export class WeatherFX {
             ctx.fill();
           });
           ctx.restore();
-          // Pass 2 (screen): faint moon-scatter glow at cloud tops
+          // Pass 2 (screen): faint moon-scatter glow at cloud top
           ctx.save();
           ctx.globalCompositeOperation = 'screen';
           const hx = p.x - p.r * 0.15, hy = p.y - p.r * 0.25, hr = p.r * 0.3;
@@ -1290,15 +1366,22 @@ export class WeatherFX {
           ctx.fill();
           ctx.restore();
         } else {
-          // Pass 1 (lighter): bright lobe fills
+          // Pass 1 (lighter): top-lit fills — shade drives white→grey-blue gradient (spec §3)
           ctx.save();
           ctx.globalCompositeOperation = 'lighter';
-          LOBES.forEach(lobe => {
+          p.lobes.forEach(lobe => {
             const lx = p.x + lobe.dx * p.r, ly = p.y + lobe.dy * p.r, lr = p.r * lobe.rs;
+            const s = lobe.shade; // 1=top bright, 0=bottom grey-blue
+            const cR = light ? Math.round(160 + s * 40) : Math.round(140 + s * 115);
+            const cG = light ? Math.round(170 + s * 30) : Math.round(160 + s *  95);
+            const cB = light ? Math.round(190 + s * 20) : Math.round(190 + s *  65);
+            const aTop  = baseAlpha * (0.35 + s * 0.20);
+            const aMid  = baseAlpha * (0.22 + s * 0.13);
+            const aEdge = baseAlpha * 0.07;
             const grd = ctx.createRadialGradient(lx, ly, 0, lx, ly, lr);
-            grd.addColorStop(0,    light ? `rgba(200,200,210,${baseAlpha * 0.6})` : `rgba(255,255,255,${baseAlpha * 0.5})`);
-            grd.addColorStop(0.4,  light ? `rgba(190,190,205,${baseAlpha * 0.35})` : `rgba(245,248,255,${baseAlpha * 0.3})`);
-            grd.addColorStop(0.75, light ? `rgba(180,185,200,${baseAlpha * 0.10})` : `rgba(200,220,245,${baseAlpha * 0.08})`);
+            grd.addColorStop(0,    `rgba(${cR},${cG},${cB},${aTop})`);
+            grd.addColorStop(0.40, `rgba(${cR},${cG},${cB},${aMid})`);
+            grd.addColorStop(0.75, `rgba(${cR},${cG},${cB},${aEdge})`);
             grd.addColorStop(1,    'rgba(0,0,0,0)');
             ctx.fillStyle = grd;
             ctx.beginPath();
@@ -1309,7 +1392,7 @@ export class WeatherFX {
           // Pass 2 (multiply): shadow interior — darkens overlapping lobe regions
           ctx.save();
           ctx.globalCompositeOperation = 'multiply';
-          LOBES.forEach(lobe => {
+          p.lobes.forEach(lobe => {
             const lx = p.x + lobe.dx * p.r, ly = p.y + lobe.dy * p.r, lr = p.r * lobe.rs * 0.7;
             const sgrd = ctx.createRadialGradient(lx, ly, 0, lx, ly, lr);
             sgrd.addColorStop(0,   `rgba(80,100,130,0.18)`);

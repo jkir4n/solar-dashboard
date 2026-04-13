@@ -9,7 +9,11 @@ A real-time solar monitoring dashboard for Home Assistant, built as a HACS-compa
 - Weather-adjusted solar generation forecasts
 - Procedural weather particle effects (rain, snow, stars, clouds, lightning, fog) with adaptive intensity
 - Hexagonal snowflakes with rotating 6-arm crystal geometry and depth-scaled branching
-- Volumetric multi-lobe clouds with 3-pass compositing (lighter/multiply/screen) and Z-depth layering
+- Meteorologically accurate cloud archetypes (cumulus, altocumulus, stratocumulus, stratus, nimbostratus, cumulonimbus) inferred from live condition + cloud_coverage
+- Procedurally unique clouds — per-spawn lobe generation (5–14 lobes per cloud), no two identical
+- Per-lobe top-lit shading — shade gradient from crown (bright) to base (grey-blue) for volumetric depth
+- 3-pass cloud compositing (lighter/multiply/screen day; source-over/screen night) with aggressive Z-depth parallax layers (40–80 px far, 110–200 px near)
+- Wind bearing-reactive cloud drift — true directional movement from live wind_bearing with gentle per-cloud Y-bob oscillation
 - Branching lightning bolts (30% child probability) with 120ms blue-white screen flash per strike
 - Stratified fog with 4 depth layers, per-layer speed, and sine-wave turbulence
 - Rainbow arc at antisolar point during rainy/pouring daytime conditions (3s fade-in)
@@ -18,7 +22,7 @@ A real-time solar monitoring dashboard for Home Assistant, built as a HACS-compa
 - Day overlay: sun rays rendered behind all daytime conditions, alpha scaled by cloud cover
 - Night overlay: stars with spectral colour variance (O/B/F/G/K/M classes) and smooth aurora curtain with vertical gradient and red lower fringe, dimmed by moon brightness
 - Wind and bearing-reactive particles — rain streaks, snow drift, fog, and sleet all track live `wind_speed` and `wind_bearing` from weather entity
-- Continuous cloud dimming via sigmoid formula on live `cloud_coverage` % (replaces discrete lookup tables)
+- Continuous cloud dimming via sigmoid formula on live `cloud_coverage` % combined with per-condition multipliers
 - Custom canvas charts with crosshair/tooltip (Live, Yesterday, 7D, 30D ranges)
 - Power flow animation between solar, battery, and load
 - Animated number transitions
