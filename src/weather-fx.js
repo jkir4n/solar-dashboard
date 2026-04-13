@@ -847,6 +847,41 @@ export class WeatherFX {
       }
     }
 
+    // ---- Rainbow arc — rainy/pouring daytime, sun above 5° ----
+    const isRainyCond = state._weatherCondition === 'rainy' || state._weatherCondition === 'pouring';
+    if (isRainyCond && !night && state._sunElevation > 5) {
+      state._rainbowFade = Math.min(1, state._rainbowFade + 1 / 180); // fade in over ~3s at 60fps
+    } else {
+      state._rainbowFade = Math.max(0, state._rainbowFade - 0.05);    // fade out quickly
+    }
+    if (state._rainbowFade > 0 && isRainyCond && !night && state._sunElevation > 5) {
+      const antisolarAz = (state._sunAzimuth + 180) % 360;
+      const arcX = w * (antisolarAz / 360);
+      const arcRadius = h * 0.55;
+      const arcCenterY = h * (0.62 + (state._sunElevation / 90) * 0.35);
+      const baseAlpha = (state._weatherCondition === 'pouring' ? 0.28 : 0.22)
+        * state._rainbowFade * state._alpha;
+      // 6 spectral bands, inner (red) to outer (violet), each 5px wide
+      const BANDS = [
+        { r: 255, g:  30, b:   0, am: 1.00, dr: -2.5 },
+        { r: 255, g: 120, b:   0, am: 0.90, dr: -1.0 },
+        { r: 255, g: 230, b:   0, am: 0.85, dr:  0.5 },
+        { r:   0, g: 200, b:  60, am: 0.80, dr:  2.0 },
+        { r:   0, g:  80, b: 255, am: 0.85, dr:  3.5 },
+        { r: 100, g:   0, b: 220, am: 0.75, dr:  5.0 },
+      ];
+      ctx.lineWidth = 5;
+      BANDS.forEach(band => {
+        ctx.globalAlpha = baseAlpha * band.am;
+        ctx.strokeStyle = `rgb(${band.r},${band.g},${band.b})`;
+        ctx.beginPath();
+        // anticlockwise=true draws the top arc (hill shape) when center is at/below horizon
+        ctx.arc(arcX, arcCenterY, arcRadius + band.dr * 5, Math.PI, 0, true);
+        ctx.stroke();
+      });
+      ctx.globalAlpha = state._alpha;
+    }
+
     if (state._currentType === 'sunny') {
       // God rays
       const rayColor = light ? 'rgba(255,190,50,1)' : 'rgba(255,220,100,1)';
