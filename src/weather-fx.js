@@ -610,6 +610,8 @@ export class WeatherFX {
       ctx.shadowBlur = lineWidth * 1.5;
       ctx.shadowColor = `hsla(${p.hue}, 80%, 50%, 0.5)`;
       ctx.stroke();
+      ctx.shadowBlur = 0;
+      ctx.shadowColor = 'transparent';
     });
     ctx.restore();
     ctx.shadowBlur = 0;
@@ -960,6 +962,8 @@ export class WeatherFX {
         ctx.shadowBlur = lineWidth * 1.5;
         ctx.shadowColor = `hsla(${p.hue}, 80%, 50%, 0.5)`;
         ctx.stroke();
+        ctx.shadowBlur = 0;
+        ctx.shadowColor = 'transparent';
       });
       ctx.restore();
       ctx.shadowBlur = 0;
