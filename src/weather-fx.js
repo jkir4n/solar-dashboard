@@ -427,7 +427,8 @@ export class WeatherFX {
           kind: 'bokeh', x: Math.random() * w, y: Math.random() * h,
           r: 10 + Math.random() * 15, vy: 0.1 + Math.random() * 0.2,
           vx: (Math.random() - 0.5) * 0.3 - windFactor * 1.2,
-          o: 0.04 + Math.random() * 0.04
+          o: 0.04 + Math.random() * 0.04,
+          angle: Math.random() * Math.PI / 3
         });
       }
     } else if (type === 'fog') {
@@ -1083,7 +1084,23 @@ export class WeatherFX {
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
         ctx.fill();
+        // Aperture blades — 6 faint lines at 60° intervals
         ctx.shadowBlur = 0;
+        const bladeAlpha = state._alpha * p.o * 0.35;
+        if (bladeAlpha > 0.001) {
+          ctx.globalAlpha = bladeAlpha;
+          ctx.strokeStyle = light
+            ? (night ? 'rgba(100,110,140,1)' : 'rgba(140,150,170,1)')
+            : (night ? 'rgba(180,195,230,1)' : 'rgba(255,255,255,1)');
+          ctx.lineWidth = 0.7;
+          ctx.beginPath();
+          for (let b = 0; b < 6; b++) {
+            const ang = p.angle + b * Math.PI / 3;
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(p.x + Math.cos(ang) * p.r * 0.8, p.y + Math.sin(ang) * p.r * 0.8);
+          }
+          ctx.stroke();
+        }
       });
       ctx.globalAlpha = state._alpha;
 
