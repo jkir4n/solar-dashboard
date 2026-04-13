@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.18.1 (2026-04-13)
+
+### Bug Fixes
+- Correct night cloud rendering and star occlusion by clouds
+- Remove implemented plans and specs
+- Cloud system redesign spec
+- Update README features list for weather effects improvements
+
+
 ## v0.18.0 (2026-04-13)
 
 ### Features
