@@ -167,7 +167,7 @@ export class WeatherFX {
     this._overlayParticlesByType = {};
     this._overlayType = null;
     this._overlayAlpha = 0;
-    this._flashAlpha = 0; this._rainbowFade = 0;
+    this._flashAlpha = 0; this._flashDecay = 0; this._rainbowFade = 0;
     if (this.ctx && this.canvas) {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
@@ -372,10 +372,18 @@ export class WeatherFX {
     } else if (type === 'night') {
       // Twinkling stars with depth
       for (let i = 0; i < 80; i++) {
+        // Spectral colour: 40% white, 25% pale blue, 20% pale yellow, 10% pale orange, 5% red
+        // Brighter stars lean toward blue/white
+        const brightness = 0.3 + Math.random() * 0.7;
+        const rand = Math.random();
+        const starColor = brightness > 0.7
+          ? (rand < 0.55 ? '#ffffff' : rand < 0.85 ? '#aad4ff' : rand < 0.97 ? '#fff8d0' : '#ffd8a0')
+          : (rand < 0.40 ? '#ffffff' : rand < 0.65 ? '#aad4ff' : rand < 0.85 ? '#fff8d0' : rand < 0.95 ? '#ffd8a0' : '#ffb0a0');
         particles.push({
           kind: 'star', x: Math.random() * w, y: Math.random() * h * 0.75,
           r: 0.3 + Math.random() * 1.8, phase: Math.random() * Math.PI * 2,
-          speed: 0.2 + Math.random() * 0.8, brightness: 0.3 + Math.random() * 0.7
+          speed: 0.2 + Math.random() * 0.8, brightness,
+          color: starColor
         });
       }
       // Aurora bands — 4 sine waves across top
@@ -585,7 +593,7 @@ export class WeatherFX {
       p.phase += p.speed * 0.02;
       const twinkle = 0.2 + 0.8 * ((Math.sin(p.phase) + 1) / 2);
       ctx.globalAlpha = scale * twinkle * p.brightness * 0.5 * overlayStarDim;
-      ctx.fillStyle = '#fff';
+      ctx.fillStyle = p.color || '#fff';
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
       ctx.fill();
@@ -914,13 +922,13 @@ export class WeatherFX {
         p.phase += p.speed * 0.02;
         const twinkle = 0.2 + 0.8 * ((Math.sin(p.phase) + 1) / 2);
         ctx.globalAlpha = state._alpha * twinkle * p.brightness * 0.5 * starDim;
-        ctx.fillStyle = '#fff';
+        ctx.fillStyle = p.color || '#fff';
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
         ctx.fill();
         if (p.r > 1.2) {
           ctx.globalAlpha = state._alpha * twinkle * p.brightness * 0.15 * starDim;
-          ctx.strokeStyle = '#fff';
+          ctx.strokeStyle = p.color || '#fff';
           ctx.lineWidth = 0.5;
           ctx.beginPath();
           ctx.moveTo(p.x - p.r * 2, p.y);
