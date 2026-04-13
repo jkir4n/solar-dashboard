@@ -771,6 +771,22 @@ export class WeatherFX {
           ctx.arc(sunX, sunY, sunR, 0, Math.PI * 2);
           ctx.fill();
         }
+        // Solar halo — 22° ring, fades out as clouds increase
+        const haloStrength = Math.max(0, cloudDim - 0.45) / 0.55;
+        if (haloStrength > 0 && elev > 5) {
+          const haloR = sunR * 2.8;
+          const inner = haloR * 0.88, outer = haloR * 1.12;
+          const haloGrd = ctx.createRadialGradient(sunX, sunY, inner, sunX, sunY, outer);
+          haloGrd.addColorStop(0,   'rgba(255,200,180,0)');
+          haloGrd.addColorStop(0.3, `rgba(255,230,220,${(haloStrength * 0.30).toFixed(3)})`);
+          haloGrd.addColorStop(0.7, `rgba(230,230,255,${(haloStrength * 0.30).toFixed(3)})`);
+          haloGrd.addColorStop(1,   'rgba(200,200,255,0)');
+          ctx.globalAlpha = state._alpha;
+          ctx.fillStyle = haloGrd;
+          ctx.beginPath();
+          ctx.arc(sunX, sunY, outer, 0, Math.PI * 2);
+          ctx.fill();
+        }
         ctx.globalAlpha = state._alpha;
       }
     }
@@ -810,6 +826,21 @@ export class WeatherFX {
           ctx.fillStyle = discGrd;
           ctx.beginPath();
           ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        // Lunar halo — same geometry, scaled by moonBrightness
+        const moonHaloStrength = Math.max(0, cloudDim - 0.45) / 0.55 * mb;
+        if (moonHaloStrength > 0 && state._moonElevation > 5) {
+          const haloR = moonR * 2.8;
+          const inner = haloR * 0.88, outer = haloR * 1.12;
+          const haloGrd = ctx.createRadialGradient(moonX, moonY, inner, moonX, moonY, outer);
+          haloGrd.addColorStop(0,   'rgba(200,210,230,0)');
+          haloGrd.addColorStop(0.5, `rgba(220,225,240,${(moonHaloStrength * 0.25).toFixed(3)})`);
+          haloGrd.addColorStop(1,   'rgba(200,210,230,0)');
+          ctx.globalAlpha = state._alpha;
+          ctx.fillStyle = haloGrd;
+          ctx.beginPath();
+          ctx.arc(moonX, moonY, outer, 0, Math.PI * 2);
           ctx.fill();
         }
         ctx.globalAlpha = state._alpha;
