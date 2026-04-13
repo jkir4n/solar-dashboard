@@ -1195,7 +1195,8 @@ class SolarDashboard extends HTMLElement {
 
     // Apply weather backdrop
     const windSpeed = parseFloat(attrs.wind_speed) || 0;
-    this._applyWeatherBackdrop(state.state, windSpeed);
+    const cloudCoverage = attrs.cloud_coverage ?? null;
+    this._applyWeatherBackdrop(state.state, windSpeed, cloudCoverage);
 
     // Temperature for solar engine
     if (attrs.temperature != null) {
@@ -1247,7 +1248,7 @@ class SolarDashboard extends HTMLElement {
     this._updateSolarEstimate();
   }
 
-  _applyWeatherBackdrop(condition, windSpeed = 0) {
+  _applyWeatherBackdrop(condition, windSpeed = 0, cloudCoverage = null) {
     const rootEl = this.shadowRoot.querySelector('.dashboard-root');
     if (!rootEl) return;
     const theme = rootEl.dataset.theme || 'dark';
@@ -1288,7 +1289,7 @@ class SolarDashboard extends HTMLElement {
     // Update weather FX particles — pass original HA condition, not the palette key,
     // because WeatherFX.start() does its own condition-to-particle mapping
     if (this._weatherFx) {
-      this._weatherFx.start(condition, isNight, theme, windSpeed, moonBrightness, moonElevation, moonAzimuth, sunElevation, sunAzimuth);
+      this._weatherFx.start(condition, isNight, theme, windSpeed, moonBrightness, moonElevation, moonAzimuth, sunElevation, sunAzimuth, cloudCoverage);
     }
   }
 

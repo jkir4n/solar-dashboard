@@ -73,6 +73,7 @@ export class WeatherFX {
     this._moonAzimuth = 180;
     this._sunElevation = -90;
     this._sunAzimuth = 180;
+    this._cloudCoverage = null;
     this._particlesByType = {};        // keyed by particle.kind
     this._overlayParticlesByType = {}; // same for overlay particles
     this._flashAlpha = 0;              // reserved for Task 7
@@ -87,7 +88,18 @@ export class WeatherFX {
    * @param {boolean} isNight - whether it is currently nighttime
    * @param {string} theme - 'dark' or 'light' (affects particle colors)
    */
-  start(weatherCondition, isNight, theme = 'dark', windSpeed = 0, moonBrightness = 0, moonElevation = -90, moonAzimuth = 180, sunElevation = -90, sunAzimuth = 180) {
+  // Continuous cloud dimming from coverage % (0-100) + condition modifier
+  // Sigmoid: gentle at extremes, steep mid-range — matches human perception
+  _calcCloudDim(cloudCoverage, condition) {
+    const c = Math.max(0, Math.min(100, cloudCoverage ?? 50));
+    const sigmoid = 1 / (1 + Math.exp((c - 50) / 15));
+    let dim = 0.10 + sigmoid * 0.90; // [0.10, 1.0]
+    const MOD = { fog: 0.70, rainy: 0.85, pouring: 0.75, snowy: 0.80,
+                  hail: 0.70, lightning: 0.65, 'lightning-rainy': 0.65 };
+    return dim * (MOD[condition] ?? 1.0);
+  }
+
+  start(weatherCondition, isNight, theme = 'dark', windSpeed = 0, moonBrightness = 0, moonElevation = -90, moonAzimuth = 180, sunElevation = -90, sunAzimuth = 180, cloudCoverage = null) {
     this._theme = theme;
     this._isNight = isNight;
     this._windSpeed = windSpeed;
@@ -98,6 +110,7 @@ export class WeatherFX {
     this._moonAzimuth    = moonAzimuth;
     this._sunElevation   = sunElevation;
     this._sunAzimuth     = sunAzimuth;
+    this._cloudCoverage  = cloudCoverage;
     // Determine particle type
     let particleType = CONDITION_PARTICLE_MAP[weatherCondition] || null;
     if (isNight && (!particleType || particleType === 'sunny')) particleType = 'night';
@@ -724,7 +737,7 @@ export class WeatherFX {
 
     // ---- Sun disc — rendered for all daytime conditions, dimmed by cloud cover ----
     if (!state._isNight && state._sunElevation > 0) {
-      const cloudDim = SUN_CLOUD_DIM[state._weatherCondition] ?? 0;
+      const cloudDim = state._calcCloudDim(state._cloudCoverage, state._weatherCondition);
       if (cloudDim > 0) {
         const elev = state._sunElevation;
         const sunX = w * (state._sunAzimuth / 360);
@@ -804,7 +817,7 @@ export class WeatherFX {
 
     // ---- Moon disc — rendered for all night conditions, dimmed by cloud cover ----
     if (state._isNight && state._moonElevation > 0) {
-      const cloudDim = MOON_CLOUD_DIM[state._weatherCondition] ?? 0;
+      const cloudDim = state._calcCloudDim(state._cloudCoverage, state._weatherCondition);
       const mb = state._moonBrightness;
       const totalBright = mb * cloudDim; // phase × cloud transmittance
       if (totalBright > 0 || cloudDim > 0) {
