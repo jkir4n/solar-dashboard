@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.17.3 (2026-04-13)
+
+### Bug Fixes
+- fix: improve sun/moon glow visibility through overcast and precipitation conditions
+
+
 ## v0.17.2 (2026-04-09)
 
 ### Bug Fixes
