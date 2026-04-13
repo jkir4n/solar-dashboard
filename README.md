@@ -7,12 +7,18 @@ A real-time solar monitoring dashboard for Home Assistant, built as a HACS-compa
 - Auto-discovering BMS monitoring — works with JK, JBD, Daly, BatMON and other integrations (no hardcoded entity IDs)
 - NOAA/Meeus solar position and irradiance calculations
 - Weather-adjusted solar generation forecasts
-- Procedural weather particle effects (rain, snow, stars, clouds, lightning, fog)
-- Real-time sun disc with elevation-based colour shift (orange at horizon → white at zenith) and cloud occlusion
-- Real-time moon disc with Meeus lunar position, phase brightness, and cloud occlusion
+- Procedural weather particle effects (rain, snow, stars, clouds, lightning, fog) with adaptive intensity
+- Hexagonal snowflakes with rotating 6-arm crystal geometry and depth-scaled branching
+- Volumetric multi-lobe clouds with 3-pass compositing (lighter/multiply/screen) and Z-depth layering
+- Branching lightning bolts (30% child probability) with 120ms blue-white screen flash per strike
+- Stratified fog with 4 depth layers, per-layer speed, and sine-wave turbulence
+- Rainbow arc at antisolar point during rainy/pouring daytime conditions (3s fade-in)
+- Real-time sun disc with elevation-based colour shift (orange at horizon → white at zenith), cloud occlusion, and 22° solar halo ring
+- Real-time moon disc with Meeus lunar position, phase brightness, cloud occlusion, and 22° lunar halo ring
 - Day overlay: sun rays rendered behind all daytime conditions, alpha scaled by cloud cover
-- Night overlay: stars and aurora rendered behind all night conditions, dimmed by moon brightness
-- Wind-reactive rain and snow particles driven by live wind speed from weather entity
+- Night overlay: stars with spectral colour variance (O/B/F/G/K/M classes) and smooth aurora curtain with vertical gradient and red lower fringe, dimmed by moon brightness
+- Wind and bearing-reactive particles — rain streaks, snow drift, fog, and sleet all track live `wind_speed` and `wind_bearing` from weather entity
+- Continuous cloud dimming via sigmoid formula on live `cloud_coverage` % (replaces discrete lookup tables)
 - Custom canvas charts with crosshair/tooltip (Live, Yesterday, 7D, 30D ranges)
 - Power flow animation between solar, battery, and load
 - Animated number transitions
