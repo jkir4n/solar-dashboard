@@ -67,6 +67,7 @@ export class WeatherFX {
     this._overlayAlpha = 0;
     this._fadeGen = 0;
     this._windSpeed = 0;         // km/h
+    this._windBearing = 180;     // meteorological: direction wind comes FROM (0=N,90=E,180=S,270=W)
     this._weatherCondition = null;
     this._moonBrightness = 0;    // 0=new moon, 1=full moon
     this._moonElevation = -90;
@@ -99,10 +100,11 @@ export class WeatherFX {
     return dim * (MOD[condition] ?? 1.0);
   }
 
-  start(weatherCondition, isNight, theme = 'dark', windSpeed = 0, moonBrightness = 0, moonElevation = -90, moonAzimuth = 180, sunElevation = -90, sunAzimuth = 180, cloudCoverage = null) {
+  start(weatherCondition, isNight, theme = 'dark', windSpeed = 0, moonBrightness = 0, moonElevation = -90, moonAzimuth = 180, sunElevation = -90, sunAzimuth = 180, cloudCoverage = null, windBearing = 180) {
     this._theme = theme;
     this._isNight = isNight;
     this._windSpeed = windSpeed;
+    this._windBearing = windBearing;
     this._weatherCondition = weatherCondition;
     // Moon values update every call — position changes continuously, no particle rebuild needed
     this._moonBrightness = moonBrightness;
@@ -283,6 +285,11 @@ export class WeatherFX {
     const particles = [];
     // 0 at calm, 1 at ~54 km/h (Beaufort 7 gale)
     const windFactor = Math.min((this._windSpeed || 0) / 54, 1.0);
+    // Convert meteorological bearing to downwind canvas direction
+    // Bearing = direction wind comes FROM; downwind = bearing + 180
+    const downwindRad = ((this._windBearing + 180) % 360) * Math.PI / 180;
+    const windDx = Math.sin(downwindRad); // +1 = right, -1 = left
+    const windDy = Math.cos(downwindRad); // +1 = down, -1 = up (minor effect on fall speed)
 
     if (type === 'sunny') {
       // Dust motes floating upward
@@ -311,7 +318,7 @@ export class WeatherFX {
           len: (14 + Math.random() * 18) * (0.5 + depth * 0.5),
           speed: (7 + Math.random() * 8) * (0.5 + depth * 0.5),
           o: (0.1 + Math.random() * 0.15) * (0.4 + depth * 0.6),
-          wind: 0.45 + windFactor * 0.55
+          windDx: windDx * windFactor * 0.55 + windDx * 0.45
         });
       }
       // More frequent, larger splash ripples
@@ -334,7 +341,7 @@ export class WeatherFX {
           len: (8 + Math.random() * 15) * (0.5 + depth * 0.5),
           speed: (3 + Math.random() * 5) * (0.5 + depth * 0.5),
           o: (0.06 + Math.random() * 0.1) * (0.4 + depth * 0.6),
-          wind: baseWind + windFactor * (maxWind - baseWind)
+          windDx: windDx * (baseWind + windFactor * (maxWind - baseWind))
         });
       }
       // Splash ripples at bottom
@@ -361,7 +368,7 @@ export class WeatherFX {
           len: (5 + Math.random() * 8) * (0.5 + depth * 0.5),
           speed: (4 + Math.random() * 4) * (0.5 + depth * 0.5),
           o: (0.05 + Math.random() * 0.08) * (0.4 + depth * 0.6),
-          wind: 0.2 + windFactor * 0.5
+          windDx: windDx * (0.2 + windFactor * 0.5)
         });
       }
       // Ice pellets — small solid circles with wind-driven horizontal drift
@@ -371,7 +378,7 @@ export class WeatherFX {
           kind: 'pellet', x: Math.random() * w, y: Math.random() * h,
           r: (1 + Math.random() * 1.5) * (0.5 + depth * 0.5),
           speed: (3 + Math.random() * 4) * (0.5 + depth * 0.5),
-          vx: (Math.random() - 0.5) * 1.5 - windFactor * 2.5 * (0.5 + depth * 0.5),
+          vx: (Math.random() - 0.5) * 1.5 + windDx * windFactor * 2.5 * (0.5 + depth * 0.5),
           o: (0.15 + Math.random() * 0.2) * (0.4 + depth * 0.6),
         });
       }
@@ -430,7 +437,7 @@ export class WeatherFX {
           sway: Math.random() * Math.PI * 2, swaySpeed: 0.3 + Math.random() * 0.5,
           // Strong wind reduces random sway and replaces with directional drift
           swayAmp: (0.3 + depth * 0.7) * (1 - windFactor * 0.7),
-          windDrift: windFactor * 2.0 * (0.3 + depth * 0.7),
+          windDrift: windDx * windFactor * 2.0 * (0.3 + depth * 0.7),
           o: (0.15 + Math.random() * 0.25) * (0.5 + depth * 0.5),
           angle: Math.random() * Math.PI * 2
         });
@@ -461,7 +468,7 @@ export class WeatherFX {
             layer: li, blobIndex: bi,
             rx: 90 + Math.random() * 70,
             ry: 24 + Math.random() * 16,
-            vx: (layer.speed + (Math.random() - 0.5) * 0.1) * (1 + windFactor * 0.3),
+            vx: (layer.speed * windDx + (Math.random() - 0.5) * 0.1) * (1 + windFactor * 0.3),
             o: layer.alphaMin + Math.random() * (layer.alphaMax - layer.alphaMin),
             amp: layer.amp
           });
@@ -949,16 +956,17 @@ export class WeatherFX {
         ? (night ? 'rgba(30,50,105,1)' : 'rgba(55,80,145,1)')
         : (night ? 'rgba(85,115,175,1)' : 'rgba(120,155,210,1)');
       (state._particlesByType.drop || []).forEach(p => {
-        p.x -= p.speed * p.wind;
+        p.x += p.windDx;
         p.y += p.speed;
         if (p.y > h + 20) { p.y = -20; p.x = Math.random() * w; }
         if (p.x < -20) p.x = w + 20;
+        if (p.x > w + 20) p.x = -20;
         ctx.globalAlpha = state._alpha * p.o;
         ctx.strokeStyle = dropColor;
         ctx.lineWidth = 1.2;
         ctx.beginPath();
         ctx.moveTo(p.x, p.y);
-        ctx.lineTo(p.x + p.len * p.wind, p.y - p.len);
+        ctx.lineTo(p.x + p.len * p.windDx, p.y - p.len);
         ctx.stroke();
       });
       (state._particlesByType.ripple || []).forEach(p => {
@@ -985,16 +993,17 @@ export class WeatherFX {
         : (night ? 'rgba(100,130,190,1)' : 'rgba(150,180,220,1)');
       const rippleColor = dropColor;
       (state._particlesByType.drop || []).forEach(p => {
-        p.x -= p.speed * p.wind;
+        p.x += p.windDx;
         p.y += p.speed;
         if (p.y > h + 20) { p.y = -20; p.x = Math.random() * w; }
         if (p.x < -20) p.x = w + 20;
+        if (p.x > w + 20) p.x = -20;
         ctx.globalAlpha = state._alpha * p.o;
         ctx.strokeStyle = dropColor;
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.moveTo(p.x, p.y);
-        ctx.lineTo(p.x + p.len * p.wind, p.y - p.len);
+        ctx.lineTo(p.x + p.len * p.windDx, p.y - p.len);
         ctx.stroke();
       });
       // Splash ripples
@@ -1300,16 +1309,17 @@ export class WeatherFX {
         ? (night ? 'rgba(60,85,130,1)' : 'rgba(100,130,180,1)')
         : (night ? 'rgba(110,140,190,1)' : 'rgba(160,190,230,1)');
       (state._particlesByType.drop || []).forEach(p => {
-        p.x -= p.speed * p.wind;
+        p.x += p.windDx;
         p.y += p.speed;
         if (p.y > h + 20) { p.y = -20; p.x = Math.random() * w; }
         if (p.x < -20) p.x = w + 20;
+        if (p.x > w + 20) p.x = -20;
         ctx.globalAlpha = state._alpha * p.o;
         ctx.strokeStyle = dropColor;
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.moveTo(p.x, p.y);
-        ctx.lineTo(p.x + p.len * p.wind, p.y - p.len);
+        ctx.lineTo(p.x + p.len * p.windDx, p.y - p.len);
         ctx.stroke();
       });
       // Ice pellets
