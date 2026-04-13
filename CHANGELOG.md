@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.19.1 (2026-04-13)
+
+### Bug Fixes
+- Show 0 kWh expected generation after sunset until sunrise
+
+
 ## v0.19.0 (2026-04-13)
 
 ### Features
