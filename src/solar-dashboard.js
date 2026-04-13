@@ -1321,8 +1321,12 @@ class SolarDashboard extends HTMLElement {
       this._animateValue(solOutput, parseFloat(solOutput.textContent) || 0, result.watts, 600, v => Math.round(v) + ' W');
     }
 
+    const sunPos = this._engine.getPosition(now);
     const currentHour = now.getHours();
-    if (currentHour !== this._lastForecastHour) {
+    if (sunPos.elevation <= 0) {
+      this._cachedForecastKWh = 0;
+      this._lastForecastHour = -1; // force recalc at next sunrise
+    } else if (currentHour !== this._lastForecastHour) {
       this._lastForecastHour = currentHour;
       this._cachedForecastKWh = this._engine.calcDailyForecast(now, panelConfig, (1 - this._weatherCloudFactor) * 100, this._weatherAmbientC);
     }
