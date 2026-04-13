@@ -387,10 +387,14 @@ export class WeatherFX {
         });
       }
       // Aurora bands — 4 sine waves across top
-      for (let i = 0; i < 4; i++) {
+      const auroraCount = 4;
+      for (let i = 0; i < auroraCount; i++) {
+        // Extended aurora hue palette: green (dominant), cyan, blue-violet, purple, rare red
+        const AURORA_HUES = [120, 120, 120, 180, 240, 270]; // weighted toward green
+        const yBase = h * (0.08 + i * 0.07);
         particles.push({
-          kind: 'aurora', yBase: h * (0.08 + i * 0.07),
-          hue: 120 + i * 30,
+          kind: 'aurora', yBase, yBaseInitial: yBase,
+          hue: AURORA_HUES[Math.floor(Math.random() * AURORA_HUES.length)],
           amplitude: 15 + Math.random() * 25, freq: 0.002 + Math.random() * 0.002,
           phase: Math.random() * Math.PI * 2, speed: 0.003 + Math.random() * 0.003,
           thickness: 30 + Math.random() * 40, o: 0.06 + Math.random() * 0.04
@@ -570,18 +574,40 @@ export class WeatherFX {
     // Aurora bands
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
-    (this._overlayParticlesByType.aurora || []).forEach(p => {
+    (this._overlayParticlesByType.aurora || []).forEach((p, bandIndex) => {
       p.phase += p.speed;
+      const t = p.phase;
+      const yBase = p.yBaseInitial + Math.sin(t * 0.015 + bandIndex * 0.8) * 12;
+      const lineWidth = 6 + 4 * Math.sin(t * 0.03 + bandIndex);
+      const halfW = lineWidth / 2;
+      // Build 10 control points
+      const pts = [];
+      for (let i = 0; i <= 9; i++) {
+        const x = w * i / 9;
+        const y = yBase
+          + Math.sin(x * p.freq + t) * p.amplitude
+          + Math.sin(x * p.freq * 2.3 + t * 1.7) * p.amplitude * 0.3;
+        pts.push({ x, y });
+      }
+      // Vertical curtain gradient: transparent top → core colour → red fringe at bottom
+      const midY = pts[Math.floor(pts.length / 2)].y;
+      const grad = ctx.createLinearGradient(0, midY - halfW, 0, midY + halfW);
+      grad.addColorStop(0,   `hsla(${p.hue}, 80%, 60%, 0)`);
+      grad.addColorStop(0.35, `hsla(${p.hue}, 85%, 60%, 1)`);
+      grad.addColorStop(0.7,  `hsla(${p.hue}, 80%, 55%, 0.8)`);
+      grad.addColorStop(1,    `hsla(0, 80%, 50%, 0.4)`); // red lower fringe
       ctx.globalAlpha = scale * p.o * overlayAurDim;
       ctx.beginPath();
-      for (let x = 0; x <= w; x += 4) {
-        const y = p.yBase + Math.sin(x * p.freq + p.phase) * p.amplitude
-          + Math.sin(x * p.freq * 2.3 + p.phase * 1.7) * p.amplitude * 0.3;
-        if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      ctx.moveTo(pts[0].x, pts[0].y);
+      for (let i = 1; i < pts.length - 1; i++) {
+        const mx = (pts[i].x + pts[i + 1].x) / 2;
+        const my = (pts[i].y + pts[i + 1].y) / 2;
+        ctx.quadraticCurveTo(pts[i].x, pts[i].y, mx, my);
       }
-      ctx.strokeStyle = `hsla(${p.hue}, 80%, 60%, 1)`;
-      ctx.lineWidth = p.thickness;
-      ctx.shadowBlur = p.thickness * 1.5;
+      ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = lineWidth;
+      ctx.shadowBlur = lineWidth * 1.5;
       ctx.shadowColor = `hsla(${p.hue}, 80%, 50%, 0.5)`;
       ctx.stroke();
     });
@@ -900,18 +926,38 @@ export class WeatherFX {
       // Aurora borealis
       ctx.save();
       ctx.globalCompositeOperation = 'lighter';
-      (state._particlesByType.aurora || []).forEach(p => {
+      (state._particlesByType.aurora || []).forEach((p, bandIndex) => {
         p.phase += p.speed;
+        const t = p.phase;
+        const yBase = p.yBaseInitial + Math.sin(t * 0.015 + bandIndex * 0.8) * 12;
+        const lineWidth = 6 + 4 * Math.sin(t * 0.03 + bandIndex);
+        const halfW = lineWidth / 2;
+        const pts = [];
+        for (let i = 0; i <= 9; i++) {
+          const x = w * i / 9;
+          const y = yBase
+            + Math.sin(x * p.freq + t) * p.amplitude
+            + Math.sin(x * p.freq * 2.3 + t * 1.7) * p.amplitude * 0.3;
+          pts.push({ x, y });
+        }
+        const midY = pts[Math.floor(pts.length / 2)].y;
+        const grad = ctx.createLinearGradient(0, midY - halfW, 0, midY + halfW);
+        grad.addColorStop(0,    `hsla(${p.hue}, 80%, 60%, 0)`);
+        grad.addColorStop(0.35, `hsla(${p.hue}, 85%, 60%, 1)`);
+        grad.addColorStop(0.7,  `hsla(${p.hue}, 80%, 55%, 0.8)`);
+        grad.addColorStop(1,    `hsla(0, 80%, 50%, 0.4)`);
         ctx.globalAlpha = state._alpha * p.o * auroraDim;
         ctx.beginPath();
-        for (let x = 0; x <= w; x += 4) {
-          const y = p.yBase + Math.sin(x * p.freq + p.phase) * p.amplitude
-            + Math.sin(x * p.freq * 2.3 + p.phase * 1.7) * p.amplitude * 0.3;
-          if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        ctx.moveTo(pts[0].x, pts[0].y);
+        for (let i = 1; i < pts.length - 1; i++) {
+          const mx = (pts[i].x + pts[i + 1].x) / 2;
+          const my = (pts[i].y + pts[i + 1].y) / 2;
+          ctx.quadraticCurveTo(pts[i].x, pts[i].y, mx, my);
         }
-        ctx.strokeStyle = `hsla(${p.hue}, 80%, 60%, 1)`;
-        ctx.lineWidth = p.thickness;
-        ctx.shadowBlur = p.thickness * 1.5;
+        ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = lineWidth;
+        ctx.shadowBlur = lineWidth * 1.5;
         ctx.shadowColor = `hsla(${p.hue}, 80%, 50%, 0.5)`;
         ctx.stroke();
       });
