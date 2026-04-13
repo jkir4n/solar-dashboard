@@ -1265,7 +1265,7 @@ export class WeatherFX {
           ctx.fill();
         });
         ctx.restore();
-        // Pass 3 (screen): top highlight — sun catches crown
+        // Pass 3 (screen): single crown highlight per cloud (not per-lobe) — targets the whole cloud mass top
         ctx.save();
         ctx.globalCompositeOperation = 'screen';
         const hx = p.x - p.r * 0.15, hy = p.y - p.r * 0.25, hr = p.r * 0.3;
