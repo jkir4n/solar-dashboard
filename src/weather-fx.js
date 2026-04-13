@@ -73,6 +73,11 @@ export class WeatherFX {
     this._moonAzimuth = 180;
     this._sunElevation = -90;
     this._sunAzimuth = 180;
+    this._particlesByType = {};        // keyed by particle.kind
+    this._overlayParticlesByType = {}; // same for overlay particles
+    this._flashAlpha = 0;              // reserved for Task 7
+    this._flashDecay = 0;
+    this._rainbowFade = 0;             // reserved for Task 9
   }
 
   /**
@@ -132,11 +137,13 @@ export class WeatherFX {
     if (newOverlayType) {
       if (this._overlayType !== newOverlayType) {
         this._overlayParticles = this._createParticles(newOverlayType, this.canvas);
+        this._overlayParticlesByType = this._bucketize(this._overlayParticles);
       }
       this._overlayType = newOverlayType;
       this._overlayAlpha = newOverlayAlpha;
     } else {
       this._overlayParticles = [];
+      this._overlayParticlesByType = {};
       this._overlayType = null;
       this._overlayAlpha = 0;
     }
@@ -153,11 +160,14 @@ export class WeatherFX {
     }
     this._currentType = null;
     this._particles = [];
+    this._particlesByType = {};
     this._alpha = 1;
     this._fading = false;
     this._overlayParticles = [];
+    this._overlayParticlesByType = {};
     this._overlayType = null;
     this._overlayAlpha = 0;
+    this._flashAlpha = 0; this._rainbowFade = 0;
     if (this.ctx && this.canvas) {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
@@ -171,9 +181,11 @@ export class WeatherFX {
     // Recreate particles for new dimensions
     if (this._currentType) {
       this._particles = this._createParticles(this._currentType, this.canvas);
+      this._particlesByType = this._bucketize(this._particles);
     }
     if (this._overlayType) {
       this._overlayParticles = this._createParticles(this._overlayType, this.canvas);
+      this._overlayParticlesByType = this._bucketize(this._overlayParticles);
     }
   }
 
@@ -210,6 +222,7 @@ export class WeatherFX {
           state._currentType = state._nextType;
           state._particles = state._currentType
             ? state._createParticles(state._currentType, canvas) : [];
+          state._particlesByType = state._currentType ? state._bucketize(state._particles) : {};
           if (state._currentType) {
             const fadeIn = () => {
               if (state._fadeGen !== gen) return;
@@ -230,6 +243,7 @@ export class WeatherFX {
     // First time — just start
     state._currentType = type;
     state._particles = type ? state._createParticles(type, canvas) : [];
+    state._particlesByType = type ? state._bucketize(state._particles) : {};
     state._alpha = 1;
 
     if (!state._animFrameId) {
@@ -456,6 +470,15 @@ export class WeatherFX {
     return particles;
   }
 
+  _bucketize(arr) {
+    const b = {};
+    for (const p of arr) {
+      if (!b[p.kind]) b[p.kind] = [];
+      b[p.kind].push(p);
+    }
+    return b;
+  }
+
   // ---- Private: lightning bolt generation (from v9 generateBolt) ----
 
   _generateBolt(x1, y1, x2, y2, depth) {
@@ -480,7 +503,7 @@ export class WeatherFX {
     // ---- Day overlays ----
     if (this._overlayType === 'sunrays') {
       const rayColor = light ? 'rgba(255,190,50,1)' : 'rgba(255,220,100,1)';
-      this._overlayParticles.filter(p => p.kind === 'ray').forEach(p => {
+      (this._overlayParticlesByType.ray || []).forEach(p => {
         const pulse = 0.7 + 0.3 * Math.sin(now * 0.001 * p.speed + p.phase);
         const cx = w * 0.85, cy = 0;
         const a1 = p.angle - p.width / 2, a2 = p.angle + p.width / 2;
@@ -495,7 +518,7 @@ export class WeatherFX {
         ctx.fill();
       });
       const moteColor = light ? 'rgba(200,160,40,' : 'rgba(255,200,80,';
-      this._overlayParticles.filter(p => p.kind === 'mote').forEach(p => {
+      (this._overlayParticlesByType.mote || []).forEach(p => {
         p.phase += 0.01;
         p.x += p.vx + Math.sin(p.phase) * 0.2;
         p.y += p.vy;
@@ -514,7 +537,7 @@ export class WeatherFX {
 
     if (this._overlayType === 'diffuse') {
       const haloColor = light ? 'rgba(240,215,130,1)' : 'rgba(255,225,160,1)';
-      this._overlayParticles.forEach(p => {
+      (this._overlayParticlesByType.halo || []).forEach(p => {
         p.x += p.vx;
         p.phase += p.breatheSpeed;
         if (p.x > w + p.rx) p.x = -p.rx;
@@ -539,7 +562,7 @@ export class WeatherFX {
     // Aurora bands
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
-    this._overlayParticles.filter(p => p.kind === 'aurora').forEach(p => {
+    (this._overlayParticlesByType.aurora || []).forEach(p => {
       p.phase += p.speed;
       ctx.globalAlpha = scale * p.o * overlayAurDim;
       ctx.beginPath();
@@ -558,7 +581,7 @@ export class WeatherFX {
     ctx.shadowBlur = 0;
 
     // Twinkling stars — dimmed by moonlight
-    this._overlayParticles.filter(p => p.kind === 'star').forEach(p => {
+    (this._overlayParticlesByType.star || []).forEach(p => {
       p.phase += p.speed * 0.02;
       const twinkle = 0.2 + 0.8 * ((Math.sin(p.phase) + 1) / 2);
       ctx.globalAlpha = scale * twinkle * p.brightness * 0.5 * overlayStarDim;
@@ -569,7 +592,7 @@ export class WeatherFX {
     });
 
     // Shooting star
-    const ss = this._overlayParticles.find(p => p.kind === 'shootingStar');
+    const ss = (this._overlayParticlesByType.shootingStar || [])[0];
     if (ss) {
       ss.timer++;
       if (ss.active) {
@@ -721,7 +744,7 @@ export class WeatherFX {
     if (state._currentType === 'sunny') {
       // God rays
       const rayColor = light ? 'rgba(255,190,50,1)' : 'rgba(255,220,100,1)';
-      state._particles.filter(p => p.kind === 'ray').forEach(p => {
+      (state._particlesByType.ray || []).forEach(p => {
         const pulse = 0.7 + 0.3 * Math.sin(now * 0.001 * p.speed + p.phase);
         const cx = w * 0.85, cy = 0;
         const a1 = p.angle - p.width / 2, a2 = p.angle + p.width / 2;
@@ -739,7 +762,7 @@ export class WeatherFX {
       // Dust motes with gentle drift
       const moteColor = light ? 'rgba(200,160,40,' : 'rgba(255,200,80,';
       const moteShadow = light ? 'rgba(200,160,40,0.2)' : 'rgba(255,200,80,0.3)';
-      state._particles.filter(p => p.kind === 'mote').forEach(p => {
+      (state._particlesByType.mote || []).forEach(p => {
         p.phase += 0.01;
         p.x += p.vx + Math.sin(p.phase) * 0.2;
         p.y += p.vy;
@@ -760,7 +783,7 @@ export class WeatherFX {
       const dropColor = light
         ? (night ? 'rgba(30,50,105,1)' : 'rgba(55,80,145,1)')
         : (night ? 'rgba(85,115,175,1)' : 'rgba(120,155,210,1)');
-      state._particles.filter(p => p.kind === 'drop').forEach(p => {
+      (state._particlesByType.drop || []).forEach(p => {
         p.x -= p.speed * p.wind;
         p.y += p.speed;
         if (p.y > h + 20) { p.y = -20; p.x = Math.random() * w; }
@@ -773,7 +796,7 @@ export class WeatherFX {
         ctx.lineTo(p.x + p.len * p.wind, p.y - p.len);
         ctx.stroke();
       });
-      state._particles.filter(p => p.kind === 'ripple').forEach(p => {
+      (state._particlesByType.ripple || []).forEach(p => {
         p.life++;
         if (p.life > p.lifespan) {
           p.life = 0; p.r = 0; p.x = Math.random() * w;
@@ -796,7 +819,7 @@ export class WeatherFX {
         ? (night ? 'rgba(50,70,120,1)' : 'rgba(80,110,160,1)')
         : (night ? 'rgba(100,130,190,1)' : 'rgba(150,180,220,1)');
       const rippleColor = dropColor;
-      state._particles.filter(p => p.kind === 'drop').forEach(p => {
+      (state._particlesByType.drop || []).forEach(p => {
         p.x -= p.speed * p.wind;
         p.y += p.speed;
         if (p.y > h + 20) { p.y = -20; p.x = Math.random() * w; }
@@ -810,7 +833,7 @@ export class WeatherFX {
         ctx.stroke();
       });
       // Splash ripples
-      state._particles.filter(p => p.kind === 'ripple').forEach(p => {
+      (state._particlesByType.ripple || []).forEach(p => {
         p.life++;
         if (p.life > p.lifespan) {
           p.life = 0; p.r = 0; p.x = Math.random() * w;
@@ -827,7 +850,7 @@ export class WeatherFX {
         ctx.stroke();
       });
       // Lightning bolt + flash for storms
-      const lp = state._particles.find(p => p.kind === 'lightning');
+      const lp = (state._particlesByType.lightning || [])[0];
       if (lp) {
         lp.timer++;
         if (lp.flashAlpha > 0) {
@@ -869,7 +892,7 @@ export class WeatherFX {
       // Aurora borealis
       ctx.save();
       ctx.globalCompositeOperation = 'lighter';
-      state._particles.filter(p => p.kind === 'aurora').forEach(p => {
+      (state._particlesByType.aurora || []).forEach(p => {
         p.phase += p.speed;
         ctx.globalAlpha = state._alpha * p.o * auroraDim;
         ctx.beginPath();
@@ -887,7 +910,7 @@ export class WeatherFX {
       ctx.restore();
       ctx.shadowBlur = 0;
       // Twinkling stars — dimmed by moonlight
-      state._particles.filter(p => p.kind === 'star').forEach(p => {
+      (state._particlesByType.star || []).forEach(p => {
         p.phase += p.speed * 0.02;
         const twinkle = 0.2 + 0.8 * ((Math.sin(p.phase) + 1) / 2);
         ctx.globalAlpha = state._alpha * twinkle * p.brightness * 0.5 * starDim;
@@ -910,7 +933,7 @@ export class WeatherFX {
         }
       });
       // Shooting star — less frequent in bright moonlight
-      const ss = state._particles.find(p => p.kind === 'shootingStar');
+      const ss = (state._particlesByType.shootingStar || [])[0];
       if (ss) {
         ss.timer++;
         if (ss.active) {
@@ -941,7 +964,7 @@ export class WeatherFX {
       const flakeColor = light
         ? (night ? 'rgba(100,110,140,' : 'rgba(140,150,170,')
         : (night ? 'rgba(180,195,230,' : 'rgba(255,255,255,');
-      state._particles.filter(p => p.kind === 'flake').forEach(p => {
+      (state._particlesByType.flake || []).forEach(p => {
         p.y += p.vy;
         p.sway += p.swaySpeed * 0.02;
         p.x += Math.sin(p.sway) * p.swayAmp + p.windDrift;
@@ -952,7 +975,7 @@ export class WeatherFX {
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
         ctx.fill();
       });
-      state._particles.filter(p => p.kind === 'bokeh').forEach(p => {
+      (state._particlesByType.bokeh || []).forEach(p => {
         p.x += p.vx; p.y += p.vy;
         if (p.y > h + 30) { p.y = -30; p.x = Math.random() * w; }
         ctx.globalAlpha = state._alpha * p.o;
@@ -974,7 +997,7 @@ export class WeatherFX {
       const fogColor = light
         ? (night ? 'rgba(90,90,110,1)' : 'rgba(160,160,170,1)')
         : (night ? 'rgba(120,120,140,1)' : 'rgba(200,200,210,1)');
-      state._particles.forEach(p => {
+      (state._particlesByType.fogBlob || []).forEach(p => {
         p.x += p.vx;
         if (p.x > w + p.rx) p.x = -p.rx;
         if (p.x < -p.rx) p.x = w + p.rx;
@@ -990,7 +1013,7 @@ export class WeatherFX {
       const cloudColor = light
         ? (night ? 'rgba(80,85,110,1)' : 'rgba(140,145,165,1)')
         : (night ? 'rgba(110,115,145,1)' : 'rgba(180,185,200,1)');
-      state._particles.forEach(p => {
+      (state._particlesByType.cloud || []).forEach(p => {
         p.x += p.vx;
         if (p.x > w + p.rx) p.x = -p.rx;
         ctx.globalAlpha = state._alpha * p.o;
@@ -1006,7 +1029,7 @@ export class WeatherFX {
       const dropColor = light
         ? (night ? 'rgba(60,85,130,1)' : 'rgba(100,130,180,1)')
         : (night ? 'rgba(110,140,190,1)' : 'rgba(160,190,230,1)');
-      state._particles.filter(p => p.kind === 'drop').forEach(p => {
+      (state._particlesByType.drop || []).forEach(p => {
         p.x -= p.speed * p.wind;
         p.y += p.speed;
         if (p.y > h + 20) { p.y = -20; p.x = Math.random() * w; }
@@ -1023,7 +1046,7 @@ export class WeatherFX {
       const pelletColor = light
         ? (night ? 'rgba(120,140,170,1)' : 'rgba(180,200,230,1)')
         : (night ? 'rgba(160,180,220,1)' : 'rgba(220,235,255,1)');
-      state._particles.filter(p => p.kind === 'pellet').forEach(p => {
+      (state._particlesByType.pellet || []).forEach(p => {
         p.x += p.vx;
         p.y += p.speed;
         if (p.y > h + 10) { p.y = -10; p.x = Math.random() * w; }
@@ -1036,7 +1059,7 @@ export class WeatherFX {
         ctx.fill();
       });
       // Splash ripples
-      state._particles.filter(p => p.kind === 'ripple').forEach(p => {
+      (state._particlesByType.ripple || []).forEach(p => {
         p.life++;
         if (p.life > p.lifespan) {
           p.life = 0; p.r = 0; p.x = Math.random() * w;
