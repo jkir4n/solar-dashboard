@@ -455,14 +455,25 @@ export class WeatherFX {
         }
       });
     } else if (type === 'cloudy') {
-      // Soft drifting cloud ellipses
-      for (let i = 0; i < 8; i++) {
-        particles.push({
-          kind: 'cloud', x: Math.random() * w, y: h * (0.1 + Math.random() * 0.5),
-          rx: 100 + Math.random() * 200, ry: 40 + Math.random() * 60,
-          vx: 0.1 + Math.random() * 0.3, o: 0.06 + Math.random() * 0.04
-        });
-      }
+      // 2 depth layers: far (small, slow) and near (large, fast)
+      const LAYERS = [
+        { count: 4, scale: 0.65, speed: 0.12, alpha: 0.55, yRange: [0.05, 0.45] },
+        { count: 4, scale: 1.0,  speed: 0.22, alpha: 0.80, yRange: [0.10, 0.50] },
+      ];
+      LAYERS.forEach((layer, li) => {
+        for (let ci = 0; ci < layer.count; ci++) {
+          const r = (80 + Math.random() * 60) * layer.scale;
+          particles.push({
+            kind: 'cloud',
+            x: Math.random() * w,
+            y: h * (layer.yRange[0] + Math.random() * (layer.yRange[1] - layer.yRange[0])),
+            r,          // base radius — lobes scale from this
+            vx: layer.speed * (0.8 + Math.random() * 0.4),
+            alpha: layer.alpha,
+            layer: li
+          });
+        }
+      });
     } else if (type === 'sunrays') {
       // Soft god rays peeking through cloud gaps
       for (let i = 0; i < 4; i++) {
@@ -1209,17 +1220,64 @@ export class WeatherFX {
       ctx.globalAlpha = state._alpha;
 
     } else if (state._currentType === 'cloudy') {
-      const cloudColor = light
-        ? (night ? 'rgba(80,85,110,1)' : 'rgba(140,145,165,1)')
-        : (night ? 'rgba(110,115,145,1)' : 'rgba(180,185,200,1)');
-      (state._particlesByType.cloud || []).forEach(p => {
+      // Lobe offsets relative to cloud center (cumulus silhouette: flat base, bumpy top)
+      const LOBES = [
+        { dx:  0,     dy:  0,    rs: 1.00 }, // center
+        { dx: -0.50,  dy: -0.35, rs: 0.80 }, // left crown
+        { dx:  0.50,  dy: -0.35, rs: 0.80 }, // right crown
+        { dx:  0,     dy:  0.25, rs: 0.60 }, // base bulge
+      ];
+      // Sort by layer (far → near) for correct depth order
+      const clouds = [...(state._particlesByType.cloud || [])].sort((a, b) => a.layer - b.layer);
+      clouds.forEach(p => {
         p.x += p.vx;
-        if (p.x > w + p.rx) p.x = -p.rx;
-        ctx.globalAlpha = state._alpha * p.o;
-        ctx.fillStyle = cloudColor;
+        if (p.x > w + p.r * 2) p.x = -p.r * 2;
+        const baseAlpha = state._alpha * p.alpha;
+        // Pass 1 (lighter): bright lobe fills
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        LOBES.forEach(lobe => {
+          const lx = p.x + lobe.dx * p.r, ly = p.y + lobe.dy * p.r, lr = p.r * lobe.rs;
+          const grd = ctx.createRadialGradient(lx, ly, 0, lx, ly, lr);
+          grd.addColorStop(0,    light ? `rgba(200,200,210,${baseAlpha * 0.6})` : `rgba(255,255,255,${baseAlpha * 0.5})`);
+          grd.addColorStop(0.4,  light ? `rgba(190,190,205,${baseAlpha * 0.35})` : `rgba(245,248,255,${baseAlpha * 0.3})`);
+          grd.addColorStop(0.75, light ? `rgba(180,185,200,${baseAlpha * 0.10})` : `rgba(200,220,245,${baseAlpha * 0.08})`);
+          grd.addColorStop(1,    'rgba(0,0,0,0)');
+          ctx.fillStyle = grd;
+          ctx.beginPath();
+          ctx.arc(lx, ly, lr, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        ctx.restore();
+        // Pass 2 (multiply): shadow interior — darkens overlapping lobe regions
+        ctx.save();
+        ctx.globalCompositeOperation = 'multiply';
+        LOBES.forEach(lobe => {
+          const lx = p.x + lobe.dx * p.r, ly = p.y + lobe.dy * p.r, lr = p.r * lobe.rs * 0.7;
+          const sgrd = ctx.createRadialGradient(lx, ly, 0, lx, ly, lr);
+          const sd = night ? 0.25 : 0.18;
+          sgrd.addColorStop(0,   `rgba(80,100,130,${sd})`);
+          sgrd.addColorStop(0.6, `rgba(80,100,130,${sd * 0.3})`);
+          sgrd.addColorStop(1,   'rgba(80,100,130,0)');
+          ctx.fillStyle = sgrd;
+          ctx.beginPath();
+          ctx.arc(lx, ly, lr, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        ctx.restore();
+        // Pass 3 (screen): top highlight — sun catches crown
+        ctx.save();
+        ctx.globalCompositeOperation = 'screen';
+        const hx = p.x - p.r * 0.15, hy = p.y - p.r * 0.25, hr = p.r * 0.3;
+        const hgrd = ctx.createRadialGradient(hx, hy, 0, hx, hy, hr);
+        const ha = state._alpha * (night ? 0.04 : 0.12);
+        hgrd.addColorStop(0, `rgba(255,255,240,${ha})`);
+        hgrd.addColorStop(1, 'rgba(255,255,240,0)');
+        ctx.fillStyle = hgrd;
         ctx.beginPath();
-        ctx.ellipse(p.x, p.y, p.rx, p.ry, 0, 0, Math.PI * 2);
+        ctx.arc(hx, hy, hr, 0, Math.PI * 2);
         ctx.fill();
+        ctx.restore();
       });
       ctx.globalAlpha = state._alpha;
 
