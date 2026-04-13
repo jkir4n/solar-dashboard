@@ -77,6 +77,7 @@ export class WeatherFX {
     this._overlayParticlesByType = {}; // same for overlay particles
     this._flashAlpha = 0;              // reserved for Task 7
     this._flashDecay = 0;
+    this._boltCache = null;
     this._rainbowFade = 0;             // reserved for Task 9
   }
 
@@ -167,7 +168,7 @@ export class WeatherFX {
     this._overlayParticlesByType = {};
     this._overlayType = null;
     this._overlayAlpha = 0;
-    this._flashAlpha = 0; this._flashDecay = 0; this._rainbowFade = 0;
+    this._flashAlpha = 0; this._flashDecay = 0; this._rainbowFade = 0; this._boltCache = null;
     if (this.ctx && this.canvas) {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
@@ -508,13 +509,36 @@ export class WeatherFX {
 
   // ---- Private: lightning bolt generation (from v9 generateBolt) ----
 
-  _generateBolt(x1, y1, x2, y2, depth) {
-    if (depth === 0) return [{ x: x1, y: y1 }, { x: x2, y: y2 }];
+  _generateBolt(x1, y1, x2, y2, depth, baseAlpha = 1.0) {
+    if (depth === 0) return { points: [{ x: x1, y: y1 }, { x: x2, y: y2 }], branches: [], baseAlpha, decayMult: 1 };
     const mx = (x1 + x2) / 2 + (Math.random() - 0.5) * Math.abs(y2 - y1) * 0.4;
     const my = (y1 + y2) / 2;
-    const left = this._generateBolt(x1, y1, mx, my, depth - 1);
-    const right = this._generateBolt(mx, my, x2, y2, depth - 1);
-    return left.concat(right.slice(1));
+    const left  = this._generateBolt(x1, y1, mx, my, depth - 1, baseAlpha);
+    const right = this._generateBolt(mx, my, x2, y2, depth - 1, baseAlpha);
+    const allPoints = left.points.concat(right.points.slice(1));
+    const branches = [...left.branches, ...right.branches];
+    // 30% chance of child branch at this midpoint
+    if (depth >= 2 && Math.random() < 0.3) {
+      const angle = (Math.random() - 0.5) * Math.PI / 3; // ±30° from vertical
+      const len = Math.abs(y2 - y1) * (0.5 + Math.random() * 0.2);
+      const ex = mx + Math.sin(angle) * len * 0.5;
+      const ey = my + len;
+      const child = this._generateBolt(mx, my, ex, ey, depth - 2, baseAlpha * (0.4 + Math.random() * 0.2));
+      child.decayMult = 1.5;
+      branches.push(child);
+    }
+    return { points: allPoints, branches, baseAlpha, decayMult: 1 };
+  }
+
+  _drawBolt(ctx, boltTree, alpha) {
+    if (!boltTree || !boltTree.points.length) return;
+    ctx.globalAlpha = alpha * boltTree.baseAlpha;
+    ctx.beginPath();
+    boltTree.points.forEach((pt, i) => i === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y));
+    ctx.stroke();
+    for (const branch of boltTree.branches) {
+      this._drawBolt(ctx, branch, alpha * 0.6);
+    }
   }
 
   // ---- Private: ambient overlay (night: stars/aurora, day: sunrays/diffuse glow) ----
@@ -906,31 +930,27 @@ export class WeatherFX {
         lp.timer++;
         if (lp.flashAlpha > 0) {
           lp.flickerPhase++;
-          const flicker = lp.flickerPhase < 3 ? 1 : lp.flickerPhase < 5 ? 0.3 :
-            lp.flickerPhase < 7 ? 0.8 : Math.max(0, 1 - (lp.flickerPhase - 7) / 8);
-          ctx.globalAlpha = state._alpha * lp.flashAlpha * flicker * (light ? 0.06 : 0.12);
-          ctx.fillStyle = light ? 'rgba(0,0,0,1)' : '#fff';
-          ctx.fillRect(0, 0, w, h);
           if (lp.flickerPhase > 15) lp.flashAlpha = 0;
         }
         if (lp.bolt && lp.flashAlpha > 0) {
-          ctx.globalAlpha = state._alpha * lp.flashAlpha * 0.7;
           ctx.strokeStyle = light ? 'rgba(60,60,120,1)' : '#fff';
           ctx.lineWidth = 2;
           ctx.shadowBlur = 15;
           ctx.shadowColor = light ? 'rgba(60,60,120,0.6)' : 'rgba(180,180,255,0.8)';
-          ctx.beginPath();
-          lp.bolt.forEach((pt, i) => i === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y));
-          ctx.stroke();
+          state._drawBolt(ctx, lp.bolt, state._alpha * lp.flashAlpha * 0.7);
           ctx.shadowBlur = 0;
         }
         if (lp.timer > lp.interval) {
           lp.timer = 0;
           lp.interval = 200 + Math.random() * 500;
           const bx = w * (0.2 + Math.random() * 0.6);
-          lp.bolt = this._generateBolt(bx, 0, bx + (Math.random() - 0.5) * w * 0.2, h * 0.6, 5);
+          state._boltCache = state._generateBolt(bx, 0, bx + (Math.random() - 0.5) * w * 0.2, h * 0.6, 5);
+          lp.bolt = state._boltCache;
           lp.flashAlpha = 1;
           lp.flickerPhase = 0;
+          const peakAlpha = state._weatherCondition === 'lightning' ? 0.45 : 0.35;
+          state._flashAlpha = Math.max(state._flashAlpha, peakAlpha);
+          state._flashDecay = peakAlpha / 7.2; // ~120ms at 60fps
         }
       }
       ctx.globalAlpha = state._alpha;
@@ -1188,6 +1208,13 @@ export class WeatherFX {
         ctx.stroke();
       });
       ctx.globalAlpha = state._alpha;
+    }
+
+    if (state._flashAlpha > 0) {
+      ctx.globalAlpha = state._flashAlpha;
+      ctx.fillStyle = 'rgba(220,230,255,1)';
+      ctx.fillRect(0, 0, w, h);
+      state._flashAlpha = Math.max(0, state._flashAlpha - state._flashDecay);
     }
 
     ctx.globalAlpha = 1;
