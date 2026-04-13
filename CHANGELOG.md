@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.17.6 (2026-04-13)
+
+### Bug Fixes
+- Raise diffuse sun glow alpha to show through mesh gradient backdrop
+
+
 ## v0.17.5 (2026-04-13)
 
 ### Bug Fixes
