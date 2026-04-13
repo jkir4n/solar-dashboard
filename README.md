@@ -8,8 +8,10 @@ A real-time solar monitoring dashboard for Home Assistant, built as a HACS-compa
 - NOAA/Meeus solar position and irradiance calculations
 - Weather-adjusted solar generation forecasts
 - Procedural weather particle effects (rain, snow, stars, clouds, lightning, fog)
-- Real-time sun disc with elevation-based colour shift (orange at horizon → white at zenith)
+- Real-time sun disc with elevation-based colour shift (orange at horizon → white at zenith) and cloud occlusion
 - Real-time moon disc with Meeus lunar position, phase brightness, and cloud occlusion
+- Day overlay: sun rays rendered behind all daytime conditions, alpha scaled by cloud cover
+- Night overlay: stars and aurora rendered behind all night conditions, dimmed by moon brightness
 - Wind-reactive rain and snow particles driven by live wind speed from weather entity
 - Custom canvas charts with crosshair/tooltip (Live, Yesterday, 7D, 30D ranges)
 - Power flow animation between solar, battery, and load
@@ -77,11 +79,15 @@ The dashboard auto-creates the following HA helpers on first load (requires admi
 
 | Helper | Default | Range | Unit | Description |
 |--------|---------|-------|------|-------------|
-| `input_number.solar_panel_count` | 6 | 1-100 | panels | Number of solar panels |
-| `input_number.solar_panel_rated_watts` | 585 | 50-1000 | W | Rated wattage per panel |
-| `input_number.solar_panel_efficiency` | 22.6 | 5-30 | % | Panel efficiency |
-| `input_number.solar_panel_tilt` | 7.5 | 0-90 | degrees | Panel tilt angle |
-| `input_number.solar_panel_azimuth` | 220 | 0-360 | degrees | Panel azimuth (south=180) |
+| `input_number.solar_panel_count` | 6 | 1–100 | panels | Number of solar panels |
+| `input_number.solar_panel_rated_watts` | 585 | 50–1000 | W | Rated wattage per panel |
+| `input_number.solar_panel_efficiency` | 22.6 | 5–30 | % | Panel efficiency |
+| `input_number.solar_panel_tilt` | 7.5 | 0–90 | ° | Panel tilt angle |
+| `input_number.solar_panel_azimuth` | 220 | 0–360 | ° | Panel azimuth (south=180) |
+| `input_number.solar_panel_width` | 2.278 | 0.5–3 | m | Panel width (for area calculation) |
+| `input_number.solar_panel_height` | 1.134 | 0.5–2 | m | Panel height (for area calculation) |
+| `input_text.solar_panel_model` | NOVA585TG144 | — | — | Panel model name (display only) |
+| `input_text.solar_panel_type` | TOPCon | — | — | Panel technology type (display only) |
 
 If you are not an admin user, helpers cannot be auto-created. The dashboard will use hardcoded defaults and log a warning. An admin can create the helpers manually via Settings -> Helpers.
 
