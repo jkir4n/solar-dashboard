@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Implement 9 weather effect improvements to `src/weather-fx.js`: particle bucketing, star colour variance, smooth aurora, hexagonal snowflakes, stratified fog, bokeh aperture blades, lightning screen flash, solar/lunar halo, and rainbow arc.
+**Goal:** Implement 12 weather effect improvements: particle bucketing, star colour variance, smooth aurora with curtain effect, hexagonal snowflakes, stratified fog, bokeh aperture blades, lightning screen flash with branching bolts, solar/lunar halo, rainbow arc, volumetric clouds, continuous cloud-coverage dimming, and wind bearing particle direction.
 
-**Architecture:** All changes isolated to `src/weather-fx.js`. No new files, no changes to other source files. Implement in dependency order — particle bucketing first (all subsequent render tasks benefit), then visual effects in sequence.
+**Architecture:** Tasks 1–9 are isolated to `src/weather-fx.js`. Tasks 10–12 also touch `src/solar-dashboard.js` (to pass new parameters). Implement in dependency order — particle bucketing first, then visual effects, cloud coverage dimming last (depends on solar-dashboard.js changes).
 
 **Tech Stack:** HTML5 Canvas 2D API, vanilla JS ES modules, Rollup (`npm run build`)
 
@@ -14,7 +14,8 @@
 
 | File | Changes |
 |------|---------|
-| `src/weather-fx.js` | All 9 tasks — constructor properties, `_createParticles`, `_renderOverlay`, `_render`, `_startParticles`, `stop`, `resize` |
+| `src/weather-fx.js` | Tasks 1–12 — constructor properties, `_createParticles`, `_renderOverlay`, `_render`, `_startParticles`, `stop`, `resize`, `start` signature |
+| `src/solar-dashboard.js` | Tasks 11–12 — pass `cloudCoverage` and `windBearing` attributes into `WeatherFX.start()` |
 | `dist/solar-dashboard.js` | Rebuilt after every task (`npm run build`) |
 
 ---
@@ -128,7 +129,47 @@ npm run build
 
 - [ ] **Step 10: Visual verify** — Open HA dashboard and cycle through conditions (sunny, rainy, storm, snowy, fog, clear-night). All effects should be unchanged.
 
-- [ ] **Step 11: Commit**
+- [ ] **Step 11: God rays — track sun position** (bonus addition to this task)
+
+In `_renderOverlay`, the `sunrays` overlay type currently hardcodes the ray origin at `cx = w * 0.85, cy = 0`. Replace with the live sun position:
+
+```js
+// OLD:
+const cx = w * 0.85, cy = 0;
+
+// NEW — origin tracks the actual sun disc:
+const elev = this._sunElevation > 0 ? this._sunElevation : 5;
+const cx = w * (this._sunAzimuth / 360);
+const cy = Math.max(0, h * (0.8 - elev / 90 * 0.75) - 10);
+```
+
+Also in `_createParticles` for `sunny` type, replace the hardcoded ray angles with a fan that radiates outward from the sun position. Rays should spread in all directions from (cx, cy), adapting count and spread with elevation:
+```js
+// Ray spread adapts with elevation — wide at horizon, tight at zenith
+const spread = 0.15 + (90 - elev) / 90 * 0.25; // radians
+const rayCount = Math.round(8 + elev / 90 * 12);  // 8 (zenith) → 20 (horizon)
+// Replace fixed 5-ray loop with rayCount rays:
+for (let i = 0; i < rayCount; i++) {
+  particles.push({
+    kind: 'ray',
+    angle: -Math.PI + (i / rayCount) * Math.PI * 2, // full 360° fan from sun
+    width: 0.04 + Math.random() * 0.06,
+    o: 0.025 + Math.random() * 0.025,
+    phase: Math.random() * Math.PI * 2,
+    speed: 0.2 + Math.random() * 0.3
+  });
+}
+```
+Note: `elev` and sun position are available at render time via `this._sunElevation` and `this._sunAzimuth`, but `_createParticles` runs at creation time. Store `cx`/`cy` computation in render using live values — ray angles in particles are relative offsets, actual origin is computed each frame.
+
+- [ ] **Step 12: Build**
+```bash
+npm run build
+```
+
+- [ ] **Step 13: Visual verify** — On `sunny` or `partlycloudy` conditions, rays should radiate from the sun disc position rather than top-right corner.
+
+- [ ] **Step 14: Commit**
 ```bash
 git add src/weather-fx.js dist/solar-dashboard.js
 git commit -m "perf: particle type buckets eliminate per-frame filter calls"
@@ -188,21 +229,23 @@ git commit -m "feat: star colour variance by spectral class"
 
 ---
 
-## Task 3: Smooth Aurora + Vertical Oscillation (8 + 9c)
+## Task 3: Smooth Aurora + Curtain Effect (8 + 9c)
 
-Replace per-pixel `lineTo` loop with `quadraticCurveTo` across 10 control points. Add bounded vertical oscillation around fixed `yBaseInitial`.
+Replace per-pixel `lineTo` loop with `quadraticCurveTo` across 10 control points. Add vertical oscillation, per-band vertical gradient (curtain fade), red lower fringe, and extended spectral hue palette.
 
 **Files:**
 - Modify: `src/weather-fx.js:368-376` (aurora creation), `542-556` (_renderOverlay aurora), `871-887` (_render night aurora)
 
-- [ ] **Step 1: Add `yBaseInitial` to aurora creation** (line ~370 in _createParticles night type)
+- [ ] **Step 1: Update aurora creation** (line ~370 in _createParticles night type)
 
-Replace aurora push with:
+Replace aurora push with extended hue palette and `yBaseInitial`:
 ```js
+// Extended aurora hue palette: green (dominant), cyan, blue-violet, purple, rare red
+const AURORA_HUES = [120, 120, 120, 180, 240, 270]; // weighted toward green
 const yBase = h * (0.08 + i * 0.07);
 particles.push({
   kind: 'aurora', yBase, yBaseInitial: yBase,
-  hue: 120 + i * 30,
+  hue: AURORA_HUES[Math.floor(Math.random() * AURORA_HUES.length)],
   amplitude: 15 + Math.random() * 25, freq: 0.002 + Math.random() * 0.002,
   phase: Math.random() * Math.PI * 2, speed: 0.003 + Math.random() * 0.003,
   thickness: 30 + Math.random() * 40, o: 0.06 + Math.random() * 0.04
@@ -211,13 +254,14 @@ particles.push({
 
 - [ ] **Step 2: Replace per-pixel loop in `_renderOverlay`** (lines 542-556)
 
-Replace the entire aurora forEach block (lines 542-556) with:
+Replace the entire aurora forEach block with quadraticCurveTo + vertical curtain gradient:
 ```js
 (this._overlayParticlesByType.aurora || []).forEach((p, bandIndex) => {
   p.phase += p.speed;
   const t = p.phase;
   const yBase = p.yBaseInitial + Math.sin(t * 0.015 + bandIndex * 0.8) * 12;
   const lineWidth = 6 + 4 * Math.sin(t * 0.03 + bandIndex);
+  const halfW = lineWidth / 2;
   // Build 10 control points
   const pts = [];
   for (let i = 0; i <= 9; i++) {
@@ -227,6 +271,13 @@ Replace the entire aurora forEach block (lines 542-556) with:
       + Math.sin(x * p.freq * 2.3 + t * 1.7) * p.amplitude * 0.3;
     pts.push({ x, y });
   }
+  // Vertical curtain gradient: transparent top → core colour → red fringe at bottom
+  const midY = pts[Math.floor(pts.length / 2)].y;
+  const grad = ctx.createLinearGradient(0, midY - halfW, 0, midY + halfW);
+  grad.addColorStop(0,   `hsla(${p.hue}, 80%, 60%, 0)`);
+  grad.addColorStop(0.35, `hsla(${p.hue}, 85%, 60%, 1)`);
+  grad.addColorStop(0.7,  `hsla(${p.hue}, 80%, 55%, 0.8)`);
+  grad.addColorStop(1,    `hsla(0, 80%, 50%, 0.4)`); // red lower fringe
   ctx.globalAlpha = scale * p.o * overlayAurDim;
   ctx.beginPath();
   ctx.moveTo(pts[0].x, pts[0].y);
@@ -236,7 +287,7 @@ Replace the entire aurora forEach block (lines 542-556) with:
     ctx.quadraticCurveTo(pts[i].x, pts[i].y, mx, my);
   }
   ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
-  ctx.strokeStyle = `hsla(${p.hue}, 80%, 60%, 1)`;
+  ctx.strokeStyle = grad;
   ctx.lineWidth = lineWidth;
   ctx.shadowBlur = lineWidth * 1.5;
   ctx.shadowColor = `hsla(${p.hue}, 80%, 50%, 0.5)`;
@@ -246,14 +297,14 @@ Replace the entire aurora forEach block (lines 542-556) with:
 
 - [ ] **Step 3: Replace per-pixel loop in `_render` night section** (lines 871-887)
 
-Replace the aurora forEach block (lines 872-887) with the same quadraticCurveTo logic. Use `state._particlesByType.aurora || []` instead of `this._overlayParticlesByType.aurora`, use `auroraDim` instead of `overlayAurDim`, and `state._alpha * p.o * auroraDim` instead of `scale * p.o * overlayAurDim`.
-
+Apply identical logic using `state._particlesByType.aurora || []`, `auroraDim`, and `state._alpha * p.o * auroraDim`:
 ```js
 (state._particlesByType.aurora || []).forEach((p, bandIndex) => {
   p.phase += p.speed;
   const t = p.phase;
   const yBase = p.yBaseInitial + Math.sin(t * 0.015 + bandIndex * 0.8) * 12;
   const lineWidth = 6 + 4 * Math.sin(t * 0.03 + bandIndex);
+  const halfW = lineWidth / 2;
   const pts = [];
   for (let i = 0; i <= 9; i++) {
     const x = w * i / 9;
@@ -262,6 +313,12 @@ Replace the aurora forEach block (lines 872-887) with the same quadraticCurveTo 
       + Math.sin(x * p.freq * 2.3 + t * 1.7) * p.amplitude * 0.3;
     pts.push({ x, y });
   }
+  const midY = pts[Math.floor(pts.length / 2)].y;
+  const grad = ctx.createLinearGradient(0, midY - halfW, 0, midY + halfW);
+  grad.addColorStop(0,    `hsla(${p.hue}, 80%, 60%, 0)`);
+  grad.addColorStop(0.35, `hsla(${p.hue}, 85%, 60%, 1)`);
+  grad.addColorStop(0.7,  `hsla(${p.hue}, 80%, 55%, 0.8)`);
+  grad.addColorStop(1,    `hsla(0, 80%, 50%, 0.4)`);
   ctx.globalAlpha = state._alpha * p.o * auroraDim;
   ctx.beginPath();
   ctx.moveTo(pts[0].x, pts[0].y);
@@ -271,7 +328,7 @@ Replace the aurora forEach block (lines 872-887) with the same quadraticCurveTo 
     ctx.quadraticCurveTo(pts[i].x, pts[i].y, mx, my);
   }
   ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
-  ctx.strokeStyle = `hsla(${p.hue}, 80%, 60%, 1)`;
+  ctx.strokeStyle = grad;
   ctx.lineWidth = lineWidth;
   ctx.shadowBlur = lineWidth * 1.5;
   ctx.shadowColor = `hsla(${p.hue}, 80%, 50%, 0.5)`;
@@ -504,26 +561,66 @@ git commit -m "feat: bokeh hexagonal aperture blade lines"
 
 ---
 
-## Task 7: Lightning Screen Flash + Bolt Cache (1 + 9a)
+## Task 7: Lightning Screen Flash + Branching Bolts + Bolt Cache (1 + 9a)
 
-Replace existing per-bolt low-alpha flicker with a class-level 120ms white screen flash. Cache bolt path at class level so segments persist across particle rebuilds (resize/stop).
+Replace existing per-bolt low-alpha flicker with a class-level 120ms white screen flash. Add 30% child branch probability to `_generateBolt` — branches are shorter, dimmer, and flicker faster. Cache bolt tree at class level.
 
 **Files:**
-- Modify: `src/weather-fx.js:52-76` (constructor — already done in Task 1), `830-861` (lightning render in `_render`), `1055-1059` (end of `_render`)
+- Modify: `src/weather-fx.js:52-76` (constructor — already done in Task 1), `461-468` (_generateBolt), `830-861` (lightning render in `_render`), `1055-1059` (end of `_render`)
 
 Note: `_flashAlpha` and `_flashDecay` were already added to the constructor and `stop()` in Task 1.
 
-- [ ] **Step 1: Add `_boltCache` to constructor** (after `_flashDecay` line added in Task 1)
+- [ ] **Step 1: Add `_boltCache` to constructor**
 
 ```js
 this._boltCache = null;
 ```
+Also add `this._boltCache = null;` to `stop()`.
 
-Also add `this._boltCache = null;` to `stop()` alongside the other resets.
+- [ ] **Step 2: Change `_generateBolt` to return a branch tree** (lines 461-468)
 
-- [ ] **Step 2: Modify the bolt-fire trigger to cache bolt and set class-level flash** (lines 853-860)
+Replace `_generateBolt` with a version that returns `{points, branches[], baseAlpha, decayMult}`:
+```js
+_generateBolt(x1, y1, x2, y2, depth, baseAlpha = 1.0) {
+  if (depth === 0) return { points: [{ x: x1, y: y1 }, { x: x2, y: y2 }], branches: [], baseAlpha, decayMult: 1 };
+  const mx = (x1 + x2) / 2 + (Math.random() - 0.5) * Math.abs(y2 - y1) * 0.4;
+  const my = (y1 + y2) / 2;
+  const left  = this._generateBolt(x1, y1, mx, my, depth - 1, baseAlpha);
+  const right = this._generateBolt(mx, my, x2, y2, depth - 1, baseAlpha);
+  const allPoints = left.points.concat(right.points.slice(1));
+  const branches = [...left.branches, ...right.branches];
+  // 30% chance of child branch at this midpoint
+  if (depth >= 2 && Math.random() < 0.3) {
+    const angle = (Math.random() - 0.5) * Math.PI / 3; // ±30° from vertical
+    const len = Math.abs(y2 - y1) * (0.5 + Math.random() * 0.2);
+    const ex = mx + Math.sin(angle) * len * 0.5;
+    const ey = my + len;
+    const child = this._generateBolt(mx, my, ex, ey, depth - 2, baseAlpha * (0.4 + Math.random() * 0.2));
+    child.decayMult = 1.5;
+    branches.push(child);
+  }
+  return { points: allPoints, branches, baseAlpha, decayMult: 1 };
+}
+```
 
-Replace the entire `if (lp.timer > lp.interval)` block with:
+- [ ] **Step 3: Add recursive bolt renderer helper** (after `_generateBolt`)
+
+```js
+_drawBolt(ctx, boltTree, alpha) {
+  if (!boltTree || !boltTree.points.length) return;
+  ctx.globalAlpha = alpha * boltTree.baseAlpha;
+  ctx.beginPath();
+  boltTree.points.forEach((pt, i) => i === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y));
+  ctx.stroke();
+  for (const branch of boltTree.branches) {
+    this._drawBolt(ctx, branch, alpha * 0.6);
+  }
+}
+```
+
+- [ ] **Step 4: Update bolt-fire trigger to use tree and set class-level flash** (lines 853-860)
+
+Replace the `if (lp.timer > lp.interval)` block with:
 ```js
 if (lp.timer > lp.interval) {
   lp.timer = 0;
@@ -539,22 +636,33 @@ if (lp.timer > lp.interval) {
 }
 ```
 
-- [ ] **Step 3: Remove the existing low-alpha screen fill** (lines 833-840)
+- [ ] **Step 5: Update bolt render to use `_drawBolt`** (lines 842-851)
 
-The existing code inside `if (lp.flashAlpha > 0)` fills the canvas with very low alpha (0.06-0.12). Remove these lines:
+Replace the existing `lp.bolt.forEach(...)` stroke block with:
 ```js
-// DELETE these 4 lines:
+if (lp.bolt && lp.flashAlpha > 0) {
+  ctx.strokeStyle = light ? 'rgba(60,60,120,1)' : '#fff';
+  ctx.lineWidth = 2;
+  ctx.shadowBlur = 15;
+  ctx.shadowColor = light ? 'rgba(60,60,120,0.6)' : 'rgba(180,180,255,0.8)';
+  state._drawBolt(ctx, lp.bolt, state._alpha * lp.flashAlpha * 0.7);
+  ctx.shadowBlur = 0;
+}
+```
+
+- [ ] **Step 6: Remove the existing low-alpha screen fill** (lines 833-840)
+
+Remove these lines from inside `if (lp.flashAlpha > 0)`:
+```js
+// DELETE:
 ctx.globalAlpha = state._alpha * lp.flashAlpha * flicker * (light ? 0.06 : 0.12);
 ctx.fillStyle = light ? 'rgba(0,0,0,1)' : '#fff';
 ctx.fillRect(0, 0, w, h);
 ```
-Keep the rest of the flicker block (bolt rendering at lines 842-851).
 
-- [ ] **Step 4: Add screen flash overlay at end of `_render`** (before `ctx.globalAlpha = 1` at line 1057)
+- [ ] **Step 7: Add screen flash overlay at end of `_render`** (before `ctx.globalAlpha = 1`)
 
-Insert before `ctx.globalAlpha = 1;`:
 ```js
-// Lightning screen flash overlay
 if (state._flashAlpha > 0) {
   ctx.globalAlpha = state._flashAlpha;
   ctx.fillStyle = 'rgba(220,230,255,1)';
@@ -563,17 +671,17 @@ if (state._flashAlpha > 0) {
 }
 ```
 
-- [ ] **Step 5: Build**
+- [ ] **Step 8: Build**
 ```bash
 npm run build
 ```
 
-- [ ] **Step 6: Visual verify** — On lightning/storm condition, each bolt strike should produce a clean blue-white flash that fades smoothly over ~120ms. `lightning` condition = slightly brighter (0.45) than `lightning-rainy` (0.35).
+- [ ] **Step 9: Visual verify** — Lightning should show branching child bolts (dimmer, diverging from main path). Each strike triggers a 120ms blue-white screen flash. `lightning` = 0.45 peak, `lightning-rainy` = 0.35.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 10: Commit**
 ```bash
 git add src/weather-fx.js dist/solar-dashboard.js
-git commit -m "feat: lightning full-screen flash overlay with 120ms fade"
+git commit -m "feat: branching lightning bolts with 120ms screen flash"
 ```
 
 ---
@@ -703,6 +811,277 @@ npm run build
 ```bash
 git add src/weather-fx.js dist/solar-dashboard.js
 git commit -m "feat: rainbow arc for rainy/pouring daytime conditions"
+```
+
+---
+
+## Task 10: Volumetric Clouds
+
+Replace 8 flat `ctx.ellipse` cloud blobs with multi-lobe cumulus shapes using radial gradient compositing passes. 2 depth layers with parallax drift for Z-depth buildup.
+
+**Files:**
+- Modify: `src/weather-fx.js` — `_createParticles` cloudy type (~lines 415-423), cloudy render block (~lines 989-1002)
+
+- [ ] **Step 1: Replace cloudy particle creation** (lines ~415-423)
+
+Replace the `type === 'cloudy'` block with 2-layer multi-lobe cloud objects:
+```js
+} else if (type === 'cloudy') {
+  // 2 depth layers: far (small, slow) and near (large, fast)
+  const LAYERS = [
+    { count: 4, scale: 0.65, speed: 0.12, alpha: 0.55, yRange: [0.05, 0.45] },
+    { count: 4, scale: 1.0,  speed: 0.22, alpha: 0.80, yRange: [0.10, 0.50] },
+  ];
+  LAYERS.forEach((layer, li) => {
+    for (let ci = 0; ci < layer.count; ci++) {
+      const r = (80 + Math.random() * 60) * layer.scale;
+      particles.push({
+        kind: 'cloud',
+        x: Math.random() * w,
+        y: h * (layer.yRange[0] + Math.random() * (layer.yRange[1] - layer.yRange[0])),
+        r,          // base radius — lobes scale from this
+        vx: layer.speed * (0.8 + Math.random() * 0.4),
+        alpha: layer.alpha,
+        layer: li
+      });
+    }
+  });
+```
+
+- [ ] **Step 2: Replace cloudy render block** (lines ~989-1002)
+
+Replace with multi-lobe volumetric rendering:
+```js
+} else if (state._currentType === 'cloudy') {
+  // Lobe offsets relative to cloud center (cumulus silhouette: flat base, bumpy top)
+  const LOBES = [
+    { dx:  0,     dy:  0,    rs: 1.00 }, // center
+    { dx: -0.50,  dy: -0.35, rs: 0.80 }, // left crown
+    { dx:  0.50,  dy: -0.35, rs: 0.80 }, // right crown
+    { dx:  0,     dy:  0.25, rs: 0.60 }, // base bulge
+  ];
+  // Sort by layer (far → near) for correct depth order
+  const clouds = [...(state._particlesByType.cloud || [])].sort((a, b) => a.layer - b.layer);
+  clouds.forEach(p => {
+    p.x += p.vx;
+    if (p.x > w + p.r * 2) p.x = -p.r * 2;
+    const baseAlpha = state._alpha * p.alpha;
+    // Pass 1 (lighter): bright lobe fills
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    LOBES.forEach(lobe => {
+      const lx = p.x + lobe.dx * p.r, ly = p.y + lobe.dy * p.r, lr = p.r * lobe.rs;
+      const grd = ctx.createRadialGradient(lx, ly, 0, lx, ly, lr);
+      grd.addColorStop(0,    light ? `rgba(200,200,210,${baseAlpha * 0.6})` : `rgba(255,255,255,${baseAlpha * 0.5})`);
+      grd.addColorStop(0.4,  light ? `rgba(190,190,205,${baseAlpha * 0.35})` : `rgba(245,248,255,${baseAlpha * 0.3})`);
+      grd.addColorStop(0.75, light ? `rgba(180,185,200,${baseAlpha * 0.10})` : `rgba(200,220,245,${baseAlpha * 0.08})`);
+      grd.addColorStop(1,    'rgba(0,0,0,0)');
+      ctx.fillStyle = grd;
+      ctx.beginPath();
+      ctx.arc(lx, ly, lr, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.restore();
+    // Pass 2 (multiply): shadow interior — darkens overlapping lobe regions
+    ctx.save();
+    ctx.globalCompositeOperation = 'multiply';
+    LOBES.forEach(lobe => {
+      const lx = p.x + lobe.dx * p.r, ly = p.y + lobe.dy * p.r, lr = p.r * lobe.rs * 0.7;
+      const sgrd = ctx.createRadialGradient(lx, ly, 0, lx, ly, lr);
+      const sd = night ? 0.25 : 0.18;
+      sgrd.addColorStop(0,   `rgba(80,100,130,${sd})`);
+      sgrd.addColorStop(0.6, `rgba(80,100,130,${sd * 0.3})`);
+      sgrd.addColorStop(1,   'rgba(80,100,130,0)');
+      ctx.fillStyle = sgrd;
+      ctx.beginPath();
+      ctx.arc(lx, ly, lr, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.restore();
+    // Pass 3 (screen): top highlight — sun catches crown
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    const hx = p.x - p.r * 0.15, hy = p.y - p.r * 0.25, hr = p.r * 0.3;
+    const hgrd = ctx.createRadialGradient(hx, hy, 0, hx, hy, hr);
+    const ha = state._alpha * (night ? 0.04 : 0.12);
+    hgrd.addColorStop(0, `rgba(255,255,240,${ha})`);
+    hgrd.addColorStop(1, 'rgba(255,255,240,0)');
+    ctx.fillStyle = hgrd;
+    ctx.beginPath();
+    ctx.arc(hx, hy, hr, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  });
+  ctx.globalAlpha = state._alpha;
+```
+
+- [ ] **Step 3: Build**
+```bash
+npm run build
+```
+
+- [ ] **Step 4: Visual verify** — Cloudy condition should show soft volumetric cloud shapes with visible lobe bumps, darker interiors, and a bright crown highlight. Far-layer clouds should appear smaller and lighter than near-layer.
+
+- [ ] **Step 5: Commit**
+```bash
+git add src/weather-fx.js dist/solar-dashboard.js
+git commit -m "feat: volumetric multi-lobe cloud rendering"
+```
+
+---
+
+## Task 11: Cloud Coverage % Continuous Dimming
+
+Replace discrete `SUN_CLOUD_DIM` / `MOON_CLOUD_DIM` lookup tables with a sigmoid formula derived from `cloud_coverage` attribute (0–100). Pass `cloudCoverage` through from `solar-dashboard.js`.
+
+**Files:**
+- Modify: `src/solar-dashboard.js` — `_applyWeatherBackdrop` and `WeatherFX.start()` call — pass `cloudCoverage`
+- Modify: `src/weather-fx.js` — `start()` signature, replace lookup table usages with `_calcCloudDim()`
+
+- [ ] **Step 1: Add `_calcCloudDim` to `WeatherFX`** (as a static or instance method, before `start()`)
+
+```js
+// Continuous cloud dimming from coverage % (0-100) + condition modifier
+// Sigmoid: gentle at extremes, steep mid-range — matches human perception
+_calcCloudDim(cloudCoverage, condition) {
+  const c = Math.max(0, Math.min(100, cloudCoverage ?? 50));
+  const sigmoid = 1 / (1 + Math.exp((c - 50) / 15));
+  let dim = 0.10 + sigmoid * 0.90; // [0.10, 1.0]
+  const MOD = { fog: 0.70, rainy: 0.85, pouring: 0.75, snowy: 0.80,
+                hail: 0.70, lightning: 0.65, 'lightning-rainy': 0.65 };
+  return dim * (MOD[condition] ?? 1.0);
+}
+```
+
+- [ ] **Step 2: Add `cloudCoverage` to `start()` signature**
+
+Change:
+```js
+start(weatherCondition, isNight, theme = 'dark', windSpeed = 0, moonBrightness = 0, moonElevation = -90, moonAzimuth = 180, sunElevation = -90, sunAzimuth = 180)
+```
+To:
+```js
+start(weatherCondition, isNight, theme = 'dark', windSpeed = 0, moonBrightness = 0, moonElevation = -90, moonAzimuth = 180, sunElevation = -90, sunAzimuth = 180, cloudCoverage = null)
+```
+And store: `this._cloudCoverage = cloudCoverage;`  
+Add `this._cloudCoverage = null;` to constructor.
+
+- [ ] **Step 3: Replace `SUN_CLOUD_DIM[...]` with `_calcCloudDim()` in `_render()`**
+
+Find every usage of `SUN_CLOUD_DIM[state._weatherCondition]` in the sun disc block (~line 618) and replace with:
+```js
+const cloudDim = state._calcCloudDim(state._cloudCoverage ?? null, state._weatherCondition);
+```
+
+Similarly replace `MOON_CLOUD_DIM[state._weatherCondition]` (~line 682) with:
+```js
+const cloudDim = state._calcCloudDim(state._cloudCoverage ?? null, state._weatherCondition);
+```
+
+The `SUN_CLOUD_DIM` and `MOON_CLOUD_DIM` constants at the top of the file can remain as fallback reference but are no longer used by the disc renders.
+
+- [ ] **Step 4: Pass `cloud_coverage` from `solar-dashboard.js`**
+
+In `src/solar-dashboard.js`, find the `WeatherFX.start()` call inside `_applyWeatherBackdrop` (or wherever the weather condition is applied). Add `cloudCoverage` from the weather entity attributes:
+
+```js
+// In _applyWeatherBackdrop or wherever WeatherFX.start() is called:
+const cloudCoverage = weatherAttrs.cloud_coverage ?? null; // HA provides 0-100
+this._weatherFX.start(
+  condition, isNight, theme, windSpeed,
+  moonBrightness, moonElevation, moonAzimuth,
+  sunElevation, sunAzimuth,
+  cloudCoverage   // new param
+);
+```
+
+- [ ] **Step 5: Build**
+```bash
+npm run build
+```
+
+- [ ] **Step 6: Visual verify** — Sun and moon disc brightness should vary smoothly with `cloud_coverage`. At 77% coverage (current PirateWeather reading) the sky should appear moderately dimmed. Switching between `sunny` and `partlycloudy` should show smooth dimming rather than a discrete jump.
+
+- [ ] **Step 7: Commit**
+```bash
+git add src/weather-fx.js src/solar-dashboard.js dist/solar-dashboard.js
+git commit -m "feat: continuous cloud-coverage dimming via sigmoid formula"
+```
+
+---
+
+## Task 12: Wind Bearing for Particle Direction
+
+Use `wind_bearing` (degrees: 0=N wind from north, 90=E) to set actual downwind particle direction instead of always drifting left. Affects rain, snow, fog, and sleet.
+
+**Files:**
+- Modify: `src/weather-fx.js` — `start()` signature, `_createParticles`, particle render loops
+- Modify: `src/solar-dashboard.js` — pass `windBearing` from weather entity attributes
+
+- [ ] **Step 1: Add `windBearing` to `start()` and constructor**
+
+Add `windBearing = 180` parameter to `start()` (default 180 = wind from north → blows south → particles move down, natural default). Store as `this._windBearing = windBearing;`. Add `this._windBearing = 180;` to constructor.
+
+- [ ] **Step 2: Compute downwind dx/dy in `_createParticles`**
+
+At the top of `_createParticles`, after `windFactor`, add:
+```js
+// Convert meteorological bearing to downwind canvas direction
+// Bearing = direction wind comes FROM; downwind = bearing + 180
+const downwindRad = ((this._windBearing + 180) % 360) * Math.PI / 180;
+const windDx = Math.sin(downwindRad); // +1 = right, -1 = left
+const windDy = Math.cos(downwindRad); // +1 = down (adds to fall speed)
+```
+
+- [ ] **Step 3: Apply to rain `drop` particles** (rainy/storm/pouring/sleet creation)
+
+Replace `wind: baseWind + windFactor * (maxWind - baseWind)` with directional components:
+```js
+windDx: windDx * windFactor * maxWind,  // horizontal drift per frame
+// vy (vertical fall speed) stays unchanged — windDy is small at typical bearings
+```
+
+Update rain render to use `windDx`: replace `p.x -= p.speed * p.wind` with `p.x += p.speed * p.windDx`.
+Update rain stroke angle: replace `ctx.lineTo(p.x + p.len * p.wind, p.y - p.len)` with `ctx.lineTo(p.x + p.len * p.windDx, p.y - p.len)`.
+
+- [ ] **Step 4: Apply to snow `flake` particles**
+
+Replace `windDrift: windFactor * 2.0 * (0.3 + depth * 0.7)` with:
+```js
+windDrift: windDx * windFactor * 2.0 * (0.3 + depth * 0.7),
+```
+
+- [ ] **Step 5: Apply to `fogBlob` particles**
+
+In fog creation, replace `vx: (layer.speed + ...) * (1 + windFactor * 0.3)` with:
+```js
+vx: (layer.speed * windDx + (Math.random() - 0.5) * 0.1) * (1 + windFactor * 0.3),
+```
+
+- [ ] **Step 6: Apply to `pellet` (sleet) particles**
+
+Replace the `vx` component with: `vx: windDx * windFactor * 2.5 * (0.5 + depth * 0.5)`
+
+- [ ] **Step 7: Pass `wind_bearing` from `solar-dashboard.js`**
+
+In the `WeatherFX.start()` call, add:
+```js
+const windBearing = weatherAttrs.wind_bearing ?? 180;
+this._weatherFX.start(...existingParams, cloudCoverage, windBearing);
+```
+Also update the `start()` signature to add `windBearing` after `cloudCoverage`.
+
+- [ ] **Step 8: Build**
+```bash
+npm run build
+```
+
+- [ ] **Step 9: Visual verify** — With `wind_bearing: 209` (current reading = SSW wind, blowing NNE), rain should streak slightly toward the upper-right. Snow should drift in the same direction. Fog should drift with wind direction.
+
+- [ ] **Step 10: Commit**
+```bash
+git add src/weather-fx.js src/solar-dashboard.js dist/solar-dashboard.js
+git commit -m "feat: wind bearing drives actual particle direction"
 ```
 
 ---
