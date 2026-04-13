@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.17.4 (2026-04-13)
+
+### Bug Fixes
+- Use CHANGELOG entry as release body, strip commit prefixes from changelog
+
+
 ## v0.17.3 (2026-04-13)
 
 ### Bug Fixes
