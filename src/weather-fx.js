@@ -578,7 +578,11 @@ export class WeatherFX {
     const canvas = this.canvas;
     const ctx = this.ctx;
     const w = canvas.width, h = canvas.height;
-    const scale = this._alpha * this._overlayAlpha;
+    // Night star overlay: scale by cloud transmittance so dense clouds occlude stars
+    const cloudTransmit = (this._overlayType === 'night' && this._cloudCoverage !== null)
+      ? this._calcCloudDim(this._cloudCoverage, this._weatherCondition)
+      : 1.0;
+    const scale = this._alpha * this._overlayAlpha * cloudTransmit;
     const light = this._theme === 'light';
     if (scale <= 0 || !this._overlayParticles.length) return;
 
@@ -1255,51 +1259,81 @@ export class WeatherFX {
         p.x += p.vx;
         if (p.x > w + p.r * 2) p.x = -p.r * 2;
         const baseAlpha = state._alpha * p.alpha;
-        // Pass 1 (lighter): bright lobe fills
-        ctx.save();
-        ctx.globalCompositeOperation = 'lighter';
-        LOBES.forEach(lobe => {
-          const lx = p.x + lobe.dx * p.r, ly = p.y + lobe.dy * p.r, lr = p.r * lobe.rs;
-          const grd = ctx.createRadialGradient(lx, ly, 0, lx, ly, lr);
-          grd.addColorStop(0,    light ? `rgba(200,200,210,${baseAlpha * 0.6})` : `rgba(255,255,255,${baseAlpha * 0.5})`);
-          grd.addColorStop(0.4,  light ? `rgba(190,190,205,${baseAlpha * 0.35})` : `rgba(245,248,255,${baseAlpha * 0.3})`);
-          grd.addColorStop(0.75, light ? `rgba(180,185,200,${baseAlpha * 0.10})` : `rgba(200,220,245,${baseAlpha * 0.08})`);
-          grd.addColorStop(1,    'rgba(0,0,0,0)');
-          ctx.fillStyle = grd;
+        if (night) {
+          // Night clouds: dark blue-grey shapes — lighter blend+white creates unnatural glowing blobs on dark bg
+          // Pass 1 (source-over): dark blue-grey cloud body, opaque center fading to transparent edge
+          ctx.save();
+          ctx.globalCompositeOperation = 'source-over';
+          LOBES.forEach(lobe => {
+            const lx = p.x + lobe.dx * p.r, ly = p.y + lobe.dy * p.r, lr = p.r * lobe.rs;
+            const grd = ctx.createRadialGradient(lx, ly, 0, lx, ly, lr);
+            grd.addColorStop(0,    `rgba(55,65,90,${baseAlpha * 0.85})`);
+            grd.addColorStop(0.45, `rgba(45,55,78,${baseAlpha * 0.60})`);
+            grd.addColorStop(0.80, `rgba(30,40,60,${baseAlpha * 0.22})`);
+            grd.addColorStop(1,    'rgba(0,0,0,0)');
+            ctx.fillStyle = grd;
+            ctx.beginPath();
+            ctx.arc(lx, ly, lr, 0, Math.PI * 2);
+            ctx.fill();
+          });
+          ctx.restore();
+          // Pass 2 (screen): faint moon-scatter glow at cloud tops
+          ctx.save();
+          ctx.globalCompositeOperation = 'screen';
+          const hx = p.x - p.r * 0.15, hy = p.y - p.r * 0.25, hr = p.r * 0.3;
+          const hgrd = ctx.createRadialGradient(hx, hy, 0, hx, hy, hr);
+          hgrd.addColorStop(0, `rgba(255,255,240,${state._alpha * 0.04})`);
+          hgrd.addColorStop(1, 'rgba(255,255,240,0)');
+          ctx.fillStyle = hgrd;
           ctx.beginPath();
-          ctx.arc(lx, ly, lr, 0, Math.PI * 2);
+          ctx.arc(hx, hy, hr, 0, Math.PI * 2);
           ctx.fill();
-        });
-        ctx.restore();
-        // Pass 2 (multiply): shadow interior — darkens overlapping lobe regions
-        ctx.save();
-        ctx.globalCompositeOperation = 'multiply';
-        LOBES.forEach(lobe => {
-          const lx = p.x + lobe.dx * p.r, ly = p.y + lobe.dy * p.r, lr = p.r * lobe.rs * 0.7;
-          const sgrd = ctx.createRadialGradient(lx, ly, 0, lx, ly, lr);
-          const sd = night ? 0.25 : 0.18;
-          sgrd.addColorStop(0,   `rgba(80,100,130,${sd})`);
-          sgrd.addColorStop(0.6, `rgba(80,100,130,${sd * 0.3})`);
-          sgrd.addColorStop(1,   'rgba(80,100,130,0)');
-          ctx.fillStyle = sgrd;
+          ctx.restore();
+        } else {
+          // Pass 1 (lighter): bright lobe fills
+          ctx.save();
+          ctx.globalCompositeOperation = 'lighter';
+          LOBES.forEach(lobe => {
+            const lx = p.x + lobe.dx * p.r, ly = p.y + lobe.dy * p.r, lr = p.r * lobe.rs;
+            const grd = ctx.createRadialGradient(lx, ly, 0, lx, ly, lr);
+            grd.addColorStop(0,    light ? `rgba(200,200,210,${baseAlpha * 0.6})` : `rgba(255,255,255,${baseAlpha * 0.5})`);
+            grd.addColorStop(0.4,  light ? `rgba(190,190,205,${baseAlpha * 0.35})` : `rgba(245,248,255,${baseAlpha * 0.3})`);
+            grd.addColorStop(0.75, light ? `rgba(180,185,200,${baseAlpha * 0.10})` : `rgba(200,220,245,${baseAlpha * 0.08})`);
+            grd.addColorStop(1,    'rgba(0,0,0,0)');
+            ctx.fillStyle = grd;
+            ctx.beginPath();
+            ctx.arc(lx, ly, lr, 0, Math.PI * 2);
+            ctx.fill();
+          });
+          ctx.restore();
+          // Pass 2 (multiply): shadow interior — darkens overlapping lobe regions
+          ctx.save();
+          ctx.globalCompositeOperation = 'multiply';
+          LOBES.forEach(lobe => {
+            const lx = p.x + lobe.dx * p.r, ly = p.y + lobe.dy * p.r, lr = p.r * lobe.rs * 0.7;
+            const sgrd = ctx.createRadialGradient(lx, ly, 0, lx, ly, lr);
+            sgrd.addColorStop(0,   `rgba(80,100,130,0.18)`);
+            sgrd.addColorStop(0.6, `rgba(80,100,130,0.05)`);
+            sgrd.addColorStop(1,   'rgba(80,100,130,0)');
+            ctx.fillStyle = sgrd;
+            ctx.beginPath();
+            ctx.arc(lx, ly, lr, 0, Math.PI * 2);
+            ctx.fill();
+          });
+          ctx.restore();
+          // Pass 3 (screen): single crown highlight per cloud
+          ctx.save();
+          ctx.globalCompositeOperation = 'screen';
+          const hx = p.x - p.r * 0.15, hy = p.y - p.r * 0.25, hr = p.r * 0.3;
+          const hgrd = ctx.createRadialGradient(hx, hy, 0, hx, hy, hr);
+          hgrd.addColorStop(0, `rgba(255,255,240,${state._alpha * 0.12})`);
+          hgrd.addColorStop(1, 'rgba(255,255,240,0)');
+          ctx.fillStyle = hgrd;
           ctx.beginPath();
-          ctx.arc(lx, ly, lr, 0, Math.PI * 2);
+          ctx.arc(hx, hy, hr, 0, Math.PI * 2);
           ctx.fill();
-        });
-        ctx.restore();
-        // Pass 3 (screen): single crown highlight per cloud (not per-lobe) — targets the whole cloud mass top
-        ctx.save();
-        ctx.globalCompositeOperation = 'screen';
-        const hx = p.x - p.r * 0.15, hy = p.y - p.r * 0.25, hr = p.r * 0.3;
-        const hgrd = ctx.createRadialGradient(hx, hy, 0, hx, hy, hr);
-        const ha = state._alpha * (night ? 0.04 : 0.12);
-        hgrd.addColorStop(0, `rgba(255,255,240,${ha})`);
-        hgrd.addColorStop(1, 'rgba(255,255,240,0)');
-        ctx.fillStyle = hgrd;
-        ctx.beginPath();
-        ctx.arc(hx, hy, hr, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
+          ctx.restore();
+        }
       });
       ctx.globalAlpha = state._alpha;
 
