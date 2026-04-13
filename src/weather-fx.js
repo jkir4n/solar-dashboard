@@ -639,8 +639,13 @@ export class WeatherFX {
         const sunR = 28 + Math.max(0, (12 - elev) * 1.2);
         // Glow spreads wider near horizon (more atmosphere to scatter through)
         const glowMult = 3.5 + Math.max(0, (30 - elev) / 8);
-        const glowR = sunR * glowMult;
-        const glowAlpha = (0.10 + (elev < 15 ? 0.08 : 0)) * cloudDim;
+        // Overcast: cloud scatters light broadly → wider diffuse patch
+        const diffuseSpread = (cloudDim > 0 && cloudDim < 0.3) ? 1.8 : 1.0;
+        const glowR = sunR * glowMult * diffuseSpread;
+        // Overcast: use a flat base + scaled component so the patch stays visible
+        const glowAlpha = cloudDim >= 0.3
+          ? (0.10 + (elev < 15 ? 0.08 : 0)) * cloudDim
+          : cloudDim > 0 ? 0.02 + cloudDim * 0.15 : 0;
 
         // Atmospheric glow
         const sunGrd = ctx.createRadialGradient(sunX, sunY, sunR * 0.4, sunX, sunY, glowR);
