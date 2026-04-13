@@ -417,7 +417,8 @@ export class WeatherFX {
           // Strong wind reduces random sway and replaces with directional drift
           swayAmp: (0.3 + depth * 0.7) * (1 - windFactor * 0.7),
           windDrift: windFactor * 2.0 * (0.3 + depth * 0.7),
-          o: (0.15 + Math.random() * 0.25) * (0.5 + depth * 0.5)
+          o: (0.15 + Math.random() * 0.25) * (0.5 + depth * 0.5),
+          angle: Math.random() * Math.PI * 2
         });
       }
       // Bokeh foreground flakes
@@ -1026,12 +1027,34 @@ export class WeatherFX {
         p.y += p.vy;
         p.sway += p.swaySpeed * 0.02;
         p.x += Math.sin(p.sway) * p.swayAmp + p.windDrift;
+        p.angle += 0.008;
         if (p.y > h + 10) { p.y = -10; p.x = Math.random() * w; }
         if (p.x > w + 10) p.x = -10;
-        ctx.fillStyle = flakeColor + p.o + ')';
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.angle);
+        ctx.strokeStyle = flakeColor + p.o + ')';
+        ctx.lineWidth = 0.8;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fill();
+        for (let arm = 0; arm < 6; arm++) {
+          const ax = Math.cos(arm * Math.PI / 3) * p.r;
+          const ay = Math.sin(arm * Math.PI / 3) * p.r;
+          ctx.moveTo(0, 0);
+          ctx.lineTo(ax, ay);
+          if (p.r >= 3.5) {
+            for (const frac of [0.45, 0.65]) {
+              const bx = ax * frac, by = ay * frac;
+              const perp = arm * Math.PI / 3 + Math.PI / 2;
+              const bl = p.r * 0.28;
+              ctx.moveTo(bx, by);
+              ctx.lineTo(bx + Math.cos(perp) * bl, by + Math.sin(perp) * bl);
+              ctx.moveTo(bx, by);
+              ctx.lineTo(bx - Math.cos(perp) * bl, by - Math.sin(perp) * bl);
+            }
+          }
+        }
+        ctx.stroke();
+        ctx.restore();
       });
       (state._particlesByType.bokeh || []).forEach(p => {
         p.x += p.vx; p.y += p.vy;
