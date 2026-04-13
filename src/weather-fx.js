@@ -431,14 +431,27 @@ export class WeatherFX {
         });
       }
     } else if (type === 'fog') {
-      // Drifting fog layers
-      for (let i = 0; i < 12; i++) {
-        particles.push({
-          kind: 'fogBlob', x: Math.random() * w, y: h * (0.2 + Math.random() * 0.6),
-          rx: 80 + Math.random() * 160, ry: 30 + Math.random() * 60,
-          vx: (Math.random() - 0.5) * 0.4, o: 0.03 + Math.random() * 0.03
-        });
-      }
+      const FOG_LAYERS = [
+        { yBase: 0.75, speed: 0.15, count: 5, alphaMin: 0.18, alphaMax: 0.24, amp: 18 },
+        { yBase: 0.55, speed: 0.22, count: 4, alphaMin: 0.12, alphaMax: 0.18, amp: 14 },
+        { yBase: 0.38, speed: 0.30, count: 4, alphaMin: 0.08, alphaMax: 0.12, amp: 10 },
+        { yBase: 0.22, speed: 0.40, count: 3, alphaMin: 0.04, alphaMax: 0.08, amp:  8 },
+      ];
+      FOG_LAYERS.forEach((layer, li) => {
+        for (let bi = 0; bi < layer.count; bi++) {
+          particles.push({
+            kind: 'fogBlob',
+            x: Math.random() * w,
+            yBase: h * layer.yBase,
+            layer: li, blobIndex: bi,
+            rx: 90 + Math.random() * 70,
+            ry: 24 + Math.random() * 16,
+            vx: (layer.speed + (Math.random() - 0.5) * 0.1) * (1 + windFactor * 0.3),
+            o: layer.alphaMin + Math.random() * (layer.alphaMax - layer.alphaMin),
+            amp: layer.amp
+          });
+        }
+      });
     } else if (type === 'cloudy') {
       // Soft drifting cloud ellipses
       for (let i = 0; i < 8; i++) {
@@ -1078,14 +1091,16 @@ export class WeatherFX {
       const fogColor = light
         ? (night ? 'rgba(90,90,110,1)' : 'rgba(160,160,170,1)')
         : (night ? 'rgba(120,120,140,1)' : 'rgba(200,200,210,1)');
+      const t = now * 0.001;
       (state._particlesByType.fogBlob || []).forEach(p => {
         p.x += p.vx;
         if (p.x > w + p.rx) p.x = -p.rx;
         if (p.x < -p.rx) p.x = w + p.rx;
+        const y = p.yBase + Math.sin(p.x * 0.04 + t * 0.025 + p.blobIndex) * p.amp;
         ctx.globalAlpha = state._alpha * p.o;
         ctx.fillStyle = fogColor;
         ctx.beginPath();
-        ctx.ellipse(p.x, p.y, p.rx, p.ry, 0, 0, Math.PI * 2);
+        ctx.ellipse(p.x, y, p.rx, p.ry, 0, 0, Math.PI * 2);
         ctx.fill();
       });
       ctx.globalAlpha = state._alpha;
