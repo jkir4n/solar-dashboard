@@ -1484,9 +1484,7 @@ class SolarDashboard extends HTMLElement {
     const tz = this._bridge.timezone;
     try {
       const now = new Date();
-      // Get today's date string in the target timezone (sv locale reliably gives YYYY-MM-DD)
       const todayStr = new Intl.DateTimeFormat('sv', { timeZone: tz }).format(now);
-      // Compute timezone offset at noon (avoids DST edge cases at midnight)
       const noonRef = new Date(`${todayStr}T12:00:00Z`);
       const localNoon = new Intl.DateTimeFormat('en-US', {
         timeZone: tz, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
@@ -1495,45 +1493,72 @@ class SolarDashboard extends HTMLElement {
       const offsetMs = (lh - 12) * 3600000 + lm * 60000 + ls * 1000;
       const midnightUTC = new Date(new Date(`${todayStr}T00:00:00Z`).getTime() - offsetMs);
 
-      const states = await this._bridge.fetchHistoryRange(E.CURRENT, midnightUTC, now, true);
-      let inAh = 0, outAh = 0;
-      for (let i = 1; i < states.length; i++) {
-        const prevV = states[i - 1].v;
-        if (prevV === null) continue;
-        const t0 = states[i - 1].t.getTime();
-        const t1 = states[i].t.getTime();
-        const dtHours = (t1 - t0) / 3600000;
-        if (dtHours > 0 && dtHours < 1) {
-          if (prevV > 0.5) inAh += prevV * dtHours;
-          else if (prevV < -0.5) outAh += Math.abs(prevV) * dtHours;
+      // Helper: integrate Watts history → kWh (rectangular rule, gap cap 1h)
+      const integrateWatts = (states) => {
+        let kWh = 0;
+        for (let i = 1; i < states.length; i++) {
+          const prevV = states[i - 1].v;
+          if (prevV === null || prevV < 0) continue;
+          const dtHours = (states[i].t.getTime() - states[i - 1].t.getTime()) / 3600000;
+          if (dtHours > 0 && dtHours < 1) kWh += prevV * dtHours / 1000;
         }
-      }
-      // Include last state to now
-      if (states.length > 0) {
-        const last = states[states.length - 1];
-        if (last.v !== null) {
-          const dtHours = (now.getTime() - last.t.getTime()) / 3600000;
-          if (dtHours > 0 && dtHours < 1) {
-            if (last.v > 0.5) inAh += last.v * dtHours;
-            else if (last.v < -0.5) outAh += Math.abs(last.v) * dtHours;
+        if (states.length > 0) {
+          const last = states[states.length - 1];
+          if (last.v !== null && last.v >= 0) {
+            const dtHours = (now.getTime() - last.t.getTime()) / 3600000;
+            if (dtHours > 0 && dtHours < 1) kWh += last.v * dtHours / 1000;
           }
         }
+        return kWh;
+      };
+
+      if (E.CHG_POWER && E.DISCHG_POWER) {
+        // Preferred: dedicated power sensors — clean, no sign ambiguity
+        const [chgStates, dischgStates] = await Promise.all([
+          this._bridge.fetchHistoryRange(E.CHG_POWER,    midnightUTC, now, true),
+          this._bridge.fetchHistoryRange(E.DISCHG_POWER, midnightUTC, now, true),
+        ]);
+        this._todayIn  = integrateWatts(chgStates);
+        this._todayOut = integrateWatts(dischgStates);
+      } else {
+        // Fallback: signed current sensor (Ah → kWh)
+        const nomV = this._bridge.battSpec.nomV;
+        const states = await this._bridge.fetchHistoryRange(E.CURRENT, midnightUTC, now, true);
+        let inAh = 0, outAh = 0;
+        for (let i = 1; i < states.length; i++) {
+          const prevV = states[i - 1].v;
+          if (prevV === null) continue;
+          const dtHours = (states[i].t.getTime() - states[i - 1].t.getTime()) / 3600000;
+          if (dtHours > 0 && dtHours < 1) {
+            if (prevV > 0.5) inAh += prevV * dtHours;
+            else if (prevV < -0.5) outAh += Math.abs(prevV) * dtHours;
+          }
+        }
+        if (states.length > 0) {
+          const last = states[states.length - 1];
+          if (last.v !== null) {
+            const dtHours = (now.getTime() - last.t.getTime()) / 3600000;
+            if (dtHours > 0 && dtHours < 1) {
+              if (last.v > 0.5) inAh += last.v * dtHours;
+              else if (last.v < -0.5) outAh += Math.abs(last.v) * dtHours;
+            }
+          }
+        }
+        this._todayIn  = inAh * nomV / 1000;
+        this._todayOut = outAh * nomV / 1000;
       }
-      this._todayIn = inAh;
-      this._todayOut = outAh;
     } catch (e) { console.warn('[Solar] Today In/Out fetch failed', e); }
 
-    const nomV = this._bridge.battSpec.nomV;
+    // _todayIn / _todayOut are kWh
     const inEl = root.getElementById('battTodayIn');
-    this._animateValue(inEl, parseFloat(inEl.textContent) || 0, this._todayIn * nomV / 1000, 600, v => v.toFixed(2) + ' kWh');
+    this._animateValue(inEl, parseFloat(inEl.textContent) || 0, this._todayIn, 600, v => v.toFixed(2) + ' kWh');
     const outEl = root.getElementById('battTodayOut');
-    this._animateValue(outEl, parseFloat(outEl.textContent) || 0, this._todayOut * nomV / 1000, 600, v => v.toFixed(2) + ' kWh');
+    this._animateValue(outEl, parseFloat(outEl.textContent) || 0, this._todayOut, 600, v => v.toFixed(2) + ' kWh');
 
-    // Update solar generation today
-    const genKWh = this._todayIn * this._bridge.battSpec.nomV / 1000;
+    // Solar generation today = charging energy (all charging assumed solar)
     const solTodayEl = root.getElementById('solTodayGen');
     if (solTodayEl) {
-      this._animateValue(solTodayEl, parseFloat(solTodayEl.textContent) || 0, genKWh, 600, v => v.toFixed(1) + ' kWh');
+      this._animateValue(solTodayEl, parseFloat(solTodayEl.textContent) || 0, this._todayIn, 600, v => v.toFixed(1) + ' kWh');
     }
   }
 
