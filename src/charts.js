@@ -316,7 +316,12 @@ export class ChartManager {
       if (snap) canvas.getContext('2d', { willReadFrequently: true }).putImageData(snap, 0, 0);
     };
 
-    const onMouseMove = (e) => handleMove(e.clientX);
+    let _hoverRafId = null;
+    const onMouseMove = (e) => {
+      const clientX = e.clientX;
+      if (_hoverRafId) return;
+      _hoverRafId = requestAnimationFrame(() => { _hoverRafId = null; handleMove(clientX); });
+    };
     const onTouchStart = (e) => { e.preventDefault(); handleMove(e.touches[0].clientX); };
     const onTouchMove = (e) => { e.preventDefault(); handleMove(e.touches[0].clientX); };
 
