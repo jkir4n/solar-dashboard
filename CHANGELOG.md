@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.20.0 (2026-04-14)
+
+### Features
+- Use CHG_POWER/DISCHG_POWER sensors for Today In/Out, fall back to signed current
+
+
 ## v0.19.6 (2026-04-14)
 
 ### Bug Fixes
