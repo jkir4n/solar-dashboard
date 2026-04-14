@@ -730,13 +730,23 @@ export class WeatherFX {
       // Tyndall rays: full below 10°, fade to invisible at 25° (softer than crepuscular)
       const _tyndallFade = Math.max(0, 1 - Math.max(0, this._sunElevation - 10) / 15);
       if (_tyndallFade > 0) {
+        ctx.save();
+        ctx.globalCompositeOperation = 'screen';
         (this._overlayParticlesByType.ray || []).forEach(p => {
           const pulse = 0.7 + 0.3 * Math.sin(now * 0.001 * p.speed + p.phase);
           const cx = _sunX, cy = _sunY;
-          const a1 = p.angle - p.width / 2, a2 = p.angle + p.width / 2;
+          const aMid = p.angle;
           const rayLen = Math.max(w, h) * 1.5;
-          ctx.globalAlpha = scale * p.o * pulse * _tyndallFade * (light ? 0.7 : 1);
-          ctx.fillStyle = rayColor;
+          const tipX = cx + Math.cos(aMid) * rayLen;
+          const tipY = cy + Math.sin(aMid) * rayLen;
+          const effAlpha = scale * p.o * pulse * _tyndallFade * (light ? 0.7 : 1);
+          const rayGrd = ctx.createLinearGradient(cx, cy, tipX, tipY);
+          rayGrd.addColorStop(0,   `rgba(255, 230, 140, ${(effAlpha * 0.9).toFixed(3)})`);
+          rayGrd.addColorStop(0.4, `rgba(255, 220, 120, ${(effAlpha * 0.4).toFixed(3)})`);
+          rayGrd.addColorStop(1,   'rgba(255, 220, 100, 0)');
+          const a1 = p.angle - p.width / 2, a2 = p.angle + p.width / 2;
+          ctx.globalAlpha = 1;
+          ctx.fillStyle = rayGrd;
           ctx.beginPath();
           ctx.moveTo(cx, cy);
           ctx.lineTo(cx + Math.cos(a1) * rayLen, cy + Math.sin(a1) * rayLen);
@@ -744,6 +754,7 @@ export class WeatherFX {
           ctx.closePath();
           ctx.fill();
         });
+        ctx.restore();
       }
       const moteColor = light ? 'rgba(200,160,40,' : 'rgba(255,200,80,';
       (this._overlayParticlesByType.mote || []).forEach(p => {
@@ -959,29 +970,30 @@ export class WeatherFX {
           ctx.fill();
           ctx.restore();
         }
-        // Solar halo — radial-gradient stroke: red inner edge → white → transparent outer
+        // Solar halo — thin prismatic ring via screen composite
         const haloStrength = Math.max(0, cloudDim - 0.45) / 0.55;
         if (haloStrength > 0 && elev > 5) {
           const haloR = sunR * 4.2;
-          const halfW = sunR * 0.9;
+          const halfW = sunR * 0.35;           // thin ring — matches real halo thinness
           ctx.save();
 
-          // Subtle inner darkening — refraction depletes brightness inside the ring
+          // Inner darkening — sky is depleted inside the 22° ring
           const darkGrd = ctx.createRadialGradient(sunX, sunY, sunR * 1.8, sunX, sunY, haloR - halfW);
           darkGrd.addColorStop(0, 'rgba(0,0,0,0)');
-          darkGrd.addColorStop(1, `rgba(0,0,0,${(haloStrength * 0.07).toFixed(3)})`);
+          darkGrd.addColorStop(1, `rgba(0,0,0,${(haloStrength * 0.09).toFixed(3)})`);
           ctx.globalAlpha = state._alpha;
           ctx.fillStyle = darkGrd;
           ctx.beginPath();
           ctx.arc(sunX, sunY, haloR - halfW, 0, Math.PI * 2);
           ctx.fill();
 
-          // Ring: radial gradient maps naturally to inner/outer stroke edges
+          // Prismatic ring — screen composite makes it glow additively
+          ctx.globalCompositeOperation = 'screen';
           const ringGrd = ctx.createRadialGradient(sunX, sunY, haloR - halfW, sunX, sunY, haloR + halfW);
-          ringGrd.addColorStop(0,    `rgba(255,  90,  25, ${(haloStrength * 0.55).toFixed(3)})`);
-          ringGrd.addColorStop(0.28, `rgba(255, 185, 100, ${(haloStrength * 0.50).toFixed(3)})`);
-          ringGrd.addColorStop(0.58, `rgba(255, 255, 255, ${(haloStrength * 0.42).toFixed(3)})`);
-          ringGrd.addColorStop(1,    'rgba(215, 228, 255, 0)');
+          ringGrd.addColorStop(0,    `rgba(255,  80,  20, ${(haloStrength * 0.70).toFixed(3)})`);  // red inner
+          ringGrd.addColorStop(0.30, `rgba(255, 170,  80, ${(haloStrength * 0.65).toFixed(3)})`);  // orange
+          ringGrd.addColorStop(0.60, `rgba(255, 255, 230, ${(haloStrength * 0.55).toFixed(3)})`);  // white-yellow peak
+          ringGrd.addColorStop(1,    'rgba(220, 235, 255, 0)');                                     // transparent blue-white
           ctx.globalAlpha = state._alpha;
           ctx.beginPath();
           ctx.arc(sunX, sunY, haloR, 0, Math.PI * 2);
@@ -1111,14 +1123,24 @@ export class WeatherFX {
       // Crepuscular rays: full below 6.5°, fade to invisible at 15°
       const _rayElevFade = Math.max(0, 1 - Math.max(0, elev - 6.5) / 8.5);
       if (_rayElevFade > 0) {
+        ctx.save();
+        ctx.globalCompositeOperation = 'screen';
         (state._particlesByType.ray || []).forEach(p => {
           if (state._sunElevation <= 0) return;
           const pulse = 0.7 + 0.3 * Math.sin(now * 0.001 * p.speed + p.phase);
           const cx = _raySunX, cy = _raySunY;
-          const a1 = p.angle - p.width / 2, a2 = p.angle + p.width / 2;
+          const aMid = p.angle;
           const rayLen = Math.max(w, h) * 1.5;
-          ctx.globalAlpha = state._alpha * p.o * pulse * _rayElevFade * (light ? 0.7 : 1);
-          ctx.fillStyle = rayColor;
+          const tipX = cx + Math.cos(aMid) * rayLen;
+          const tipY = cy + Math.sin(aMid) * rayLen;
+          // Linear gradient: bright at sun origin, transparent at tip
+          const rayGrd = ctx.createLinearGradient(cx, cy, tipX, tipY);
+          rayGrd.addColorStop(0,   `rgba(255, 230, 140, ${(p.o * pulse * _rayElevFade * (light ? 0.5 : 0.7)).toFixed(3)})`);
+          rayGrd.addColorStop(0.4, `rgba(255, 220, 120, ${(p.o * pulse * _rayElevFade * (light ? 0.2 : 0.35)).toFixed(3)})`);
+          rayGrd.addColorStop(1,   'rgba(255, 220, 100, 0)');
+          const a1 = p.angle - p.width / 2, a2 = p.angle + p.width / 2;
+          ctx.globalAlpha = state._alpha;
+          ctx.fillStyle = rayGrd;
           ctx.beginPath();
           ctx.moveTo(cx, cy);
           ctx.lineTo(cx + Math.cos(a1) * rayLen, cy + Math.sin(a1) * rayLen);
@@ -1126,6 +1148,7 @@ export class WeatherFX {
           ctx.closePath();
           ctx.fill();
         });
+        ctx.restore();
       }
       ctx.globalAlpha = state._alpha;
       // Dust motes with gentle drift
