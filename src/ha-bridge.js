@@ -338,7 +338,12 @@ export class HABridge {
       };
       if (significantOnly) msg.significant_changes_only = true;
       const result = await this._hass.callWS(msg);
-      return (result?.[entityId] || []).map(d => ({ t: new Date(d.last_changed || d.last_updated), v: isNaN(parseFloat(d.state)) ? null : parseFloat(d.state) }));
+      return (result?.[entityId] || []).map(d => {
+        const state = d.s ?? d.state;
+        const ts = d.lu ?? d.last_changed ?? d.last_updated;
+        const t = typeof ts === 'number' ? new Date(ts * 1000) : new Date(ts);
+        return { t, v: isNaN(parseFloat(state)) ? null : parseFloat(state) };
+      });
     } catch (e) {
       console.warn('[Solar] History fetch failed:', e);
       return [];

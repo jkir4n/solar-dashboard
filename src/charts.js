@@ -35,7 +35,7 @@ export class ChartManager {
       this._chartAnimIds[canvasId] = null;
     }
 
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
     canvas.width = rect.width * dpr;
@@ -192,7 +192,7 @@ export class ChartManager {
     const cd = this._chartData[canvasId];
     if (!cd) return;
     const { datasets, opts, cW, cH, padLeft, padTop, dpr, minVal, maxVal } = cd;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
     const yRange = maxVal - minVal || 1;
 
     // Restore clean chart snapshot (avoids full redraw on every mousemove)
@@ -313,7 +313,7 @@ export class ChartManager {
     const handleLeave = () => {
       const canvasId = canvas.id || canvas.dataset.chartId || 'anon';
       const snap = this._snapshots[canvasId];
-      if (snap) canvas.getContext('2d').putImageData(snap, 0, 0);
+      if (snap) canvas.getContext('2d', { willReadFrequently: true }).putImageData(snap, 0, 0);
     };
 
     const onMouseMove = (e) => handleMove(e.clientX);
@@ -344,7 +344,7 @@ export class ChartManager {
   // Ported from v9 line 2337-2351
   showPlaceholder(canvas, message) {
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
     canvas.width = rect.width * dpr;

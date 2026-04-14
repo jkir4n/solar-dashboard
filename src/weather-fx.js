@@ -89,6 +89,60 @@ export class WeatherFX {
    * @param {boolean} isNight - whether it is currently nighttime
    * @param {string} theme - 'dark' or 'light' (affects particle colors)
    */
+  // Pre-render a cloud particle to an off-screen canvas and store it on p.
+  // Called once at spawn so the render loop can just blit p.off each frame.
+  _renderCloudToOffscreen(p, isNight) {
+    const cloudR = p.r;
+    const offW = Math.ceil(cloudR * 3), offH = Math.ceil(cloudR * 2.5);
+    const off = document.createElement('canvas');
+    off.width = offW; off.height = offH;
+    const octx = off.getContext('2d');
+    const ox = offW / 2, oy = offH * 0.6;
+
+    // Build clip from all lobes
+    octx.beginPath();
+    for (const lobe of p.lobes) {
+      const lx = ox + lobe.dx * cloudR;
+      const ly = oy + lobe.dy * cloudR;
+      const lr = lobe.rs * cloudR;
+      octx.arc(lx, ly, lr, 0, Math.PI * 2);
+    }
+    octx.clip();
+
+    // Gradient fill
+    const minDy = Math.min(...p.lobes.map(l => l.dy));
+    const maxDy = Math.max(...p.lobes.map(l => l.dy));
+    const maxRs = Math.max(...p.lobes.map(l => l.rs));
+    const topY = oy + minDy * cloudR;
+    const botY = oy + maxDy * cloudR + maxRs * cloudR;
+    const grad = octx.createLinearGradient(ox, topY, ox, botY);
+    if (isNight) {
+      grad.addColorStop(0,   'rgba(60, 70, 100, 0.90)');
+      grad.addColorStop(0.5, 'rgba(35, 42,  65, 0.85)');
+      grad.addColorStop(1.0, 'rgba(20, 25,  45, 0.80)');
+    } else {
+      grad.addColorStop(0,   'rgba(255, 255, 255, 0.95)');
+      grad.addColorStop(0.3, 'rgba(240, 245, 255, 0.90)');
+      grad.addColorStop(0.7, 'rgba(210, 220, 235, 0.85)');
+      grad.addColorStop(1.0, 'rgba(180, 195, 215, 0.80)');
+    }
+    octx.fillStyle = grad;
+    octx.fillRect(0, 0, offW, offH);
+
+    // Shadow belly
+    octx.globalCompositeOperation = 'multiply';
+    const shadowGrad = octx.createRadialGradient(ox, botY - cloudR * 0.1, 0, ox, botY - cloudR * 0.1, cloudR * 1.2);
+    shadowGrad.addColorStop(0, 'rgba(100, 120, 160, 0.25)');
+    shadowGrad.addColorStop(1, 'rgba(100, 120, 160, 0)');
+    octx.fillStyle = shadowGrad;
+    octx.fillRect(0, 0, offW, offH);
+    octx.globalCompositeOperation = 'source-over';
+
+    p.off = off;
+    p.ox = ox;
+    p.oy = oy;
+  }
+
   // Continuous cloud dimming from coverage % (0-100) + condition modifier
   // Sigmoid: gentle at extremes, steep mid-range — matches human perception
   _calcCloudDim(cloudCoverage, condition) {
@@ -546,7 +600,7 @@ export class WeatherFX {
           lobes.forEach(l => {
             l.shade = (maxDy === minDy) ? 0.5 : 1.0 - (l.dy - minDy) / (maxDy - minDy);
           });
-          particles.push({
+          const p = {
             kind: 'cloud',
             x: Math.random() * w,
             yBase, y: yBase,
@@ -560,7 +614,9 @@ export class WeatherFX {
             phase:    Math.random() * Math.PI * 2,
             bobSpeed: 0.0003 + Math.random() * 0.0002,
             bobAmp:   3 + Math.random() * 5,
-          });
+          };
+          this._renderCloudToOffscreen(p, this._isNight);
+          particles.push(p);
         }
       });
     } else if (type === 'sunrays') {
@@ -657,10 +713,13 @@ export class WeatherFX {
 
     // ---- Day overlays ----
     if (this._overlayType === 'sunrays') {
+      if (this._sunElevation <= 0) return;
+      const _sunX = w * (this._sunAzimuth / 360);
+      const _sunY = h * (0.8 - this._sunElevation / 90 * 0.75);
       const rayColor = light ? 'rgba(255,190,50,1)' : 'rgba(255,220,100,1)';
       (this._overlayParticlesByType.ray || []).forEach(p => {
         const pulse = 0.7 + 0.3 * Math.sin(now * 0.001 * p.speed + p.phase);
-        const cx = w * 0.85, cy = 0;
+        const cx = _sunX, cy = _sunY;
         const a1 = p.angle - p.width / 2, a2 = p.angle + p.width / 2;
         const rayLen = Math.max(w, h) * 1.5;
         ctx.globalAlpha = scale * p.o * pulse * (light ? 0.7 : 1);
@@ -867,29 +926,48 @@ export class WeatherFX {
             sunX - sunR * 0.25, sunY - sunR * 0.25, sunR * 0.1,
             sunX, sunY, sunR
           );
-          discGrd.addColorStop(0,   `rgba(255,255,230,${discAlpha})`);
-          discGrd.addColorStop(0.5, `rgba(${r},${Math.min(255, g + 8)},${b},${discAlpha * 0.95})`);
-          discGrd.addColorStop(1,   `rgba(${r},${g},${Math.max(0, b - 20)},${discAlpha * 0.85})`);
+          discGrd.addColorStop(0,    `rgba(255,255,230,${discAlpha})`);
+          discGrd.addColorStop(0.5,  `rgba(${r},${Math.min(255, g + 8)},${b},${discAlpha * 0.95})`);
+          // Limb darkening — slightly darker/more saturated near edge (Rayleigh)
+          discGrd.addColorStop(0.85, `rgba(${Math.round(r * 0.86)},${Math.round(g * 0.71)},${Math.round(b * 0.44)},${(discAlpha * 0.4).toFixed(3)})`);
+          discGrd.addColorStop(1,    `rgba(${r},${g},${Math.max(0, b - 20)},${discAlpha * 0.85})`);
           ctx.fillStyle = discGrd;
           ctx.beginPath();
           ctx.arc(sunX, sunY, sunR, 0, Math.PI * 2);
           ctx.fill();
+          // Bloom ring — wide soft corona using screen compositing
+          ctx.save();
+          ctx.globalCompositeOperation = 'screen';
+          const bloom = ctx.createRadialGradient(sunX, sunY, sunR * 0.8, sunX, sunY, sunR * 3.5);
+          bloom.addColorStop(0, `rgba(255, 240, 180, ${(0.15 * cloudDim).toFixed(3)})`);
+          bloom.addColorStop(1, 'rgba(255, 240, 180, 0)');
+          ctx.fillStyle = bloom;
+          ctx.beginPath();
+          ctx.arc(sunX, sunY, sunR * 3.5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
         }
         // Solar halo — 22° ring, fades out as clouds increase
         const haloStrength = Math.max(0, cloudDim - 0.45) / 0.55;
         if (haloStrength > 0 && elev > 5) {
           const haloR = sunR * 2.8;
-          const inner = haloR * 0.88, outer = haloR * 1.12;
-          const haloGrd = ctx.createRadialGradient(sunX, sunY, inner, sunX, sunY, outer);
-          haloGrd.addColorStop(0,   'rgba(255,200,180,0)');
-          haloGrd.addColorStop(0.3, `rgba(255,230,220,${(haloStrength * 0.30).toFixed(3)})`);
-          haloGrd.addColorStop(0.7, `rgba(230,230,255,${(haloStrength * 0.30).toFixed(3)})`);
-          haloGrd.addColorStop(1,   'rgba(200,200,255,0)');
+          const haloInner = haloR * 0.88, haloOuter = haloR * 1.12;
+          // True annulus via evenodd winding — only the ring is filled, not the disc interior
+          const haloGrad = ctx.createRadialGradient(sunX, sunY, haloInner, sunX, sunY, haloOuter);
+          // Real 22° halo: red on inside, progressing to violet/blue on outside
+          haloGrad.addColorStop(0,   `rgba(255, 180, 140, 0)`);                                   // transparent inner edge
+          haloGrad.addColorStop(0.1, `rgba(255, 160, 100, ${(haloStrength * 0.5).toFixed(3)})`);  // red/orange inner
+          haloGrad.addColorStop(0.5, `rgba(255, 255, 255, ${(haloStrength * 0.4).toFixed(3)})`);  // white middle
+          haloGrad.addColorStop(0.9, `rgba(180, 200, 255, ${(haloStrength * 0.5).toFixed(3)})`);  // blue/violet outer
+          haloGrad.addColorStop(1,   `rgba(160, 180, 255, 0)`);                                   // transparent outer edge
+          ctx.save();
           ctx.globalAlpha = state._alpha;
-          ctx.fillStyle = haloGrd;
+          ctx.fillStyle = haloGrad;
           ctx.beginPath();
-          ctx.arc(sunX, sunY, outer, 0, Math.PI * 2);
-          ctx.fill();
+          ctx.arc(sunX, sunY, haloOuter, 0, Math.PI * 2, false); // outer circle
+          ctx.arc(sunX, sunY, haloInner, 0, Math.PI * 2, true);  // inner circle (hole)
+          ctx.fill('evenodd');
+          ctx.restore();
         }
         ctx.globalAlpha = state._alpha;
       }
@@ -989,9 +1067,12 @@ export class WeatherFX {
     if (state._currentType === 'sunny') {
       // God rays
       const rayColor = light ? 'rgba(255,190,50,1)' : 'rgba(255,220,100,1)';
+      const _raySunX = w * (state._sunAzimuth / 360);
+      const _raySunY = h * (0.8 - state._sunElevation / 90 * 0.75);
       (state._particlesByType.ray || []).forEach(p => {
+        if (state._sunElevation <= 0) return;
         const pulse = 0.7 + 0.3 * Math.sin(now * 0.001 * p.speed + p.phase);
-        const cx = w * 0.85, cy = 0;
+        const cx = _raySunX, cy = _raySunY;
         const a1 = p.angle - p.width / 2, a2 = p.angle + p.width / 2;
         const rayLen = Math.max(w, h) * 1.5;
         ctx.globalAlpha = state._alpha * p.o * pulse * (light ? 0.7 : 1);
@@ -1334,89 +1415,27 @@ export class WeatherFX {
         if (p.yBase >  h + p.r)     { p.yBase = -p.r;       p.x = Math.random() * w; }
         if (p.yBase < -p.r)         { p.yBase =  h + p.r;   p.x = Math.random() * w; }
         const baseAlpha = state._alpha * p.alpha;
-        if (night) {
-          // Night clouds: dark blue-grey — top lobes lighter (city-glow hint), bottom very dark (spec §3)
+        // Blit pre-rendered off-screen canvas (created once at spawn in _renderCloudToOffscreen)
+        if (p.off) {
           ctx.save();
-          ctx.globalCompositeOperation = 'source-over';
-          p.lobes.forEach(lobe => {
-            const lx = p.x + lobe.dx * p.r, ly = p.y + lobe.dy * p.r, lr = p.r * lobe.rs;
-            const s = lobe.shade; // 1=top, 0=bottom
-            const cR = Math.round(22 + s * 48), cG = Math.round(28 + s * 52), cB = Math.round(45 + s * 60);
-            const grd = ctx.createRadialGradient(lx, ly, 0, lx, ly, lr);
-            grd.addColorStop(0,    `rgba(${cR},${cG},${cB},${baseAlpha * 0.85})`);
-            grd.addColorStop(0.45, `rgba(${cR},${cG},${cB},${baseAlpha * 0.60})`);
-            grd.addColorStop(0.80, `rgba(${cR},${cG},${cB},${baseAlpha * 0.22})`);
-            grd.addColorStop(1,    'rgba(0,0,0,0)');
-            ctx.fillStyle = grd;
-            ctx.beginPath();
-            ctx.arc(lx, ly, lr, 0, Math.PI * 2);
-            ctx.fill();
-          });
-          ctx.restore();
-          // Pass 2 (screen): faint moon-scatter glow at cloud top
-          ctx.save();
-          ctx.globalCompositeOperation = 'screen';
-          const hx = p.x - p.r * 0.15, hy = p.y - p.r * 0.25, hr = p.r * 0.3;
-          const hgrd = ctx.createRadialGradient(hx, hy, 0, hx, hy, hr);
-          hgrd.addColorStop(0, `rgba(255,255,240,${state._alpha * 0.04})`);
-          hgrd.addColorStop(1, 'rgba(255,255,240,0)');
-          ctx.fillStyle = hgrd;
-          ctx.beginPath();
-          ctx.arc(hx, hy, hr, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.restore();
-        } else {
-          // Pass 1 (lighter): top-lit fills — shade drives white→grey-blue gradient (spec §3)
-          ctx.save();
-          ctx.globalCompositeOperation = 'lighter';
-          p.lobes.forEach(lobe => {
-            const lx = p.x + lobe.dx * p.r, ly = p.y + lobe.dy * p.r, lr = p.r * lobe.rs;
-            const s = lobe.shade; // 1=top bright, 0=bottom grey-blue
-            const cR = light ? Math.round(160 + s * 40) : Math.round(140 + s * 115);
-            const cG = light ? Math.round(170 + s * 30) : Math.round(160 + s *  95);
-            const cB = light ? Math.round(190 + s * 20) : Math.round(190 + s *  65);
-            const aTop  = baseAlpha * (0.35 + s * 0.20);
-            const aMid  = baseAlpha * (0.22 + s * 0.13);
-            const aEdge = baseAlpha * 0.07;
-            const grd = ctx.createRadialGradient(lx, ly, 0, lx, ly, lr);
-            grd.addColorStop(0,    `rgba(${cR},${cG},${cB},${aTop})`);
-            grd.addColorStop(0.40, `rgba(${cR},${cG},${cB},${aMid})`);
-            grd.addColorStop(0.75, `rgba(${cR},${cG},${cB},${aEdge})`);
-            grd.addColorStop(1,    'rgba(0,0,0,0)');
-            ctx.fillStyle = grd;
-            ctx.beginPath();
-            ctx.arc(lx, ly, lr, 0, Math.PI * 2);
-            ctx.fill();
-          });
-          ctx.restore();
-          // Pass 2 (multiply): shadow interior — darkens overlapping lobe regions
-          ctx.save();
-          ctx.globalCompositeOperation = 'multiply';
-          p.lobes.forEach(lobe => {
-            const lx = p.x + lobe.dx * p.r, ly = p.y + lobe.dy * p.r, lr = p.r * lobe.rs * 0.7;
-            const sgrd = ctx.createRadialGradient(lx, ly, 0, lx, ly, lr);
-            sgrd.addColorStop(0,   `rgba(80,100,130,0.18)`);
-            sgrd.addColorStop(0.6, `rgba(80,100,130,0.05)`);
-            sgrd.addColorStop(1,   'rgba(80,100,130,0)');
-            ctx.fillStyle = sgrd;
-            ctx.beginPath();
-            ctx.arc(lx, ly, lr, 0, Math.PI * 2);
-            ctx.fill();
-          });
-          ctx.restore();
-          // Pass 3 (screen): single crown highlight per cloud
-          ctx.save();
-          ctx.globalCompositeOperation = 'screen';
-          const hx = p.x - p.r * 0.15, hy = p.y - p.r * 0.25, hr = p.r * 0.3;
-          const hgrd = ctx.createRadialGradient(hx, hy, 0, hx, hy, hr);
-          hgrd.addColorStop(0, `rgba(255,255,240,${state._alpha * 0.12})`);
-          hgrd.addColorStop(1, 'rgba(255,255,240,0)');
-          ctx.fillStyle = hgrd;
-          ctx.beginPath();
-          ctx.arc(hx, hy, hr, 0, Math.PI * 2);
-          ctx.fill();
+          ctx.globalAlpha = baseAlpha;
+          ctx.drawImage(p.off, p.x - p.ox, p.y - p.oy);
           ctx.restore();
         }
+
+        // Moon/sun scatter highlight at cloud top (screen pass — runs on main canvas after blit)
+        ctx.save();
+        ctx.globalCompositeOperation = 'screen';
+        const hx = p.x - p.r * 0.15, hy = p.y - p.r * 0.25, hr = p.r * 0.3;
+        const hgrd = ctx.createRadialGradient(hx, hy, 0, hx, hy, hr);
+        const highlightAlpha = night ? state._alpha * 0.04 : state._alpha * 0.12;
+        hgrd.addColorStop(0, `rgba(255,255,240,${highlightAlpha})`);
+        hgrd.addColorStop(1, 'rgba(255,255,240,0)');
+        ctx.fillStyle = hgrd;
+        ctx.beginPath();
+        ctx.arc(hx, hy, hr, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
       });
       ctx.globalAlpha = state._alpha;
 
