@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.19.3 (2026-04-14)
+
+### Bug Fixes
+- Live charts, today totals, cloud/sun/halo visuals, sun ray origin
+
+
 ## v0.19.2 (2026-04-14)
 
 ### Bug Fixes
