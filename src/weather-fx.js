@@ -959,27 +959,36 @@ export class WeatherFX {
           ctx.fill();
           ctx.restore();
         }
-        // Solar halo — soft stroked arcs for atmospheric 22° ring look
+        // Solar halo — radial-gradient stroke: red inner edge → white → transparent outer
         const haloStrength = Math.max(0, cloudDim - 0.45) / 0.55;
         if (haloStrength > 0 && elev > 5) {
-          const haloR = sunR * 3.8;
+          const haloR = sunR * 4.2;
+          const halfW = sunR * 0.9;
           ctx.save();
+
+          // Subtle inner darkening — refraction depletes brightness inside the ring
+          const darkGrd = ctx.createRadialGradient(sunX, sunY, sunR * 1.8, sunX, sunY, haloR - halfW);
+          darkGrd.addColorStop(0, 'rgba(0,0,0,0)');
+          darkGrd.addColorStop(1, `rgba(0,0,0,${(haloStrength * 0.07).toFixed(3)})`);
           ctx.globalAlpha = state._alpha;
-          // Wide outer diffuse white glow
+          ctx.fillStyle = darkGrd;
+          ctx.beginPath();
+          ctx.arc(sunX, sunY, haloR - halfW, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Ring: radial gradient maps naturally to inner/outer stroke edges
+          const ringGrd = ctx.createRadialGradient(sunX, sunY, haloR - halfW, sunX, sunY, haloR + halfW);
+          ringGrd.addColorStop(0,    `rgba(255,  90,  25, ${(haloStrength * 0.55).toFixed(3)})`);
+          ringGrd.addColorStop(0.28, `rgba(255, 185, 100, ${(haloStrength * 0.50).toFixed(3)})`);
+          ringGrd.addColorStop(0.58, `rgba(255, 255, 255, ${(haloStrength * 0.42).toFixed(3)})`);
+          ringGrd.addColorStop(1,    'rgba(215, 228, 255, 0)');
+          ctx.globalAlpha = state._alpha;
           ctx.beginPath();
           ctx.arc(sunX, sunY, haloR, 0, Math.PI * 2);
-          ctx.strokeStyle = `rgba(255, 255, 255, ${(haloStrength * 0.20).toFixed(3)})`;
-          ctx.lineWidth = sunR * 1.6;
-          ctx.shadowBlur = sunR * 2.5;
-          ctx.shadowColor = `rgba(210, 225, 255, ${(haloStrength * 0.18).toFixed(3)})`;
+          ctx.strokeStyle = ringGrd;
+          ctx.lineWidth = halfW * 2;
           ctx.stroke();
-          ctx.shadowBlur = 0;
-          // Inner red-orange rim (characteristic 22° halo inner edge)
-          ctx.beginPath();
-          ctx.arc(sunX, sunY, haloR * 0.91, 0, Math.PI * 2);
-          ctx.strokeStyle = `rgba(255, 155, 80, ${(haloStrength * 0.28).toFixed(3)})`;
-          ctx.lineWidth = sunR * 0.55;
-          ctx.stroke();
+
           ctx.restore();
         }
         ctx.globalAlpha = state._alpha;
@@ -1023,20 +1032,37 @@ export class WeatherFX {
           ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
           ctx.fill();
         }
-        // Lunar halo — same geometry, scaled by moonBrightness
+        // Lunar halo — same radial-gradient ring technique, silvery tones
         const moonHaloStrength = Math.max(0, cloudDim - 0.45) / 0.55 * mb;
         if (moonHaloStrength > 0 && state._moonElevation > 5) {
-          const haloR = moonR * 2.8;
-          const inner = haloR * 0.88, outer = haloR * 1.12;
-          const haloGrd = ctx.createRadialGradient(moonX, moonY, inner, moonX, moonY, outer);
-          haloGrd.addColorStop(0,   'rgba(200,210,230,0)');
-          haloGrd.addColorStop(0.5, `rgba(220,225,240,${(moonHaloStrength * 0.25).toFixed(3)})`);
-          haloGrd.addColorStop(1,   'rgba(200,210,230,0)');
+          const mHaloR = moonR * 4.2;
+          const mHalfW = moonR * 0.9;
+          ctx.save();
+
+          // Inner darkening
+          const mDarkGrd = ctx.createRadialGradient(moonX, moonY, moonR * 1.8, moonX, moonY, mHaloR - mHalfW);
+          mDarkGrd.addColorStop(0, 'rgba(0,0,0,0)');
+          mDarkGrd.addColorStop(1, `rgba(0,0,0,${(moonHaloStrength * 0.05).toFixed(3)})`);
           ctx.globalAlpha = state._alpha;
-          ctx.fillStyle = haloGrd;
+          ctx.fillStyle = mDarkGrd;
           ctx.beginPath();
-          ctx.arc(moonX, moonY, outer, 0, Math.PI * 2);
+          ctx.arc(moonX, moonY, mHaloR - mHalfW, 0, Math.PI * 2);
           ctx.fill();
+
+          // Ring — silvery: faint orange inner → white → transparent blue-silver outer
+          const mRingGrd = ctx.createRadialGradient(moonX, moonY, mHaloR - mHalfW, moonX, moonY, mHaloR + mHalfW);
+          mRingGrd.addColorStop(0,    `rgba(210, 185, 155, ${(moonHaloStrength * 0.35).toFixed(3)})`);
+          mRingGrd.addColorStop(0.40, `rgba(230, 230, 220, ${(moonHaloStrength * 0.30).toFixed(3)})`);
+          mRingGrd.addColorStop(0.70, `rgba(220, 228, 245, ${(moonHaloStrength * 0.22).toFixed(3)})`);
+          mRingGrd.addColorStop(1,    'rgba(200, 215, 240, 0)');
+          ctx.globalAlpha = state._alpha;
+          ctx.beginPath();
+          ctx.arc(moonX, moonY, mHaloR, 0, Math.PI * 2);
+          ctx.strokeStyle = mRingGrd;
+          ctx.lineWidth = mHalfW * 2;
+          ctx.stroke();
+
+          ctx.restore();
         }
         ctx.globalAlpha = state._alpha;
       }
