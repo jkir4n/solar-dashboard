@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.19.6 (2026-04-14)
+
+### Bug Fixes
+- RAF debounce chart mousemove to cap redraws at 60fps
+
+
 ## v0.19.5 (2026-04-14)
 
 ### Bug Fixes
