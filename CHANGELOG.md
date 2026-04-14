@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.19.2 (2026-04-14)
+
+### Bug Fixes
+- Recognise perf commits as patch bumps, opt into Node 24 actions
+- Perf/fix: pause animations on hide, debounce hass, cache chart snapshots, fix tz calc
+
+
 ## v0.19.1 (2026-04-13)
 
 ### Bug Fixes
