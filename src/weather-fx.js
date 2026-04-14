@@ -359,12 +359,15 @@ export class WeatherFX {
           o: 0.12 + Math.random() * 0.2, phase: Math.random() * Math.PI * 2
         });
       }
-      // God rays — 5 translucent beams from top-right
-      for (let i = 0; i < 5; i++) {
+      // God rays — 10 beams radiating from sun in all directions
+      // Crepuscular effect: only visible at low elevation (< 15°), peak below 6.5°
+      for (let i = 0; i < 10; i++) {
+        const baseAngle = (i / 10) * Math.PI * 2;
         particles.push({
-          kind: 'ray', angle: -0.4 + i * 0.15, width: 0.06 + Math.random() * 0.08,
-          o: 0.03 + Math.random() * 0.03, phase: Math.random() * Math.PI * 2,
-          speed: 0.2 + Math.random() * 0.3
+          kind: 'ray', angle: baseAngle + (Math.random() - 0.5) * 0.4,
+          width: 0.04 + Math.random() * 0.06,
+          o: 0.025 + Math.random() * 0.025, phase: Math.random() * Math.PI * 2,
+          speed: 0.15 + Math.random() * 0.25
         });
       }
     } else if (type === 'pouring') {
@@ -624,12 +627,15 @@ export class WeatherFX {
         }
       });
     } else if (type === 'sunrays') {
-      // Soft god rays peeking through cloud gaps
-      for (let i = 0; i < 4; i++) {
+      // Tyndall rays through cloud gaps — 8 beams radiating from sun
+      // Visible up to ~25° elevation (diffuse, softer than pure crepuscular)
+      for (let i = 0; i < 8; i++) {
+        const baseAngle = (i / 8) * Math.PI * 2;
         particles.push({
-          kind: 'ray', angle: -0.5 + i * 0.18, width: 0.05 + Math.random() * 0.07,
-          o: 0.08 + Math.random() * 0.06, phase: Math.random() * Math.PI * 2,
-          speed: 0.15 + Math.random() * 0.2
+          kind: 'ray', angle: baseAngle + (Math.random() - 0.5) * 0.5,
+          width: 0.03 + Math.random() * 0.05,
+          o: 0.06 + Math.random() * 0.05, phase: Math.random() * Math.PI * 2,
+          speed: 0.12 + Math.random() * 0.18
         });
       }
       // Golden motes drifting slowly upward
@@ -721,20 +727,24 @@ export class WeatherFX {
       const _sunX = w * (this._sunAzimuth / 360);
       const _sunY = h * (0.8 - this._sunElevation / 90 * 0.75);
       const rayColor = light ? 'rgba(255,190,50,1)' : 'rgba(255,220,100,1)';
-      (this._overlayParticlesByType.ray || []).forEach(p => {
-        const pulse = 0.7 + 0.3 * Math.sin(now * 0.001 * p.speed + p.phase);
-        const cx = _sunX, cy = _sunY;
-        const a1 = p.angle - p.width / 2, a2 = p.angle + p.width / 2;
-        const rayLen = Math.max(w, h) * 1.5;
-        ctx.globalAlpha = scale * p.o * pulse * (light ? 0.7 : 1);
-        ctx.fillStyle = rayColor;
-        ctx.beginPath();
-        ctx.moveTo(cx, cy);
-        ctx.lineTo(cx + Math.cos(a1) * rayLen, cy + Math.sin(a1) * rayLen);
-        ctx.lineTo(cx + Math.cos(a2) * rayLen, cy + Math.sin(a2) * rayLen);
-        ctx.closePath();
-        ctx.fill();
-      });
+      // Tyndall rays: full below 10°, fade to invisible at 25° (softer than crepuscular)
+      const _tyndallFade = Math.max(0, 1 - Math.max(0, this._sunElevation - 10) / 15);
+      if (_tyndallFade > 0) {
+        (this._overlayParticlesByType.ray || []).forEach(p => {
+          const pulse = 0.7 + 0.3 * Math.sin(now * 0.001 * p.speed + p.phase);
+          const cx = _sunX, cy = _sunY;
+          const a1 = p.angle - p.width / 2, a2 = p.angle + p.width / 2;
+          const rayLen = Math.max(w, h) * 1.5;
+          ctx.globalAlpha = scale * p.o * pulse * _tyndallFade * (light ? 0.7 : 1);
+          ctx.fillStyle = rayColor;
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          ctx.lineTo(cx + Math.cos(a1) * rayLen, cy + Math.sin(a1) * rayLen);
+          ctx.lineTo(cx + Math.cos(a2) * rayLen, cy + Math.sin(a2) * rayLen);
+          ctx.closePath();
+          ctx.fill();
+        });
+      }
       const moteColor = light ? 'rgba(200,160,40,' : 'rgba(255,200,80,';
       (this._overlayParticlesByType.mote || []).forEach(p => {
         p.phase += 0.01;
@@ -949,26 +959,27 @@ export class WeatherFX {
           ctx.fill();
           ctx.restore();
         }
-        // Solar halo — 22° ring, fades out as clouds increase
+        // Solar halo — soft stroked arcs for atmospheric 22° ring look
         const haloStrength = Math.max(0, cloudDim - 0.45) / 0.55;
         if (haloStrength > 0 && elev > 5) {
-          const haloR = sunR * 2.8;
-          const haloInner = haloR * 0.88, haloOuter = haloR * 1.12;
-          // True annulus via evenodd winding — only the ring is filled, not the disc interior
-          const haloGrad = ctx.createRadialGradient(sunX, sunY, haloInner, sunX, sunY, haloOuter);
-          // Real 22° halo: red on inside, progressing to violet/blue on outside
-          haloGrad.addColorStop(0,   `rgba(255, 180, 140, 0)`);                                   // transparent inner edge
-          haloGrad.addColorStop(0.1, `rgba(255, 160, 100, ${(haloStrength * 0.5).toFixed(3)})`);  // red/orange inner
-          haloGrad.addColorStop(0.5, `rgba(255, 255, 255, ${(haloStrength * 0.4).toFixed(3)})`);  // white middle
-          haloGrad.addColorStop(0.9, `rgba(180, 200, 255, ${(haloStrength * 0.5).toFixed(3)})`);  // blue/violet outer
-          haloGrad.addColorStop(1,   `rgba(160, 180, 255, 0)`);                                   // transparent outer edge
+          const haloR = sunR * 3.8;
           ctx.save();
           ctx.globalAlpha = state._alpha;
-          ctx.fillStyle = haloGrad;
+          // Wide outer diffuse white glow
           ctx.beginPath();
-          ctx.arc(sunX, sunY, haloOuter, 0, Math.PI * 2, false); // outer circle
-          ctx.arc(sunX, sunY, haloInner, 0, Math.PI * 2, true);  // inner circle (hole)
-          ctx.fill('evenodd');
+          ctx.arc(sunX, sunY, haloR, 0, Math.PI * 2);
+          ctx.strokeStyle = `rgba(255, 255, 255, ${(haloStrength * 0.20).toFixed(3)})`;
+          ctx.lineWidth = sunR * 1.6;
+          ctx.shadowBlur = sunR * 2.5;
+          ctx.shadowColor = `rgba(210, 225, 255, ${(haloStrength * 0.18).toFixed(3)})`;
+          ctx.stroke();
+          ctx.shadowBlur = 0;
+          // Inner red-orange rim (characteristic 22° halo inner edge)
+          ctx.beginPath();
+          ctx.arc(sunX, sunY, haloR * 0.91, 0, Math.PI * 2);
+          ctx.strokeStyle = `rgba(255, 155, 80, ${(haloStrength * 0.28).toFixed(3)})`;
+          ctx.lineWidth = sunR * 0.55;
+          ctx.stroke();
           ctx.restore();
         }
         ctx.globalAlpha = state._alpha;
@@ -1071,21 +1082,25 @@ export class WeatherFX {
       const rayColor = light ? 'rgba(255,190,50,1)' : 'rgba(255,220,100,1)';
       const _raySunX = w * (state._sunAzimuth / 360);
       const _raySunY = h * (0.8 - state._sunElevation / 90 * 0.75);
-      (state._particlesByType.ray || []).forEach(p => {
-        if (state._sunElevation <= 0) return;
-        const pulse = 0.7 + 0.3 * Math.sin(now * 0.001 * p.speed + p.phase);
-        const cx = _raySunX, cy = _raySunY;
-        const a1 = p.angle - p.width / 2, a2 = p.angle + p.width / 2;
-        const rayLen = Math.max(w, h) * 1.5;
-        ctx.globalAlpha = state._alpha * p.o * pulse * (light ? 0.7 : 1);
-        ctx.fillStyle = rayColor;
-        ctx.beginPath();
-        ctx.moveTo(cx, cy);
-        ctx.lineTo(cx + Math.cos(a1) * rayLen, cy + Math.sin(a1) * rayLen);
-        ctx.lineTo(cx + Math.cos(a2) * rayLen, cy + Math.sin(a2) * rayLen);
-        ctx.closePath();
-        ctx.fill();
-      });
+      // Crepuscular rays: full below 6.5°, fade to invisible at 15°
+      const _rayElevFade = Math.max(0, 1 - Math.max(0, elev - 6.5) / 8.5);
+      if (_rayElevFade > 0) {
+        (state._particlesByType.ray || []).forEach(p => {
+          if (state._sunElevation <= 0) return;
+          const pulse = 0.7 + 0.3 * Math.sin(now * 0.001 * p.speed + p.phase);
+          const cx = _raySunX, cy = _raySunY;
+          const a1 = p.angle - p.width / 2, a2 = p.angle + p.width / 2;
+          const rayLen = Math.max(w, h) * 1.5;
+          ctx.globalAlpha = state._alpha * p.o * pulse * _rayElevFade * (light ? 0.7 : 1);
+          ctx.fillStyle = rayColor;
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          ctx.lineTo(cx + Math.cos(a1) * rayLen, cy + Math.sin(a1) * rayLen);
+          ctx.lineTo(cx + Math.cos(a2) * rayLen, cy + Math.sin(a2) * rayLen);
+          ctx.closePath();
+          ctx.fill();
+        });
+      }
       ctx.globalAlpha = state._alpha;
       // Dust motes with gentle drift
       const moteColor = light ? 'rgba(200,160,40,' : 'rgba(255,200,80,';
