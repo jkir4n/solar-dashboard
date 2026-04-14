@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.20.1 (2026-04-14)
+
+### Bug Fixes
+- Radial-gradient halo ring with inner darkening for solar and lunar halos
+
+
 ## v0.20.0 (2026-04-14)
 
 ### Features
