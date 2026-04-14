@@ -93,50 +93,54 @@ export class WeatherFX {
   // Called once at spawn so the render loop can just blit p.off each frame.
   _renderCloudToOffscreen(p, isNight) {
     const cloudR = p.r;
-    const offW = Math.ceil(cloudR * 3), offH = Math.ceil(cloudR * 2.5);
-    const off = document.createElement('canvas');
-    off.width = offW; off.height = offH;
-    const octx = off.getContext('2d');
-    const ox = offW / 2, oy = offH * 0.6;
-
-    // Build clip from all lobes
-    octx.beginPath();
+    // Compute tight bounds from actual lobe positions
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
     for (const lobe of p.lobes) {
+      const lx = lobe.dx * cloudR, ly = lobe.dy * cloudR, lr = lobe.rs * cloudR;
+      if (lx - lr < minX) minX = lx - lr;
+      if (lx + lr > maxX) maxX = lx + lr;
+      if (ly - lr < minY) minY = ly - lr;
+      if (ly + lr > maxY) maxY = ly + lr;
+    }
+    const pad = cloudR * 0.4;
+    const offW = Math.ceil(maxX - minX + pad * 2);
+    const offH = Math.ceil(maxY - minY + pad * 2);
+    const ox = -minX + pad;   // origin offset within offscreen canvas
+    const oy = -minY + pad;
+
+    const off = document.createElement('canvas');
+    off.width = Math.max(offW, 1); off.height = Math.max(offH, 1);
+    const octx = off.getContext('2d');
+
+    // Sort lobes bottom → top so top lobes are painted last (on top)
+    const sorted = [...p.lobes].sort((a, b) => b.dy - a.dy);
+    sorted.forEach(lobe => {
       const lx = ox + lobe.dx * cloudR;
       const ly = oy + lobe.dy * cloudR;
       const lr = lobe.rs * cloudR;
+      const s  = lobe.shade;                 // 1 = topmost, 0 = bottommost
+      // Highlight offset: top-left corner of lobe
+      const hlX = lx - lr * 0.25, hlY = ly - lr * 0.30;
+      const grd = octx.createRadialGradient(hlX, hlY, lr * 0.05, lx, ly, lr);
+      if (isNight) {
+        grd.addColorStop(0,    `rgba(85, 100, 140, ${(0.75 + s * 0.15).toFixed(2)})`);
+        grd.addColorStop(0.55, `rgba(50,  60,  95, ${(0.70 + s * 0.10).toFixed(2)})`);
+        grd.addColorStop(1,    `rgba(25,  30,  60, ${(0.20 + s * 0.10).toFixed(2)})`);
+      } else {
+        // Top lobes (s≈1): bright white/pale; bottom lobes (s≈0): cool grey
+        const hi = Math.round(230 + s * 25);   // highlight base: 230–255
+        const md = Math.round(185 + s * 45);   // mid body:  185–230
+        const lo = Math.round(175 + s * 35);   // bottom:    175–210
+        grd.addColorStop(0,    `rgba(255, 255, 255, 0.95)`);
+        grd.addColorStop(0.30, `rgba(${hi}, ${hi}, ${hi + 4}, 0.90)`);
+        grd.addColorStop(0.65, `rgba(${md}, ${md + 4}, ${md + 12}, 0.78)`);
+        grd.addColorStop(1,    `rgba(${lo}, ${lo + 5}, ${lo + 18}, 0.18)`);
+      }
+      octx.fillStyle = grd;
+      octx.beginPath();
       octx.arc(lx, ly, lr, 0, Math.PI * 2);
-    }
-    octx.clip();
-
-    // Gradient fill
-    const minDy = Math.min(...p.lobes.map(l => l.dy));
-    const maxDy = Math.max(...p.lobes.map(l => l.dy));
-    const maxRs = Math.max(...p.lobes.map(l => l.rs));
-    const topY = oy + minDy * cloudR;
-    const botY = oy + maxDy * cloudR + maxRs * cloudR;
-    const grad = octx.createLinearGradient(ox, topY, ox, botY);
-    if (isNight) {
-      grad.addColorStop(0,   'rgba(60, 70, 100, 0.90)');
-      grad.addColorStop(0.5, 'rgba(35, 42,  65, 0.85)');
-      grad.addColorStop(1.0, 'rgba(20, 25,  45, 0.80)');
-    } else {
-      grad.addColorStop(0,   'rgba(255, 255, 255, 0.95)');
-      grad.addColorStop(0.3, 'rgba(240, 245, 255, 0.90)');
-      grad.addColorStop(0.7, 'rgba(210, 220, 235, 0.85)');
-      grad.addColorStop(1.0, 'rgba(180, 195, 215, 0.80)');
-    }
-    octx.fillStyle = grad;
-    octx.fillRect(0, 0, offW, offH);
-
-    // Shadow belly
-    octx.globalCompositeOperation = 'multiply';
-    const shadowGrad = octx.createRadialGradient(ox, botY - cloudR * 0.1, 0, ox, botY - cloudR * 0.1, cloudR * 1.2);
-    shadowGrad.addColorStop(0, 'rgba(100, 120, 160, 0.25)');
-    shadowGrad.addColorStop(1, 'rgba(100, 120, 160, 0)');
-    octx.fillStyle = shadowGrad;
-    octx.fillRect(0, 0, offW, offH);
-    octx.globalCompositeOperation = 'source-over';
+      octx.fill();
+    });
 
     p.off = off;
     p.ox = ox;
@@ -906,8 +910,8 @@ export class WeatherFX {
         // Overcast: use a flat base + scaled component so the patch stays visible
         // Needs higher alpha to show through the semi-transparent mesh gradient backdrop
         const glowAlpha = cloudDim >= 0.3
-          ? (0.10 + (elev < 15 ? 0.08 : 0)) * cloudDim
-          : cloudDim > 0 ? 0.08 + cloudDim * 0.20 : 0;
+          ? (0.18 + (elev < 15 ? 0.10 : 0)) * cloudDim
+          : cloudDim > 0 ? 0.10 + cloudDim * 0.25 : 0;
 
         // Atmospheric glow
         const sunGrd = ctx.createRadialGradient(sunX, sunY, sunR * 0.4, sunX, sunY, glowR);
@@ -923,14 +927,12 @@ export class WeatherFX {
         if (cloudDim >= 0.3) {
           const discAlpha = state._alpha * cloudDim;
           const discGrd = ctx.createRadialGradient(
-            sunX - sunR * 0.25, sunY - sunR * 0.25, sunR * 0.1,
+            sunX - sunR * 0.30, sunY - sunR * 0.30, sunR * 0.05,
             sunX, sunY, sunR
           );
-          discGrd.addColorStop(0,    `rgba(255,255,230,${discAlpha})`);
-          discGrd.addColorStop(0.5,  `rgba(${r},${Math.min(255, g + 8)},${b},${discAlpha * 0.95})`);
-          // Limb darkening — slightly darker/more saturated near edge (Rayleigh)
-          discGrd.addColorStop(0.85, `rgba(${Math.round(r * 0.86)},${Math.round(g * 0.71)},${Math.round(b * 0.44)},${(discAlpha * 0.4).toFixed(3)})`);
-          discGrd.addColorStop(1,    `rgba(${r},${g},${Math.max(0, b - 20)},${discAlpha * 0.85})`);
+          discGrd.addColorStop(0,   `rgba(255,255,245,${discAlpha})`);
+          discGrd.addColorStop(0.5, `rgba(${r},${Math.min(255, g + 5)},${b},${discAlpha})`);
+          discGrd.addColorStop(1,   `rgba(${Math.round(r * 0.92)},${Math.round(g * 0.85)},${Math.round(Math.max(0, b * 0.70))},${(discAlpha * 0.72).toFixed(3)})`);
           ctx.fillStyle = discGrd;
           ctx.beginPath();
           ctx.arc(sunX, sunY, sunR, 0, Math.PI * 2);
@@ -938,7 +940,7 @@ export class WeatherFX {
           // Bloom ring — wide soft corona using screen compositing
           ctx.save();
           ctx.globalCompositeOperation = 'screen';
-          const bloom = ctx.createRadialGradient(sunX, sunY, sunR * 0.8, sunX, sunY, sunR * 3.5);
+          const bloom = ctx.createRadialGradient(sunX, sunY, sunR * 1.0, sunX, sunY, sunR * 3.5);
           bloom.addColorStop(0, `rgba(255, 240, 180, ${(0.15 * cloudDim).toFixed(3)})`);
           bloom.addColorStop(1, 'rgba(255, 240, 180, 0)');
           ctx.fillStyle = bloom;
