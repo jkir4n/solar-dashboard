@@ -8,6 +8,8 @@ on:
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
     permissions:
       contents: write
 
@@ -43,7 +45,7 @@ jobs:
             BUMP="major"
           elif echo "$COMMITS" | grep -qE "^feat(\(.+\))?:|^feat!:"; then
             BUMP="minor"
-          elif echo "$COMMITS" | grep -qE "^fix(\(.+\))?:|^fix!:"; then
+          elif echo "$COMMITS" | grep -qE "^(fix|perf)(\/[a-z]+)?(\(.+\))?:|^(fix|perf)!:"; then
             BUMP="patch"
           else
             echo "No version-worthy commits found. Skipping release."
