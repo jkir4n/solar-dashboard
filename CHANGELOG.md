@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.19.4 (2026-04-14)
+
+### Bug Fixes
+- Cloud offscreen bounds, sun disc gradient, bloom ring, glow alpha
+
+
 ## v0.19.3 (2026-04-14)
 
 ### Bug Fixes
