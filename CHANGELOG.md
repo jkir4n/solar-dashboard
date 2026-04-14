@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.20.2 (2026-04-14)
+
+### Bug Fixes
+- Screen composite halo + linear-gradient rays for professional atmospheric look
+
+
 ## v0.20.1 (2026-04-14)
 
 ### Bug Fixes
