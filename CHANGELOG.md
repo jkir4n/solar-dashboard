@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.19.5 (2026-04-14)
+
+### Bug Fixes
+- Atmospheric halo strokes, 360-degree rays, crepuscular elevation fade
+
+
 ## v0.19.4 (2026-04-14)
 
 ### Bug Fixes
