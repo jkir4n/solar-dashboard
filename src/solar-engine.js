@@ -11,6 +11,24 @@ const INSTALL = {
   monthlyClarity: [0.95, 0.93, 0.90, 0.88, 0.85, 0.80, 0.70, 0.72, 0.78, 0.85, 0.92, 0.95],
 };
 
+export function cloudTransmission(cloudPct) {
+  const bands = [
+    [0,  10,  0.95, 1.0 ],
+    [10, 50,  0.75, 0.95],
+    [50, 70,  0.40, 0.75],
+    [70, 90,  0.20, 0.40],
+    [90, 100, 0.10, 0.25],
+  ];
+  const c = Math.max(0, Math.min(100, cloudPct));
+  for (const [lo, hi, tLo, tHi] of bands) {
+    if (c <= hi) {
+      const frac = (c - lo) / (hi - lo);
+      return tHi - frac * (tHi - tLo);
+    }
+  }
+  return 0.10;
+}
+
 export class SolarEngine {
   constructor(lat, lon, altitude = 0, installDate = new Date(2026, 2, 1)) {
     this.lat = lat;
@@ -205,21 +223,7 @@ export class SolarEngine {
 
   // Cloud transmission model — 5-band linear interpolation (v9 line 774)
   _cloudTransmission(cloudPct) {
-    const bands = [
-      [0,  10,  0.95, 1.0 ],
-      [10, 50,  0.75, 0.95],
-      [50, 70,  0.40, 0.75],
-      [70, 90,  0.20, 0.40],
-      [90, 100, 0.10, 0.25],
-    ];
-    const c = Math.max(0, Math.min(100, cloudPct));
-    for (const [lo, hi, tLo, tHi] of bands) {
-      if (c <= hi) {
-        const frac = (c - lo) / (hi - lo);
-        return tHi - frac * (tHi - tLo);
-      }
-    }
-    return 0.10;
+    return cloudTransmission(cloudPct);
   }
 
   // panelConfig: { count, efficiency, tilt, azimuth, ratedWatts } from HABridge helpers

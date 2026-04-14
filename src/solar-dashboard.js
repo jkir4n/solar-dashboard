@@ -1,5 +1,5 @@
 import { HABridge } from './ha-bridge.js';
-import { SolarEngine } from './solar-engine.js';
+import { SolarEngine, cloudTransmission } from './solar-engine.js';
 import { WeatherFX } from './weather-fx.js';
 import { ChartManager } from './charts.js';
 import { STYLES } from './styles.js';
@@ -90,24 +90,6 @@ const WEATHER_PALETTES = {
     night_windy:        ['rgba(30,90,130,0.12)',  'rgba(25,80,120,0.08)',  'rgba(35,100,140,0.06)'],
   },
 };
-
-function cloudTransmission(cloudPct) {
-  const bands = [
-    [0, 10, 0.95, 1.0],
-    [10, 50, 0.75, 0.95],
-    [50, 70, 0.40, 0.75],
-    [70, 90, 0.20, 0.40],
-    [90, 100, 0.10, 0.25],
-  ];
-  const c = Math.max(0, Math.min(100, cloudPct));
-  for (const [lo, hi, tLo, tHi] of bands) {
-    if (c <= hi) {
-      const frac = (c - lo) / (hi - lo);
-      return tHi - frac * (tHi - tLo);
-    }
-  }
-  return 0.10;
-}
 
 // ============ FLOW PARTICLE SYSTEM ============
 class FlowParticles {
@@ -227,6 +209,8 @@ class SolarDashboard extends HTMLElement {
     this._activeChartRange = 'Live';
     this._lastLiveChartFetch = 0;
     this._cycleRatePerDay = null;
+    this._pendingChanges = new Set();
+    this._updateRafId = null;
   }
 
   set hass(hass) {
@@ -244,17 +228,25 @@ class SolarDashboard extends HTMLElement {
     }
     const changed = this._bridge.getChangedEntities();
     if (changed.length > 0) {
-      this._updateUI(changed);
-      // Refresh Live chart when relevant entities change, throttled to once per 2 minutes
-      if (this._activeChartRange === 'Live' && this._chartsLoaded) {
-        const E = this._bridge.E;
-        const liveEntities = new Set([E.POWER, E.CHG_POWER, E.DISCHG_POWER, E.SOC].filter(Boolean));
-        const relevant = changed.some(id => liveEntities.has(id));
-        if (relevant && Date.now() - this._lastLiveChartFetch > 60000) {
-          this._lastLiveChartFetch = Date.now();
-          this._loadChartRange('Live');
+      changed.forEach(id => this._pendingChanges.add(id));
+    }
+    if (!this._updateRafId) {
+      this._updateRafId = requestAnimationFrame(() => {
+        this._updateRafId = null;
+        const pending = [...this._pendingChanges];
+        this._pendingChanges.clear();
+        if (pending.length === 0) return;
+        this._updateUI(pending);
+        if (this._activeChartRange === 'Live' && this._chartsLoaded) {
+          const E = this._bridge.E;
+          const liveEntities = new Set([E.POWER, E.CHG_POWER, E.DISCHG_POWER, E.SOC].filter(Boolean));
+          const relevant = pending.some(id => liveEntities.has(id));
+          if (relevant && Date.now() - this._lastLiveChartFetch > 60000) {
+            this._lastLiveChartFetch = Date.now();
+            this._loadChartRange('Live');
+          }
         }
-      }
+      });
     }
   }
 
@@ -270,8 +262,9 @@ class SolarDashboard extends HTMLElement {
     this._applyTheme();
     const dashRoot = root.querySelector('.dashboard-root');
     if (dashRoot) dashRoot.classList.add('js-ready');
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    mq.addEventListener('change', () => this._applyTheme());
+    this._mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    this._themeHandler = () => this._applyTheme();
+    this._mediaQuery.addEventListener('change', this._themeHandler);
 
     // Init solar engine
     const lat = this._bridge.latitude;
@@ -331,7 +324,7 @@ class SolarDashboard extends HTMLElement {
 
     // Start calcTodayInOut
     this._calcTodayInOut();
-    this._intervals.push(setInterval(() => this._calcTodayInOut(), 60000));
+    this._intervals.push(setInterval(() => this._calcTodayInOut(), 300000));
 
     // Start solar estimate update
     this._updateSolarEstimate();
@@ -354,9 +347,33 @@ class SolarDashboard extends HTMLElement {
     };
     window.addEventListener('resize', this._resizeHandler);
 
+    // Visibility handler — pause all animations when panel is hidden
+    this._visibilityHandler = () => {
+      if (document.hidden) {
+        this._intervals.forEach(id => clearInterval(id));
+        this._intervals = [];
+        if (this._flowPS1) this._flowPS1.stop();
+        if (this._flowPS2) this._flowPS2.stop();
+        this._stopBattArcs();
+        this._activeAnimations.forEach(id => cancelAnimationFrame(id));
+        this._activeAnimations.clear();
+        if (this._weatherFx) this._weatherFx.stop();
+      } else {
+        // Restart all intervals
+        this._intervals.push(setInterval(() => this._startClock(), 1000));
+        this._intervals.push(setInterval(() => this._calcTodayInOut(), 300000));
+        this._intervals.push(setInterval(() => this._updateSolarEstimate(), 60000));
+        this._intervals.push(setInterval(() => this._updateSolarUI(), 3600000));
+        this._intervals.push(setInterval(() => this._updateCycleRate(), 3600000));
+        this._startBattArcs();
+        this._updateWeather();
+        this._refreshAllUI();
+      }
+    };
+    document.addEventListener('visibilitychange', this._visibilityHandler);
+
     // Initial full refresh + reveal
     this._refreshAllUI();
-    this._loadChartRange('Live');
 
     // Staggered card reveal with fallback
     setTimeout(() => this._revealCards(), 200);
@@ -371,6 +388,8 @@ class SolarDashboard extends HTMLElement {
     if (this._weatherFx) this._weatherFx.destroy();
     if (this._charts) this._charts.detachAll();
     if (this._resizeHandler) window.removeEventListener('resize', this._resizeHandler);
+    if (this._visibilityHandler) document.removeEventListener('visibilitychange', this._visibilityHandler);
+    if (this._mediaQuery && this._themeHandler) this._mediaQuery.removeEventListener('change', this._themeHandler);
     this._stopBattArcs();
     this._activeAnimations.forEach(id => cancelAnimationFrame(id));
     this._activeAnimations.clear();
@@ -1170,7 +1189,7 @@ class SolarDashboard extends HTMLElement {
     if (!this._bridge._hass) return null;
     const knownStates = new Set(Object.keys(MOON_PHASE_BRIGHTNESS));
     const match = Object.entries(this._bridge._hass.states)
-      .find(([, s]) => knownStates.has(s.state));
+      .find(([id, s]) => id.startsWith('sensor.') && knownStates.has(s.state));
     return match ? match[0] : null;
   }
 
@@ -1465,10 +1484,16 @@ class SolarDashboard extends HTMLElement {
     const tz = this._bridge.timezone;
     try {
       const now = new Date();
-      const localNow = new Date(now.toLocaleString('en-US', { timeZone: tz }));
-      localNow.setHours(0, 0, 0, 0);
-      const offsetMs = now.getTime() - new Date(now.toLocaleString('en-US', { timeZone: tz })).getTime();
-      const midnightUTC = new Date(localNow.getTime() + offsetMs);
+      // Get today's date string in the target timezone (sv locale reliably gives YYYY-MM-DD)
+      const todayStr = new Intl.DateTimeFormat('sv', { timeZone: tz }).format(now);
+      // Compute timezone offset at noon (avoids DST edge cases at midnight)
+      const noonRef = new Date(`${todayStr}T12:00:00Z`);
+      const localNoon = new Intl.DateTimeFormat('en-US', {
+        timeZone: tz, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+      }).format(noonRef);
+      const [lh, lm, ls] = localNoon.split(':').map(Number);
+      const offsetMs = (lh - 12) * 3600000 + lm * 60000 + ls * 1000;
+      const midnightUTC = new Date(new Date(`${todayStr}T00:00:00Z`).getTime() - offsetMs);
 
       const states = await this._bridge.fetchHistoryRange(E.CURRENT, midnightUTC, now, true);
       let inAh = 0, outAh = 0;

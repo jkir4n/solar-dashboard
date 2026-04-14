@@ -328,10 +328,17 @@ export class HABridge {
   async fetchHistoryRange(entityId, startDate, endDate, significantOnly = false) {
     if (!this._hass) return [];
     try {
-      let path = `history/period/${startDate.toISOString()}?filter_entity_id=${entityId}&end_time=${endDate.toISOString()}&minimal_response&no_attributes`;
-      if (significantOnly) path += '&significant_changes_only';
-      const result = await this._hass.callApi('GET', path);
-      return (result?.[0] || []).map(d => ({ t: new Date(d.last_changed || d.last_updated), v: isNaN(parseFloat(d.state)) ? null : parseFloat(d.state) }));
+      const msg = {
+        type: 'history/history_during_period',
+        start_time: startDate.toISOString(),
+        end_time: endDate.toISOString(),
+        entity_ids: [entityId],
+        minimal_response: true,
+        no_attributes: true,
+      };
+      if (significantOnly) msg.significant_changes_only = true;
+      const result = await this._hass.callWS(msg);
+      return (result?.[entityId] || []).map(d => ({ t: new Date(d.last_changed || d.last_updated), v: isNaN(parseFloat(d.state)) ? null : parseFloat(d.state) }));
     } catch (e) {
       console.warn('[Solar] History fetch failed:', e);
       return [];

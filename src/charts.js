@@ -18,6 +18,7 @@ export class ChartManager {
     this._bridge = bridge;       // HABridge instance for history/stats fetching
     this._chartData = {};        // canvasId -> { datasets, opts, ... }
     this._chartAnimIds = {};     // canvasId -> requestAnimationFrame id
+    this._snapshots = {};        // canvasId -> ImageData snapshot of clean chart
     this._crosshairHandlers = new Map(); // canvas -> { handlers } for cleanup
     this._lastUpdate = 0;
     this._throttleMs = 5000;
@@ -154,7 +155,11 @@ export class ChartManager {
       })(),
     };
 
-    if (!animate) { drawFrame(1); return; }
+    if (!animate) {
+      drawFrame(1);
+      this._snapshots[canvasId] = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      return;
+    }
 
     // Animated reveal with easeOutCubic
     const dur = 800;
@@ -164,7 +169,10 @@ export class ChartManager {
       const ease = 1 - Math.pow(1 - t, 3);
       drawFrame(ease);
       if (t < 1) this._chartAnimIds[canvasId] = requestAnimationFrame(tick);
-      else this._chartAnimIds[canvasId] = null;
+      else {
+        this._chartAnimIds[canvasId] = null;
+        this._snapshots[canvasId] = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      }
     };
     this._chartAnimIds[canvasId] = requestAnimationFrame(tick);
   }
@@ -187,10 +195,16 @@ export class ChartManager {
     const ctx = canvas.getContext('2d');
     const yRange = maxVal - minVal || 1;
 
-    // Re-render the clean chart (no animation)
-    this.drawChart(canvas, datasets, opts, false);
+    // Restore clean chart snapshot (avoids full redraw on every mousemove)
+    const snap = this._snapshots[canvasId];
+    if (snap && canvas.width === snap.width && canvas.height === snap.height) {
+      ctx.putImageData(snap, 0, 0);
+    } else {
+      this.drawChart(canvas, datasets, opts, false);
+      this._snapshots[canvasId] = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    }
 
-    // drawChart leaves ctx scaled by dpr; reset so we draw in CSS-pixel coords
+    // Set transform for CSS-pixel overlay drawing
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     if (mouseX < padLeft || mouseX > padLeft + cW) return;
@@ -298,8 +312,8 @@ export class ChartManager {
 
     const handleLeave = () => {
       const canvasId = canvas.id || canvas.dataset.chartId || 'anon';
-      const cd = this._chartData[canvasId];
-      if (cd) this.drawChart(canvas, cd.datasets, cd.opts, false);
+      const snap = this._snapshots[canvasId];
+      if (snap) canvas.getContext('2d').putImageData(snap, 0, 0);
     };
 
     const onMouseMove = (e) => handleMove(e.clientX);
