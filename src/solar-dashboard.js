@@ -197,9 +197,11 @@ class FlowParticles {
     const ctx = this.arcCtx;
     const cv = this.arcCanvas;
     if (!ctx || !cv || this.arcs.length === 0) return;
-    if (cv.width < 10) {
-      cv.width = this.wrap.offsetWidth || 100;
-      cv.height = this.wrap.offsetHeight || 20;
+    const wW = this.wrap.offsetWidth || 100;
+    const wH = this.wrap.offsetHeight || 14;
+    if (cv.width !== wW || cv.height !== wH) {
+      cv.width = wW;
+      cv.height = wH;
     }
     const W = cv.width;
     const H = cv.height;
