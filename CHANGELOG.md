@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.22.1 (2026-04-17)
+
+### Bug Fixes
+- Randomise flow dot initial positions to prevent clustering
+
+
 ## v0.22.0 (2026-04-17)
 
 ### Features
