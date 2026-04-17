@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.23.2 (2026-04-17)
+
+### Bug Fixes
+- Battery arc color updates correctly when charge/discharge state changes
+
+
 ## v0.23.1 (2026-04-17)
 
 ### Bug Fixes
