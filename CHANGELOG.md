@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.23.1 (2026-04-17)
+
+### Bug Fixes
+- Arc canvas sizing to match wrap dimensions so arcs render on flow line
+
+
 ## v0.23.0 (2026-04-17)
 
 ### Features
