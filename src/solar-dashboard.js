@@ -120,7 +120,7 @@ class FlowParticles {
     // Continuous speed: 0.002 → 0.010
     this.speed = 0.002 + frac * 0.008;
     // Continuous dot count as float 2.0 → 5.0
-    this.activeFrac = 2 + frac * 3;
+    this.activeFrac = 2 + frac * 18;
     if (this.line) {
       if (!this._lineSet) {
         this.line.style.background = this.color + '33';
@@ -487,7 +487,7 @@ class SolarDashboard extends HTMLElement {
           </div>
           <div class="flow-line-wrap" id="flowWrap1">
             <div class="flow-line" id="flowLine1"></div>
-            <div class="flow-particles" id="flowParticles1"><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div></div>
+            <div class="flow-particles" id="flowParticles1"><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div></div>
             <span class="flow-watt" id="flowWatt1">0 W</span>
           </div>
           <div class="flow-node">
@@ -502,7 +502,7 @@ class SolarDashboard extends HTMLElement {
           </div>
           <div class="flow-line-wrap" id="flowWrap2">
             <div class="flow-line" id="flowLine2"></div>
-            <div class="flow-particles" id="flowParticles2"><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div></div>
+            <div class="flow-particles" id="flowParticles2"><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div></div>
             <span class="flow-watt" id="flowWatt2">0 W</span>
           </div>
           <div class="flow-node">
