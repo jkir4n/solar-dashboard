@@ -141,6 +141,8 @@ class FlowParticles {
       }
       const sweepS = (2.5 - frac * 1.7).toFixed(2);
       this.line.style.setProperty('--sweep-speed', sweepS + 's');
+      const glowAlpha = Math.round(40 + frac * 80).toString(16).padStart(2, '0');
+      this.line.style.boxShadow = `0 0 ${4 + frac * 10}px ${1 + frac * 3}px ${this.color}${glowAlpha}`;
     }
     if (!this.rafId) this.rafId = requestAnimationFrame(this._tick);
   }
@@ -197,8 +199,8 @@ class FlowParticles {
     const ctx = this.arcCtx;
     const cv = this.arcCanvas;
     if (!ctx || !cv || this.arcs.length === 0) return;
-    const wW = this.wrap.offsetWidth || 100;
-    const wH = this.wrap.offsetHeight || 14;
+    const wW = cv.offsetWidth || 100;
+    const wH = 20;
     if (cv.width !== wW || cv.height !== wH) {
       cv.width = wW;
       cv.height = wH;

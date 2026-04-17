@@ -263,7 +263,7 @@ export const STYLES = `
   .flow-icon.glow-dim svg { stroke: var(--text3); }
   .flow-label { font-size: 11px; font-weight: 600; color: var(--text2); }
   .flow-line-wrap { flex: 1; min-width: 40px; position: relative; display: flex; align-items: center; padding: 0 4px; margin-top: 22px; }
-  .flow-line { width: 100%; height: 3px; border-radius: 2px; background: var(--glass-border); position: relative; overflow: hidden; }
+  .flow-line { width: 100%; height: 3px; border-radius: 2px; background: var(--glass-border); position: relative; overflow: hidden; transition: box-shadow 0.4s ease, background 0.4s ease; }
   .flow-pulse { display: none; }
   .flow-particles { position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; overflow: hidden; }
   .flow-dot { position: absolute; width: 4px; height: 4px; border-radius: 50%; top: 0; opacity: 0; }
@@ -278,7 +278,7 @@ export const STYLES = `
   .flow-watt { position: absolute; top: calc(100% + 4px); left: 50%; transform: translateX(-50%); font-size: 10px; font-weight: 600; white-space: nowrap; }
   .flow-idle .flow-particles { display: none; }
   .flow-idle .flow-line { opacity: 0.3; }
-  .flow-arc-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+  .flow-arc-canvas { position: absolute; top: 50%; left: 0; transform: translateY(-50%); width: 100%; height: 20px; pointer-events: none; z-index: 1; }
 
   .sol-output { font-size: 42px; font-weight: 800; text-shadow: 0 0 24px var(--orange-glow); color: var(--orange); }
   .health-bar { height: 8px; border-radius: 4px; background: var(--glass-border); overflow: hidden; margin: 12px 0; }
