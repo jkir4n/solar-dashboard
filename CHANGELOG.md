@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.23.3 (2026-04-17)
+
+### Bug Fixes
+- Arc canvas height + energized flow line glow scaling with power
+
+
 ## v0.23.2 (2026-04-17)
 
 ### Bug Fixes
