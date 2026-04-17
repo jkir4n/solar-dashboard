@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.24.0 (2026-04-17)
+
+### Features
+- Rebuild dist for rain intensity & wind reactivity
+- Wire rain render blocks to _renderDrops
+- Add _renderDrops gradient stroke helper
+- Unify drop spawn with severity-driven formula
+- Add RAIN_SEVERITY constant map
+
+
 ## v0.23.3 (2026-04-17)
 
 ### Bug Fixes
