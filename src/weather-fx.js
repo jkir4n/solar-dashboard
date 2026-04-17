@@ -379,14 +379,28 @@ export class WeatherFX {
       }
     } else if (type === 'pouring') {
       // Heavy downpour — dense, long, fast streaks with strong wind
-      for (let i = 0; i < 110; i++) {
+      // Unified severity-driven drop spawn
+      const sev = RAIN_SEVERITY[type] ?? 0.55;
+      const spawnWF = Math.min(1, (this._windSpeed || 0) / 54);
+      const count = Math.round((80 + sev * 160) * (1 + spawnWF * 0.4));
+      const lenBase = 8 + sev * 14, lenRange = 10 + sev * 12;
+      const speedBase = 3 + sev * 8, speedRange = 3 + sev * 7;
+      const oBase = 0.12 + sev * 0.20, oRange = 0.12 + sev * 0.18;
+      const lwMin = 0.6 + sev * 0.5, lwRange = 0.8 + sev * 1.4;
+      const windBase = 0.3 + sev * 0.2, windRangeW = 0.4 + sev * 0.4;
+      for (let i = 0; i < count; i++) {
         const depth = Math.random();
+        const depthScale = 0.5 + depth * 0.5;
         particles.push({
-          kind: 'drop', x: Math.random() * w, y: Math.random() * h,
-          len: (14 + Math.random() * 18) * (0.5 + depth * 0.5),
-          speed: (7 + Math.random() * 8) * (0.5 + depth * 0.5),
-          o: (0.1 + Math.random() * 0.15) * (0.4 + depth * 0.6),
-          windDx: windDx * windFactor * 0.55 + windDx * 0.45
+          kind: 'drop',
+          x: Math.random() * w,
+          y: Math.random() * h,
+          len: (lenBase + Math.random() * lenRange) * depthScale * (1 + spawnWF * 0.5),
+          speed: (speedBase + Math.random() * speedRange) * depthScale,
+          o: (oBase + Math.random() * oRange) * (0.45 + depth * 0.55),
+          lw: lwMin + depth * lwRange,
+          gustPhase: Math.random() * Math.PI * 2,
+          windDx: windDx * (windBase + spawnWF * windRangeW),
         });
       }
       // More frequent, larger splash ripples
@@ -399,17 +413,28 @@ export class WeatherFX {
       }
     } else if (type === 'rainy' || type === 'storm') {
       // Streak rain with depth layers
-      const count = type === 'storm' ? 80 : 50;
+      // Unified severity-driven drop spawn
+      const sev = RAIN_SEVERITY[type] ?? 0.55;
+      const spawnWF = Math.min(1, (this._windSpeed || 0) / 54);
+      const count = Math.round((80 + sev * 160) * (1 + spawnWF * 0.4));
+      const lenBase = 8 + sev * 14, lenRange = 10 + sev * 12;
+      const speedBase = 3 + sev * 8, speedRange = 3 + sev * 7;
+      const oBase = 0.12 + sev * 0.20, oRange = 0.12 + sev * 0.18;
+      const lwMin = 0.6 + sev * 0.5, lwRange = 0.8 + sev * 1.4;
+      const windBase = 0.3 + sev * 0.2, windRangeW = 0.4 + sev * 0.4;
       for (let i = 0; i < count; i++) {
         const depth = Math.random();
-        const baseWind = type === 'storm' ? 0.5 : 0.3;
-        const maxWind = type === 'storm' ? 1.0 : 0.8;
+        const depthScale = 0.5 + depth * 0.5;
         particles.push({
-          kind: 'drop', x: Math.random() * w, y: Math.random() * h,
-          len: (8 + Math.random() * 15) * (0.5 + depth * 0.5),
-          speed: (3 + Math.random() * 5) * (0.5 + depth * 0.5),
-          o: (0.06 + Math.random() * 0.1) * (0.4 + depth * 0.6),
-          windDx: windDx * (baseWind + windFactor * (maxWind - baseWind))
+          kind: 'drop',
+          x: Math.random() * w,
+          y: Math.random() * h,
+          len: (lenBase + Math.random() * lenRange) * depthScale * (1 + spawnWF * 0.5),
+          speed: (speedBase + Math.random() * speedRange) * depthScale,
+          o: (oBase + Math.random() * oRange) * (0.45 + depth * 0.55),
+          lw: lwMin + depth * lwRange,
+          gustPhase: Math.random() * Math.PI * 2,
+          windDx: windDx * (windBase + spawnWF * windRangeW),
         });
       }
       // Splash ripples at bottom
@@ -429,14 +454,28 @@ export class WeatherFX {
       }
     } else if (type === 'sleet') {
       // Rain streaks — denser, shorter, steeper than pure rain
-      for (let i = 0; i < 40; i++) {
+      // Unified severity-driven drop spawn
+      const sev = RAIN_SEVERITY[type] ?? 0.55;
+      const spawnWF = Math.min(1, (this._windSpeed || 0) / 54);
+      const count = Math.round((80 + sev * 160) * (1 + spawnWF * 0.4));
+      const lenBase = 8 + sev * 14, lenRange = 10 + sev * 12;
+      const speedBase = 3 + sev * 8, speedRange = 3 + sev * 7;
+      const oBase = 0.12 + sev * 0.20, oRange = 0.12 + sev * 0.18;
+      const lwMin = 0.6 + sev * 0.5, lwRange = 0.8 + sev * 1.4;
+      const windBase = 0.3 + sev * 0.2, windRangeW = 0.4 + sev * 0.4;
+      for (let i = 0; i < count; i++) {
         const depth = Math.random();
+        const depthScale = 0.5 + depth * 0.5;
         particles.push({
-          kind: 'drop', x: Math.random() * w, y: Math.random() * h,
-          len: (5 + Math.random() * 8) * (0.5 + depth * 0.5),
-          speed: (4 + Math.random() * 4) * (0.5 + depth * 0.5),
-          o: (0.05 + Math.random() * 0.08) * (0.4 + depth * 0.6),
-          windDx: windDx * (0.2 + windFactor * 0.5)
+          kind: 'drop',
+          x: Math.random() * w,
+          y: Math.random() * h,
+          len: (lenBase + Math.random() * lenRange) * depthScale * (1 + spawnWF * 0.5),
+          speed: (speedBase + Math.random() * speedRange) * depthScale,
+          o: (oBase + Math.random() * oRange) * (0.45 + depth * 0.55),
+          lw: lwMin + depth * lwRange,
+          gustPhase: Math.random() * Math.PI * 2,
+          windDx: windDx * (windBase + spawnWF * windRangeW),
         });
       }
       // Ice pellets — small solid circles with wind-driven horizontal drift
