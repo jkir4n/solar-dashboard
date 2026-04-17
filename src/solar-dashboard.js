@@ -106,8 +106,8 @@ class FlowParticles {
     this.dots = [];
     const dotsEl = this.container?.querySelectorAll('.flow-dot');
     if (dotsEl) {
-      dotsEl.forEach((d, i) => {
-        this.dots.push({ el: d, p: i / dotsEl.length });
+      dotsEl.forEach((d) => {
+        this.dots.push({ el: d, p: Math.random() });
       });
     }
   }
