@@ -21,7 +21,7 @@ A real-time solar monitoring dashboard for Home Assistant, built as a HACS-compa
 - Real-time moon disc with Meeus lunar position, phase brightness, cloud occlusion, and 22° lunar halo ring
 - Day overlay: sun rays rendered behind all daytime conditions, alpha scaled by cloud cover
 - Night overlay: stars with spectral colour variance (O/B/F/G/K/M classes) and smooth aurora curtain with vertical gradient and red lower fringe, dimmed by moon brightness
-- Wind and bearing-reactive particles — rain streaks, snow drift, fog, and sleet all track live `wind_speed` and `wind_bearing` from weather entity
+- Wind and bearing-reactive particles — rain streaks, snow drift, fog, and sleet all track live `wind_speed` and `wind_bearing` from weather entity; rain intensity is severity-driven (`RAIN_SEVERITY`: sleet 0.45 → rainy 0.55 → storm 0.80 → pouring 1.0), with counts ranging ~70–280 drops depending on severity and wind; streaks use gradient rendering (opaque head → transparent tail); wind affects spawn count, streak length, real-time angle, and per-frame gust wave sweeping
 - Continuous cloud dimming via sigmoid formula on live `cloud_coverage` % combined with per-condition multipliers
 - Custom canvas charts with crosshair/tooltip (Live, Yesterday, 7D, 30D ranges)
 - Power flow animation between solar, battery, and load
