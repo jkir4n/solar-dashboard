@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.21.0 (2026-04-17)
+
+### Features
+- Continuous flow particle scaling + throughput in kWh (Ah)
+
+
 ## v0.20.2 (2026-04-14)
 
 ### Bug Fixes
