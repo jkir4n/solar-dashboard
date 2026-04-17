@@ -742,6 +742,33 @@ export class WeatherFX {
     return { points: allPoints, branches, baseAlpha, decayMult: 1 };
   }
 
+  _renderDrops(ctx, particles, now, night, light, windFactor, windDx, alpha) {
+    const [rH, gH, bH] = night ? [140, 170, 220] : [200, 225, 255];
+    const gustFactor = windFactor * 0.4;
+    const w = this.canvas.width, h = this.canvas.height;
+    particles.forEach(p => {
+      const effDx = p.windDx * (1 + gustFactor * Math.sin(now * 0.0007 + p.gustPhase));
+      p.x += effDx;
+      p.y += p.speed;
+      if (p.y > h + 20) { p.y = -20; p.x = Math.random() * w; }
+      if (p.x < -20) p.x = w + 20;
+      if (p.x > w + 20) p.x = -20;
+      const x0 = p.x, y0 = p.y;
+      const x1 = p.x + p.len * effDx, y1 = p.y - p.len;
+      const grad = ctx.createLinearGradient(x0, y0, x1, y1);
+      const ao = alpha * p.o;
+      grad.addColorStop(0, `rgba(${rH},${gH},${bH},${ao})`);
+      grad.addColorStop(1, `rgba(${rH},${gH},${bH},0)`);
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = p.lw;
+      ctx.beginPath();
+      ctx.moveTo(x0, y0);
+      ctx.lineTo(x1, y1);
+      ctx.stroke();
+    });
+  }
+
   _drawBolt(ctx, boltTree, alpha) {
     if (!boltTree || !boltTree.points.length) return;
     ctx.globalAlpha = alpha * boltTree.baseAlpha;
