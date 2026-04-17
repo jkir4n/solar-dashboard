@@ -1248,20 +1248,10 @@ export class WeatherFX {
       const dropColor = light
         ? (night ? 'rgba(30,50,105,1)' : 'rgba(55,80,145,1)')
         : (night ? 'rgba(85,115,175,1)' : 'rgba(120,155,210,1)');
-      (state._particlesByType.drop || []).forEach(p => {
-        p.x += p.windDx;
-        p.y += p.speed;
-        if (p.y > h + 20) { p.y = -20; p.x = Math.random() * w; }
-        if (p.x < -20) p.x = w + 20;
-        if (p.x > w + 20) p.x = -20;
-        ctx.globalAlpha = state._alpha * p.o;
-        ctx.strokeStyle = dropColor;
-        ctx.lineWidth = 1.2;
-        ctx.beginPath();
-        ctx.moveTo(p.x, p.y);
-        ctx.lineTo(p.x + p.len * p.windDx, p.y - p.len);
-        ctx.stroke();
-      });
+      const windFactor = Math.min((state._windSpeed || 0) / 54, 1.0);
+      const downwindRad = ((state._windBearing + 180) % 360) * Math.PI / 180;
+      const windDx = Math.sin(downwindRad);
+      state._renderDrops(ctx, state._particlesByType.drop || [], now, night, light, windFactor, windDx, state._alpha);
       (state._particlesByType.ripple || []).forEach(p => {
         p.life++;
         if (p.life > p.lifespan) {
@@ -1285,20 +1275,10 @@ export class WeatherFX {
         ? (night ? 'rgba(50,70,120,1)' : 'rgba(80,110,160,1)')
         : (night ? 'rgba(100,130,190,1)' : 'rgba(150,180,220,1)');
       const rippleColor = dropColor;
-      (state._particlesByType.drop || []).forEach(p => {
-        p.x += p.windDx;
-        p.y += p.speed;
-        if (p.y > h + 20) { p.y = -20; p.x = Math.random() * w; }
-        if (p.x < -20) p.x = w + 20;
-        if (p.x > w + 20) p.x = -20;
-        ctx.globalAlpha = state._alpha * p.o;
-        ctx.strokeStyle = dropColor;
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(p.x, p.y);
-        ctx.lineTo(p.x + p.len * p.windDx, p.y - p.len);
-        ctx.stroke();
-      });
+      const windFactor = Math.min((state._windSpeed || 0) / 54, 1.0);
+      const downwindRad = ((state._windBearing + 180) % 360) * Math.PI / 180;
+      const windDx = Math.sin(downwindRad);
+      state._renderDrops(ctx, state._particlesByType.drop || [], now, night, light, windFactor, windDx, state._alpha);
       // Splash ripples
       (state._particlesByType.ripple || []).forEach(p => {
         p.life++;
@@ -1583,20 +1563,10 @@ export class WeatherFX {
       const dropColor = light
         ? (night ? 'rgba(60,85,130,1)' : 'rgba(100,130,180,1)')
         : (night ? 'rgba(110,140,190,1)' : 'rgba(160,190,230,1)');
-      (state._particlesByType.drop || []).forEach(p => {
-        p.x += p.windDx;
-        p.y += p.speed;
-        if (p.y > h + 20) { p.y = -20; p.x = Math.random() * w; }
-        if (p.x < -20) p.x = w + 20;
-        if (p.x > w + 20) p.x = -20;
-        ctx.globalAlpha = state._alpha * p.o;
-        ctx.strokeStyle = dropColor;
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(p.x, p.y);
-        ctx.lineTo(p.x + p.len * p.windDx, p.y - p.len);
-        ctx.stroke();
-      });
+      const windFactor = Math.min((state._windSpeed || 0) / 54, 1.0);
+      const downwindRad = ((state._windBearing + 180) % 360) * Math.PI / 180;
+      const windDx = Math.sin(downwindRad);
+      state._renderDrops(ctx, state._particlesByType.drop || [], now, night, light, windFactor, windDx, state._alpha);
       // Ice pellets
       const pelletColor = light
         ? (night ? 'rgba(120,140,170,1)' : 'rgba(180,200,230,1)')
