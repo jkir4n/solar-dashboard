@@ -12,6 +12,13 @@ const CONDITION_PARTICLE_MAP = {
   'exceptional': 'cloudy', 'snowy-rainy': 'sleet',
 };
 
+const RAIN_SEVERITY = {
+  rainy: 0.55,
+  pouring: 1.0,
+  storm: 0.80,
+  sleet: 0.45,
+};
+
 // How much the sun disc is visible through each condition (0=hidden, 1=full)
 // < 0.3 → diffuse glow only; >= 0.3 → disc + glow
 const SUN_CLOUD_DIM = {
