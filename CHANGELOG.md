@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.22.0 (2026-04-17)
+
+### Features
+- Expand flow particles to 20 dots with continuous 2→20 scaling
+
+
 ## v0.21.0 (2026-04-17)
 
 ### Features
