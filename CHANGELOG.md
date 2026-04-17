@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.23.0 (2026-04-17)
+
+### Features
+- Electric arc effect on flow lines, continuous power-responsive scaling
+
+
 ## v0.22.1 (2026-04-17)
 
 ### Bug Fixes
