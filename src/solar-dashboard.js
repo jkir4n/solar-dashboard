@@ -115,14 +115,12 @@ class FlowParticles {
   start(powerW) {
     this.active = true;
     this.powerW = powerW;
-    this.speed = 0.002 + Math.min(powerW, 1500) / 1500 * 0.006;
-    const newActive = powerW < 200 ? 2 : powerW < 500 ? 3 : powerW < 1000 ? 4 : 5;
-    if (newActive > this.activeDots) {
-      for (let i = this.activeDots; i < newActive; i++) {
-        this.dots[i].p = Math.random();
-      }
-    }
-    this.activeDots = newActive;
+    const MAX_W = 5000;
+    const frac = Math.min(powerW, MAX_W) / MAX_W;
+    // Continuous speed: 0.002 → 0.010
+    this.speed = 0.002 + frac * 0.008;
+    // Continuous dot count as float 2.0 → 5.0
+    this.activeFrac = 2 + frac * 3;
     if (this.line) {
       if (!this._lineSet) {
         this.line.style.background = this.color + '33';
@@ -130,7 +128,7 @@ class FlowParticles {
         this.line.style.setProperty('--flow-color', this.color);
         this._lineSet = true;
       }
-      const sweepS = (3 - Math.min(powerW, 1500) / 1500 * 2.2).toFixed(1);
+      const sweepS = (2.5 - frac * 1.7).toFixed(2);
       this.line.style.setProperty('--sweep-speed', sweepS + 's');
     }
     if (!this.rafId) this.rafId = requestAnimationFrame(this._tick);
@@ -149,9 +147,12 @@ class FlowParticles {
 
   _animate() {
     if (!this.active) return;
+    const fullDots = Math.floor(this.activeFrac);
+    const partialAlpha = this.activeFrac - fullDots;
     for (let i = 0; i < this.dots.length; i++) {
       const d = this.dots[i];
-      if (i >= this.activeDots) {
+      const maxOpacity = i < fullDots ? 1.0 : i === fullDots ? partialAlpha : 0;
+      if (maxOpacity < 0.01) {
         const cur = parseFloat(d.el.style.opacity) || 0;
         if (cur > 0.01) {
           d.p += this.speed;
@@ -165,11 +166,11 @@ class FlowParticles {
       }
       d.p += this.speed;
       if (d.p >= 1) d.p -= 1;
-      let o = 1;
-      if (d.p < 0.08) o = d.p / 0.08;
-      else if (d.p > 0.92) o = (1 - d.p) / 0.08;
+      let edgeFade = 1;
+      if (d.p < 0.08) edgeFade = d.p / 0.08;
+      else if (d.p > 0.92) edgeFade = (1 - d.p) / 0.08;
       d.el.style.left = (d.p * 100) + '%';
-      d.el.style.opacity = o;
+      d.el.style.opacity = (maxOpacity * edgeFade).toFixed(3);
       d.el.style.background = this.color;
       d.el.style.boxShadow = `0 0 6px 2px ${this.color}, 0 0 12px 4px ${this.color}55`;
     }
@@ -853,8 +854,10 @@ class SolarDashboard extends HTMLElement {
     const throughput = this._bridge.getVal(E.THROUGHPUT);
     if (throughput != null) {
       const el = root.getElementById('sysThroughput');
+      const nomV = this._bridge.battSpec?.nomV || 52;
+      const throughputKwh = throughput * nomV / 1000;
       const old = parseFloat(el.textContent) || 0;
-      this._animateValue(el, old, throughput, 600, v => Math.round(v) + ' Ah');
+      this._animateValue(el, old, throughputKwh, 600, v => v.toFixed(1) + ' kWh (' + Math.round(throughput) + ' Ah)');
     }
 
     const minCellV = this._bridge.getVal(E.MIN_CELL_V);
