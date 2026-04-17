@@ -1030,7 +1030,7 @@ class SolarDashboard extends HTMLElement {
     this._battArcPowerW = Math.abs(batteryW);
     if (charging || discharging) {
       const arcColor = charging ? '#00F0FF' : '#FF453A';
-      if (!this._battArcActive) this._startBattArcs(arcColor);
+      this._startBattArcs(arcColor);
     } else {
       this._stopBattArcs();
     }
