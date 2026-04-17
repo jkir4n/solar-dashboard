@@ -93,17 +93,21 @@ const WEATHER_PALETTES = {
 
 // ============ FLOW PARTICLE SYSTEM ============
 class FlowParticles {
-  constructor(root, wrapId, particlesId, lineId, color) {
+  constructor(root, wrapId, particlesId, lineId, arcId, color) {
     this.wrap = root.getElementById(wrapId);
     this.container = root.getElementById(particlesId);
     this.line = root.getElementById(lineId);
+    this.arcCanvas = root.getElementById(arcId);
+    this.arcCtx = this.arcCanvas?.getContext('2d');
     this.color = color;
     this.active = false;
     this.activeDots = 0;
     this.speed = 0.003;
+    this.activeFrac = 2;
     this.rafId = null;
     this._tick = this._animate.bind(this);
     this.dots = [];
+    this.arcs = [];
     const dotsEl = this.container?.querySelectorAll('.flow-dot');
     if (dotsEl) {
       dotsEl.forEach((d) => {
@@ -121,6 +125,13 @@ class FlowParticles {
     this.speed = 0.002 + frac * 0.008;
     // Continuous dot count as float 2.0 → 5.0
     this.activeFrac = 2 + frac * 18;
+    if (this.arcs.length === 0) {
+      this.arcs = Array.from({ length: 4 }, () => ({
+        p: Math.random(),
+        len: 0.05 + Math.random() * 0.05,
+        opacity: Math.random() * 0.4 + 0.2,
+      }));
+    }
     if (this.line) {
       if (!this._lineSet) {
         this.line.style.background = this.color + '33';
@@ -143,6 +154,10 @@ class FlowParticles {
       this._lineSet = false;
     }
     this.dots.forEach(d => d.el.style.opacity = '0');
+    if (this.arcCtx && this.arcCanvas) {
+      this.arcCtx.clearRect(0, 0, this.arcCanvas.width, this.arcCanvas.height);
+    }
+    this.arcs = [];
   }
 
   _animate() {
@@ -174,7 +189,55 @@ class FlowParticles {
       d.el.style.background = this.color;
       d.el.style.boxShadow = `0 0 6px 2px ${this.color}, 0 0 12px 4px ${this.color}55`;
     }
+    this._drawArcs();
     this.rafId = requestAnimationFrame(this._tick);
+  }
+
+  _drawArcs() {
+    const ctx = this.arcCtx;
+    const cv = this.arcCanvas;
+    if (!ctx || !cv || this.arcs.length === 0) return;
+    if (cv.width < 10) {
+      cv.width = this.wrap.offsetWidth || 100;
+      cv.height = this.wrap.offsetHeight || 20;
+    }
+    const W = cv.width;
+    const H = cv.height;
+    const cy = H / 2;
+    const p = Math.min(this.activeFrac / 20, 1); // 0→1 power fraction
+    const activeArcs = Math.max(1, Math.round(p * this.arcs.length));
+    const roughness = 1 + p * 4;        // 1px → 5px
+    const glowBlur = 4 + p * 14;        // 4 → 18
+    const lineWidth = 0.5 + p * 1.5;    // 0.5px → 2px
+    ctx.clearRect(0, 0, W, H);
+    for (let i = 0; i < this.arcs.length; i++) {
+      const arc = this.arcs[i];
+      arc.p += this.speed * 0.9;
+      if (arc.p > 1 + arc.len) arc.p = -arc.len;
+      if (i >= activeArcs) continue;
+      arc.opacity += (Math.random() - 0.5) * 0.15;
+      arc.opacity = Math.max(0.1, Math.min(0.6 + p * 0.3, arc.opacity));
+      const x1 = (arc.p - arc.len / 2) * W;
+      const x2 = (arc.p + arc.len / 2) * W;
+      if (x2 < 0 || x1 > W) continue;
+      const segments = 5 + Math.round(p * 4); // 5→9 segments
+      const step = (x2 - x1) / segments;
+      ctx.save();
+      ctx.globalAlpha = arc.opacity;
+      ctx.shadowBlur = glowBlur;
+      ctx.shadowColor = this.color;
+      ctx.strokeStyle = this.color;
+      ctx.lineWidth = lineWidth;
+      ctx.beginPath();
+      ctx.moveTo(Math.max(0, x1), cy);
+      for (let j = 1; j <= segments; j++) {
+        const x = Math.min(W, Math.max(0, x1 + j * step));
+        const y = j === segments ? cy : cy + (Math.random() - 0.5) * roughness * 2;
+        ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
   }
 }
 
@@ -290,8 +353,8 @@ class SolarDashboard extends HTMLElement {
     });
 
     // Init flow particles
-    this._flowPS1 = new FlowParticles(root, 'flowWrap1', 'flowParticles1', 'flowLine1', '#00F0FF');
-    this._flowPS2 = new FlowParticles(root, 'flowWrap2', 'flowParticles2', 'flowLine2', '#FF453A');
+    this._flowPS1 = new FlowParticles(root, 'flowWrap1', 'flowParticles1', 'flowLine1', 'flowArc1', '#00F0FF');
+    this._flowPS2 = new FlowParticles(root, 'flowWrap2', 'flowParticles2', 'flowLine2', 'flowArc2', '#FF453A');
 
     // Wire chart tab handlers
     const tabs = root.querySelectorAll('.chart-tab');
@@ -487,6 +550,7 @@ class SolarDashboard extends HTMLElement {
           </div>
           <div class="flow-line-wrap" id="flowWrap1">
             <div class="flow-line" id="flowLine1"></div>
+            <canvas class="flow-arc-canvas" id="flowArc1"></canvas>
             <div class="flow-particles" id="flowParticles1"><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div></div>
             <span class="flow-watt" id="flowWatt1">0 W</span>
           </div>
@@ -502,6 +566,7 @@ class SolarDashboard extends HTMLElement {
           </div>
           <div class="flow-line-wrap" id="flowWrap2">
             <div class="flow-line" id="flowLine2"></div>
+            <canvas class="flow-arc-canvas" id="flowArc2"></canvas>
             <div class="flow-particles" id="flowParticles2"><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div></div>
             <span class="flow-watt" id="flowWatt2">0 W</span>
           </div>

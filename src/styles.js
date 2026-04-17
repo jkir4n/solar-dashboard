@@ -278,6 +278,7 @@ export const STYLES = `
   .flow-watt { position: absolute; top: calc(100% + 4px); left: 50%; transform: translateX(-50%); font-size: 10px; font-weight: 600; white-space: nowrap; }
   .flow-idle .flow-particles { display: none; }
   .flow-idle .flow-line { opacity: 0.3; }
+  .flow-arc-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
 
   .sol-output { font-size: 42px; font-weight: 800; text-shadow: 0 0 24px var(--orange-glow); color: var(--orange); }
   .health-bar { height: 8px; border-radius: 4px; background: var(--glass-border); overflow: hidden; margin: 12px 0; }
