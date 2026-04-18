@@ -16,6 +16,10 @@ export class ChartManager {
     this._themeRoot = null;
     this._cachedGrid = 'rgba(255,255,255,0.06)';
     this._cachedText = 'rgba(255,255,255,0.35)';
+    this._canvasRect = null;
+    // Invalidate cached rect on resize so stale values are not used
+    this._onWindowResize = () => { this._canvasRect = null; };
+    window.addEventListener('resize', this._onWindowResize);
   }
 
   setThemeRoot(el) {
@@ -326,16 +330,19 @@ export class ChartManager {
     }
 
     const handleMove = (clientX) => {
-      const rect = canvas.getBoundingClientRect();
+      const rect = this._canvasRect || (this._canvasRect = canvas.getBoundingClientRect());
       const mouseX = clientX - rect.left;
       this.drawChartOverlay(canvas, mouseX);
     };
 
     const handleLeave = () => {
+      this._canvasRect = null;
       const canvasId = canvas.id || canvas.dataset.chartId || 'anon';
       const snap = this._snapshots[canvasId];
       if (snap) canvas.getContext('2d', { willReadFrequently: true }).putImageData(snap, 0, 0);
     };
+
+    const onMouseEnter = () => { this._canvasRect = canvas.getBoundingClientRect(); };
 
     let _hoverRafId = null;
     const onMouseMove = (e) => {
@@ -346,17 +353,19 @@ export class ChartManager {
     const onTouchStart = (e) => { e.preventDefault(); handleMove(e.touches[0].clientX); };
     const onTouchMove = (e) => { e.preventDefault(); handleMove(e.touches[0].clientX); };
 
+    canvas.addEventListener('mouseenter', onMouseEnter);
     canvas.addEventListener('mousemove', onMouseMove);
     canvas.addEventListener('mouseleave', handleLeave);
     canvas.addEventListener('touchstart', onTouchStart, { passive: false });
     canvas.addEventListener('touchmove', onTouchMove, { passive: false });
     canvas.addEventListener('touchend', handleLeave);
 
-    this._crosshairHandlers.set(canvas, { onMouseMove, onLeave: handleLeave, onTouchStart, onTouchMove });
+    this._crosshairHandlers.set(canvas, { onMouseEnter, onMouseMove, onLeave: handleLeave, onTouchStart, onTouchMove });
   }
 
   detachAll() {
     this._crosshairHandlers.forEach((handlers, canvas) => {
+      if (handlers.onMouseEnter) canvas.removeEventListener('mouseenter', handlers.onMouseEnter);
       canvas.removeEventListener('mousemove', handlers.onMouseMove);
       canvas.removeEventListener('mouseleave', handlers.onLeave);
       canvas.removeEventListener('touchstart', handlers.onTouchStart);
@@ -365,6 +374,7 @@ export class ChartManager {
     });
     this._snapshots = {};
     this._crosshairHandlers.clear();
+    this._canvasRect = null;
   }
 
   // ─── showPlaceholder ─────────────────────────────────────────

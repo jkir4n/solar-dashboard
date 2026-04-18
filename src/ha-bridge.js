@@ -65,6 +65,7 @@ export class HABridge {
     this._discoveryRun = 0;
     this._helperCreated = false;
     this._prefixBeforeChange = null;
+    this._cachedWeatherEntityId = null;
   }
 
   get E() { return this._entities || {}; }
@@ -306,10 +307,19 @@ export class HABridge {
       'input_text.solar_panel_type', 'input_datetime.solar_install_date',
       'input_text.bms_entity_prefix',
     ];
-    // Also track cell voltages (dynamic entity IDs) and weather
+    // Also track cell voltages (dynamic entity IDs), weather, and moon sensors
+    // Weather entity is cached after first discovery to avoid scanning all states every call
+    if (this._cachedWeatherEntityId && this._hass.states[this._cachedWeatherEntityId]) {
+      tracked.push(this._cachedWeatherEntityId);
+    } else {
+      this._cachedWeatherEntityId = null;
+    }
     for (const eid of Object.keys(this._hass.states)) {
       if (eid.includes('cell_voltage_')) tracked.push(eid);
-      if (eid.startsWith('weather.')) tracked.push(eid);
+      if (eid.startsWith('weather.')) {
+        tracked.push(eid);
+        if (!this._cachedWeatherEntityId) this._cachedWeatherEntityId = eid;
+      }
       if (eid.startsWith('sensor.') && eid.includes('moon')) tracked.push(eid);
     }
     for (const eid of tracked) {

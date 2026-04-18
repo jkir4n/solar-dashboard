@@ -35,6 +35,8 @@ export class SolarEngine {
     this.lon = lon;
     this.altitude = altitude;
     this.installDate = installDate;
+    this._posCache = null;
+    this._forecastCache = null;
   }
 
   // --- Solar Position (NOAA/Meeus) ---
@@ -85,6 +87,8 @@ export class SolarEngine {
   // v9 line 1831: solarPosition
   // NOTE: azimuth uses sinZen (sin of zenith) in denominator, not cos(elevation)
   getPosition(date) {
+    const minuteKey = Math.floor(date.getTime() / 60000);
+    if (this._posCache && this._posCache.key === minuteKey) return this._posCache.val;
     const T = this._julianCentury(date);
     const decl = this._solarDeclination(T);
     const eot = this._equationOfTime(T);
@@ -120,7 +124,9 @@ export class SolarEngine {
       if (ha > 0) azimuth = 360 - azimuth;
     }
 
-    return { elevation, azimuth, zenith };
+    const result = { elevation, azimuth, zenith };
+    this._posCache = { key: minuteKey, val: result };
+    return result;
   }
 
   // Moon position — Meeus Ch.47 simplified (main perturbation terms only)
@@ -267,6 +273,8 @@ export class SolarEngine {
   // Daily kWh forecast (v9 line 1923)
   // NOTE: v9 iterates from actual sunrise to sunset (minute-by-minute scan), then 15-min intervals
   calcDailyForecast(date, panelConfig, cloudCoverPct = 0, ambientC = null) {
+    const dayKey = date.toISOString().slice(0, 10);
+    if (this._forecastCache && this._forecastCache.key === dayKey) return this._forecastCache.val;
     const dayStart = new Date(date);
     dayStart.setHours(0, 0, 0, 0);
     let totalWh = 0;
@@ -289,7 +297,9 @@ export class SolarEngine {
       totalWh += watts * 0.25; // 15-minute interval = 0.25 h
     }
 
-    return totalWh / 1000; // kWh
+    const result = totalWh / 1000; // kWh
+    this._forecastCache = { key: dayKey, val: result };
+    return result;
   }
 
   // Degradation info for display (v9 line 1975 / calcSolar)

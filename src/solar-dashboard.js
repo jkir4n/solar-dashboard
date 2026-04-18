@@ -257,6 +257,7 @@ class SolarDashboard extends HTMLElement {
     this._initialized = false;
     this._intervals = [];
     this._activeAnimations = new Map();
+    this._clockFormatter = null;
     this._flowPS1 = null;
     this._flowPS2 = null;
     this._battArcInterval = null;
@@ -750,6 +751,7 @@ class SolarDashboard extends HTMLElement {
       if (el.textContent === '--' || el.textContent === '') el.textContent = formatter(to);
       return;
     }
+    if (Math.abs(to - from) < 0.01) { el.textContent = formatter(to); return; }
     const existing = this._activeAnimations.get(el);
     if (existing) cancelAnimationFrame(existing);
 
@@ -1493,18 +1495,19 @@ class SolarDashboard extends HTMLElement {
     const root = this.shadowRoot;
     const E = this._bridge.E;
     const voltages = [];
-    let allValid = true;
     for (let i = 1; i <= 16; i++) {
       const v = this._bridge.getVal(E['CELL' + i]);
-      if (v == null || v <= 0) { allValid = false; voltages.push(null); }
-      else voltages.push(v);
+      voltages.push((v != null && v > 0) ? v : null);
     }
-    if (!allValid) return;
+    const validVoltages = voltages.filter(v => v != null);
+    if (validVoltages.length === 0) return;
 
-    const globalMaxI = voltages.indexOf(Math.max(...voltages));
-    const globalMinI = voltages.indexOf(Math.min(...voltages));
-    this._renderPack('pack1', voltages.slice(0, 8), 1, globalMaxI, globalMinI);
-    this._renderPack('pack2', voltages.slice(8), 9, globalMaxI, globalMinI);
+    const globalMaxI = voltages.indexOf(Math.max(...validVoltages));
+    const globalMinI = voltages.indexOf(Math.min(...validVoltages));
+    const pack1 = voltages.slice(0, 8).filter(v => v != null);
+    const pack2 = voltages.slice(8).filter(v => v != null);
+    if (pack1.length > 0) this._renderPack('pack1', pack1, 1, globalMaxI, globalMinI);
+    if (pack2.length > 0) this._renderPack('pack2', pack2, 9, globalMaxI, globalMinI);
     this._applyBal(voltages);
   }
 
@@ -1671,11 +1674,14 @@ class SolarDashboard extends HTMLElement {
   _startClock() {
     const el = this.shadowRoot.getElementById('clock');
     if (el) {
-      el.textContent = new Date().toLocaleString('en-IN', {
-        timeZone: this._bridge.timezone,
-        weekday: 'short', day: 'numeric', month: 'short',
-        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true,
-      });
+      if (!this._clockFormatter) {
+        this._clockFormatter = new Intl.DateTimeFormat('en-IN', {
+          timeZone: this._bridge.timezone,
+          weekday: 'short', day: 'numeric', month: 'short',
+          hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true,
+        });
+      }
+      el.textContent = this._clockFormatter.format(new Date());
     }
   }
 
