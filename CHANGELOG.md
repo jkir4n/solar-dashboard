@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.25.2 (2026-04-18)
+
+### Bug Fixes
+- Cache hot paths and fix graceful degradation across all modules
+
+
 ## v0.25.1 (2026-04-18)
 
 ### Bug Fixes
