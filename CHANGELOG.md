@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.24.1 (2026-04-18)
+
+### Bug Fixes
+- Apply quick-win bug fixes and performance improvements
+- Update rain particle system documentation
+
+
 ## v0.24.0 (2026-04-17)
 
 ### Features
