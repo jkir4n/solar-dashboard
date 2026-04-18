@@ -673,24 +673,31 @@ export class WeatherFX {
         }
       });
     } else if (type === 'sunrays') {
-      // Tyndall rays through cloud gaps — 8 beams radiating from sun
-      // Visible up to ~25° elevation (diffuse, softer than pure crepuscular)
-      for (let i = 0; i < 8; i++) {
-        const baseAngle = (i / 8) * Math.PI * 2;
+      // 16 directional crepuscular beams — fan downward from sun in ±90° cone
+      for (let i = 0; i < 16; i++) {
+        const t = i / 15;
+        const baseAngle = (Math.PI / 2) + (t - 0.5) * Math.PI; // ±90° from straight down
         particles.push({
-          kind: 'ray', angle: baseAngle + (Math.random() - 0.5) * 0.5,
-          width: 0.03 + Math.random() * 0.05,
-          o: 0.06 + Math.random() * 0.05, phase: Math.random() * Math.PI * 2,
-          speed: 0.12 + Math.random() * 0.18
+          kind: 'ray',
+          angle: baseAngle + (Math.random() - 0.5) * 0.2,
+          width: 0.012 + Math.random() * 0.018,
+          baseO: 0.04 + Math.random() * 0.05,
+          phase1: Math.random() * Math.PI * 2,
+          phase2: Math.random() * Math.PI * 2,
+          freq1: 0.0003 + Math.random() * 0.0004,
+          freq2: 0.0011 + Math.random() * 0.0019,
+          reachBase: 0.65 + Math.random() * 0.35,
+          reachPhase: Math.random() * Math.PI * 2,
+          reachFreq: 0.00018 + Math.random() * 0.00025,
         });
       }
       // Golden motes drifting slowly upward
-      for (let i = 0; i < 12; i++) {
+      for (let i = 0; i < 10; i++) {
         particles.push({
           kind: 'mote', x: Math.random() * w, y: Math.random() * h,
           r: 1 + Math.random() * 2,
           vy: -(0.1 + Math.random() * 0.2), vx: (Math.random() - 0.5) * 0.2,
-          o: 0.15 + Math.random() * 0.15, phase: Math.random() * Math.PI * 2
+          o: 0.12 + Math.random() * 0.12, phase: Math.random() * Math.PI * 2,
         });
       }
     } else if (type === 'diffuse') {
@@ -797,38 +804,61 @@ export class WeatherFX {
     // ---- Day overlays ----
     if (this._overlayType === 'sunrays') {
       if (this._sunElevation <= 0) return;
-      const _sunX = w * (this._sunAzimuth / 360);
-      const _sunY = h * (0.8 - this._sunElevation / 90 * 0.75);
-      const rayColor = light ? 'rgba(255,190,50,1)' : 'rgba(255,220,100,1)';
-      // Tyndall rays: full below 10°, fade to invisible at 25° (softer than crepuscular)
-      const _tyndallFade = Math.max(0, 1 - Math.max(0, this._sunElevation - 10) / 15);
-      if (_tyndallFade > 0) {
+      const sunX = w * (this._sunAzimuth / 360);
+      const sunY = h * (0.8 - this._sunElevation / 90 * 0.75);
+
+      // Cloud intensity gate: shafts peak at 40-70% coverage, fade on clear or overcast
+      const cc = this._cloudCoverage ?? 50;
+      const cloudGate = cc < 15  ? cc / 15 * 0.35
+                      : cc < 40  ? 0.35 + (cc - 15) / 25 * 0.65
+                      : cc < 70  ? 1.0
+                      : cc < 90  ? 1.0 - (cc - 70) / 20 * 0.65
+                      : 0.35;
+
+      // Elevation colour ramp: deep amber at horizon → near-white at zenith
+      const el = this._sunElevation;
+      const [rr, gg, bb] = el < 10 ? [255, 140,  60]
+                         : el < 30 ? [255, 190,  80]
+                         : el < 60 ? [255, 225, 130]
+                                   : [255, 248, 210];
+
+      if (cloudGate > 0.04) {
         ctx.save();
         ctx.globalCompositeOperation = 'screen';
+        const rayLen = Math.max(w, h) * 1.6;
+
         (this._overlayParticlesByType.ray || []).forEach(p => {
-          const pulse = 0.7 + 0.3 * Math.sin(now * 0.001 * p.speed + p.phase);
-          const cx = _sunX, cy = _sunY;
-          const aMid = p.angle;
-          const rayLen = Math.max(w, h) * 1.5;
-          const tipX = cx + Math.cos(aMid) * rayLen;
-          const tipY = cy + Math.sin(aMid) * rayLen;
-          const effAlpha = scale * p.o * pulse * _tyndallFade * (light ? 0.7 : 1);
-          const rayGrd = ctx.createLinearGradient(cx, cy, tipX, tipY);
-          rayGrd.addColorStop(0,   `rgba(255, 230, 140, ${(effAlpha * 0.9).toFixed(3)})`);
-          rayGrd.addColorStop(0.4, `rgba(255, 220, 120, ${(effAlpha * 0.4).toFixed(3)})`);
-          rayGrd.addColorStop(1,   'rgba(255, 220, 100, 0)');
-          const a1 = p.angle - p.width / 2, a2 = p.angle + p.width / 2;
+          // Dual-oscillator flicker — independent shimmer per beam
+          const flicker = 0.55
+            + 0.30 * Math.sin(now * p.freq1 + p.phase1)
+            + 0.15 * Math.sin(now * p.freq2 + p.phase2);
+          // Variable reach simulates cloud gap opening/closing
+          const reach = Math.max(0.3, p.reachBase + 0.3 * Math.sin(now * p.reachFreq + p.reachPhase));
+          const effLen = rayLen * reach;
+          const effAlpha = scale * p.baseO * flicker * cloudGate * (light ? 0.55 : 1.0);
+          if (effAlpha < 0.003) return;
+
+          const tipX = sunX + Math.cos(p.angle) * effLen;
+          const tipY = sunY + Math.sin(p.angle) * effLen;
+          const grd = ctx.createLinearGradient(sunX, sunY, tipX, tipY);
+          grd.addColorStop(0,    `rgba(${rr},${gg},${bb},${effAlpha.toFixed(3)})`);
+          grd.addColorStop(0.35, `rgba(${rr},${gg},${bb},${(effAlpha * 0.4).toFixed(3)})`);
+          grd.addColorStop(1,    `rgba(${rr},${gg},${bb},0)`);
+
+          const a1 = p.angle - p.width / 2;
+          const a2 = p.angle + p.width / 2;
           ctx.globalAlpha = 1;
-          ctx.fillStyle = rayGrd;
+          ctx.fillStyle = grd;
           ctx.beginPath();
-          ctx.moveTo(cx, cy);
-          ctx.lineTo(cx + Math.cos(a1) * rayLen, cy + Math.sin(a1) * rayLen);
-          ctx.lineTo(cx + Math.cos(a2) * rayLen, cy + Math.sin(a2) * rayLen);
+          ctx.moveTo(sunX, sunY);
+          ctx.lineTo(sunX + Math.cos(a1) * effLen, sunY + Math.sin(a1) * effLen);
+          ctx.lineTo(sunX + Math.cos(a2) * effLen, sunY + Math.sin(a2) * effLen);
           ctx.closePath();
           ctx.fill();
         });
         ctx.restore();
       }
+
       const moteColor = light ? 'rgba(200,160,40,' : 'rgba(255,200,80,';
       (this._overlayParticlesByType.mote || []).forEach(p => {
         p.phase += 0.01;
@@ -837,7 +867,7 @@ export class WeatherFX {
         if (p.y < -10) { p.y = h + 10; p.x = Math.random() * w; }
         if (p.x < -10) p.x = w + 10;
         if (p.x > w + 10) p.x = -10;
-        ctx.globalAlpha = scale * p.o;
+        ctx.globalAlpha = scale * p.o * cloudGate;
         ctx.fillStyle = moteColor + p.o + ')';
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
