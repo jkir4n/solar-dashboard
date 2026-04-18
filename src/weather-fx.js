@@ -55,6 +55,10 @@ const MOON_CLOUD_DIM = {
   'lightning-rainy': 0.0,
 };
 
+// B23: Pool of offscreen canvases keyed by "WxH" — one canvas reused per size.
+// Cloud particles always redraw fully before blitting, so shared canvas state is safe.
+const _cloudCanvasPool = new Map();
+
 export class WeatherFX {
   constructor(canvas) {
     this.canvas = canvas;
@@ -115,8 +119,13 @@ export class WeatherFX {
     const ox = -minX + pad;   // origin offset within offscreen canvas
     const oy = -minY + pad;
 
-    const off = document.createElement('canvas');
-    off.width = Math.max(offW, 1); off.height = Math.max(offH, 1);
+    const poolKey = `${Math.max(offW, 1)}x${Math.max(offH, 1)}`;
+    const off = _cloudCanvasPool.get(poolKey) || (() => {
+      const el = document.createElement('canvas');
+      el.width = Math.max(offW, 1); el.height = Math.max(offH, 1);
+      return el;
+    })();
+    _cloudCanvasPool.set(poolKey, off);
     const octx = off.getContext('2d');
 
     // Sort lobes bottom → top so top lobes are painted last (on top)
@@ -803,8 +812,7 @@ export class WeatherFX {
     // ---- Day overlays ----
     if (this._overlayType === 'sunrays') {
       if (this._sunElevation <= 0) return;
-      const sunX = w * (this._sunAzimuth / 360);
-      const sunY = h * (0.8 - this._sunElevation / 90 * 0.75);
+      const { x: sunX, y: sunY } = WeatherFX._getSunCanvasPos(w, h, this._sunAzimuth, this._sunElevation);
 
       // Cloud intensity gate: shafts peak at 40-70% coverage, fade on clear or overcast
       const cc = this._cloudCoverage ?? 50;
@@ -1004,8 +1012,7 @@ export class WeatherFX {
     if (!state._isNight && state._sunElevation > 0) {
       if (cloudDim > 0) {
         const elev = state._sunElevation;
-        const sunX = w * (state._sunAzimuth / 360);
-        const sunY = h * (0.8 - elev / 90 * 0.75);
+        const { x: sunX, y: sunY } = WeatherFX._getSunCanvasPos(w, h, state._sunAzimuth, elev);
 
         // Color by elevation — deep orange at horizon, pale yellow-white at zenith
         let r, g, b;
@@ -1217,8 +1224,7 @@ export class WeatherFX {
     if (state._currentType === 'sunny') {
       // God rays
       const rayColor = light ? 'rgba(255,190,50,1)' : 'rgba(255,220,100,1)';
-      const _raySunX = w * (state._sunAzimuth / 360);
-      const _raySunY = h * (0.8 - state._sunElevation / 90 * 0.75);
+      const { x: _raySunX, y: _raySunY } = WeatherFX._getSunCanvasPos(w, h, state._sunAzimuth, state._sunElevation);
       // Crepuscular rays: full below 6.5°, fade to invisible at 15°
       const _rayElevFade = Math.max(0, 1 - Math.max(0, elev - 6.5) / 8.5);
       if (_rayElevFade > 0) {
@@ -1633,5 +1639,14 @@ export class WeatherFX {
     }
 
     ctx.globalAlpha = 1;
+  }
+
+  // B16: Shared sun canvas-position formula — azimuth maps linearly across width,
+  // elevation maps 0° (horizon) → 80% down, 90° (zenith) → 5% down.
+  static _getSunCanvasPos(w, h, azimuth, elevation) {
+    return {
+      x: w * (azimuth / 360),
+      y: h * (0.8 - elevation / 90 * 0.75),
+    };
   }
 }

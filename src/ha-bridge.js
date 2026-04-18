@@ -238,7 +238,12 @@ export class HABridge {
         });
         console.log('[Solar] Created BMS prefix helper');
       } catch (e) {
-        console.warn('[Solar] Failed to create BMS prefix helper:', e);
+        const haYear = parseInt((this._hass.config.version || '0').split('.')[0]);
+        if (haYear >= 2025) {
+          console.warn('[solar-dashboard] Helper creation failed on HA 2025+. Please create helpers manually or via HA UI.');
+        } else {
+          console.warn('[Solar] Failed to create BMS prefix helper:', e);
+        }
       }
     }
   }
@@ -413,7 +418,12 @@ export class HABridge {
           await this._hass.callWS(params);
           console.log(`[Solar] Created helper: ${def.id}`);
         } catch (e) {
-          console.warn(`[Solar] Failed to create helper ${def.id}:`, e);
+          const haYear = parseInt((this._hass.config.version || '0').split('.')[0]);
+          if (haYear >= 2025) {
+            console.warn('[solar-dashboard] Helper creation failed on HA 2025+. Please create helpers manually or via HA UI.');
+          } else {
+            console.warn(`[Solar] Failed to create helper ${def.id}:`, e);
+          }
         }
       }
     }

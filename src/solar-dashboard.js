@@ -278,6 +278,8 @@ class SolarDashboard extends HTMLElement {
     this._todayOut = 0;
     this._lastForecastHour = -1;
     this._cachedForecastKWh = 0;
+    this._revealFallbackTimeout = null;
+    this._wasDay = false;
     this._resizeHandler = null;
     this._activeChartRange = 'Live';
     this._lastLiveChartFetch = 0;
@@ -474,7 +476,7 @@ class SolarDashboard extends HTMLElement {
 
     // Staggered card reveal with fallback
     setTimeout(() => this._revealCards(), 200);
-    setTimeout(() => this._revealCards(), 2000); // fallback
+    this._revealFallbackTimeout = setTimeout(() => this._revealCards(), 2000); // fallback
   }
 
   disconnectedCallback() {
@@ -768,7 +770,7 @@ class SolarDashboard extends HTMLElement {
         el.classList.remove('val-flash');
         void el.offsetWidth;
         el.classList.add('val-flash');
-        el.addEventListener('animationend', () => el.classList.remove('val-flash'), { once: true });
+        el.addEventListener('animationend', () => { if (el.isConnected) el.classList.remove('val-flash'); }, { once: true, passive: true });
       }
     };
     this._activeAnimations.set(el, requestAnimationFrame(tick));
@@ -1449,7 +1451,10 @@ class SolarDashboard extends HTMLElement {
 
     const sunPos = this._engine.getPosition(now);
     const currentHour = now.getHours();
-    if (sunPos.elevation <= 0) {
+    const isDay = sunPos.elevation > 0;
+    if (isDay && !this._wasDay) this._lastForecastHour = -1; // reset on sunrise
+    this._wasDay = isDay;
+    if (!isDay) {
       this._cachedForecastKWh = 0;
       this._lastForecastHour = -1; // force recalc at next sunrise
     } else if (currentHour !== this._lastForecastHour) {
@@ -1593,13 +1598,16 @@ class SolarDashboard extends HTMLElement {
     try {
       const now = new Date();
       const todayStr = new Intl.DateTimeFormat('sv', { timeZone: tz }).format(now);
-      const noonRef = new Date(`${todayStr}T12:00:00Z`);
-      const localNoon = new Intl.DateTimeFormat('en-US', {
-        timeZone: tz, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
-      }).format(noonRef);
-      const [lh, lm, ls] = localNoon.split(':').map(Number);
-      const offsetMs = (lh - 12) * 3600000 + lm * 60000 + ls * 1000;
-      const midnightUTC = new Date(new Date(`${todayStr}T00:00:00Z`).getTime() - offsetMs);
+      // DST-safe midnight: use a noon UTC seed so we're on the right calendar day,
+      // then step back by however many local h:m have elapsed to reach 00:00 local.
+      const svFmt   = new Intl.DateTimeFormat('sv', { timeZone: tz });
+      const timeFmt = new Intl.DateTimeFormat('sv', { timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: false });
+      let candidate = new Date(`${todayStr}T12:00:00Z`);
+      // Ensure candidate is on the correct local date (handles edge-case offsets > ±12h)
+      if (svFmt.format(candidate) < todayStr) candidate = new Date(candidate.getTime() + 86400000);
+      if (svFmt.format(candidate) > todayStr) candidate = new Date(candidate.getTime() - 86400000);
+      const [lh, lm] = timeFmt.format(candidate).split(':').map(Number);
+      const midnightUTC = new Date(candidate.getTime() - (lh * 3600 + lm * 60) * 1000);
 
       // Helper: integrate Watts history → kWh (rectangular rule, gap cap 1h)
       const integrateWatts = (states) => {
@@ -1798,6 +1806,7 @@ class SolarDashboard extends HTMLElement {
 
   // ============ CARD REVEAL ============
   _revealCards() {
+    if (this._revealFallbackTimeout) { clearTimeout(this._revealFallbackTimeout); this._revealFallbackTimeout = null; }
     if (this._cardsRevealed) return;
     this._cardsRevealed = true;
     const cards = this.shadowRoot.querySelectorAll('.card');
