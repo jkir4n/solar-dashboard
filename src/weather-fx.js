@@ -676,10 +676,9 @@ export class WeatherFX {
       // 16 directional crepuscular beams — fan downward from sun in ±90° cone
       for (let i = 0; i < 16; i++) {
         const t = i / 15;
-        const baseAngle = (Math.PI / 2) + (t - 0.5) * Math.PI; // ±90° from straight down
         particles.push({
           kind: 'ray',
-          angle: baseAngle + (Math.random() - 0.5) * 0.2,
+          angleOffset: (t - 0.5) * Math.PI + (Math.random() - 0.5) * 0.2,
           width: 0.012 + Math.random() * 0.018,
           baseO: 0.04 + Math.random() * 0.05,
           phase1: Math.random() * Math.PI * 2,
@@ -827,6 +826,8 @@ export class WeatherFX {
         ctx.globalCompositeOperation = 'screen';
         const rayLen = Math.max(w, h) * 1.6;
 
+        // Direction from sun toward canvas center — adapts as sun moves through the sky
+        const baseDir = Math.atan2(h / 2 - sunY, w / 2 - sunX);
         (this._overlayParticlesByType.ray || []).forEach(p => {
           // Dual-oscillator flicker — independent shimmer per beam
           const flicker = 0.55
@@ -838,15 +839,16 @@ export class WeatherFX {
           const effAlpha = scale * p.baseO * flicker * cloudGate * (light ? 0.55 : 1.0);
           if (effAlpha < 0.003) return;
 
-          const tipX = sunX + Math.cos(p.angle) * effLen;
-          const tipY = sunY + Math.sin(p.angle) * effLen;
+          const angle = baseDir + p.angleOffset;
+          const tipX = sunX + Math.cos(angle) * effLen;
+          const tipY = sunY + Math.sin(angle) * effLen;
           const grd = ctx.createLinearGradient(sunX, sunY, tipX, tipY);
           grd.addColorStop(0,    `rgba(${rr},${gg},${bb},${effAlpha.toFixed(3)})`);
           grd.addColorStop(0.35, `rgba(${rr},${gg},${bb},${(effAlpha * 0.4).toFixed(3)})`);
           grd.addColorStop(1,    `rgba(${rr},${gg},${bb},0)`);
 
-          const a1 = p.angle - p.width / 2;
-          const a2 = p.angle + p.width / 2;
+          const a1 = angle - p.width / 2;
+          const a2 = angle + p.width / 2;
           ctx.globalAlpha = 1;
           ctx.fillStyle = grd;
           ctx.beginPath();
