@@ -1,15 +1,6 @@
 // charts.js — Custom canvas charting with crosshair overlay
 // Ported from solar-v9.html lines 2033-2475
 
-/**
- * Read a CSS custom property from :root.
- * @param {string} prop  e.g. '--chart-grid'
- * @returns {string}
- */
-function getCS(prop) {
-  return getComputedStyle(document.documentElement).getPropertyValue(prop).trim();
-}
-
 export class ChartManager {
   /**
    * @param {import('./ha-bridge.js').HABridge} bridge
@@ -22,6 +13,23 @@ export class ChartManager {
     this._crosshairHandlers = new Map(); // canvas -> { handlers } for cleanup
     this._lastUpdate = 0;
     this._throttleMs = 5000;
+    this._themeRoot = null;
+    this._cachedGrid = 'rgba(255,255,255,0.06)';
+    this._cachedText = 'rgba(255,255,255,0.35)';
+  }
+
+  setThemeRoot(el) {
+    this._themeRoot = el;
+    this.updateTheme();
+  }
+
+  updateTheme() {
+    if (!this._themeRoot) return;
+    const cs = getComputedStyle(this._themeRoot);
+    const grid = cs.getPropertyValue('--chart-grid').trim();
+    const text = cs.getPropertyValue('--chart-text').trim();
+    if (grid) this._cachedGrid = grid;
+    if (text) this._cachedText = text;
   }
 
   // ─── drawChart ───────────────────────────────────────────────
@@ -47,9 +55,16 @@ export class ChartManager {
     const cW = W - pad.left - pad.right;
     const cH = H - pad.top - pad.bottom;
 
-    const allVals = datasets.flatMap(d => d.points.filter(v => v != null));
-    const minVal = opts.minY ?? (allVals.length ? Math.min(...allVals) : 0);
-    const maxVal = opts.maxY ?? (allVals.length ? Math.max(...allVals) : 1);
+    let minVal = opts.minY ?? Infinity;
+    let maxVal = opts.maxY ?? -Infinity;
+    if (opts.minY === undefined || opts.maxY === undefined) {
+      for (const ds of datasets) for (const v of ds.points) if (v != null) {
+        if (opts.minY === undefined && v < minVal) minVal = v;
+        if (opts.maxY === undefined && v > maxVal) maxVal = v;
+      }
+    }
+    if (minVal === Infinity) minVal = 0;
+    if (maxVal === -Infinity) maxVal = 1;
     const range = maxVal - minVal || 1;
     // When all data equals minVal (e.g. all-zero at night), anchor the axis
     // upward from minVal rather than letting the fallback range go negative.
@@ -63,9 +78,9 @@ export class ChartManager {
 
       // Grid
       const gridN = 4;
-      ctx.strokeStyle = getCS('--chart-grid') || 'rgba(255,255,255,0.06)';
+      ctx.strokeStyle = this._cachedGrid;
       ctx.lineWidth = 0.5;
-      ctx.fillStyle = getCS('--chart-text') || 'rgba(255,255,255,0.35)';
+      ctx.fillStyle = this._cachedText;
       ctx.font = '10px Inter, sans-serif';
       ctx.textAlign = 'right';
       let lastYLabel = null;
@@ -138,7 +153,13 @@ export class ChartManager {
 
     // Store chart data for overlay / crosshair
     // Compute overall min/max across ALL datasets for correct overlay positioning
-    const overlayVals = datasets.flatMap(d => d.points.filter(v => v != null));
+    let _oMin = Infinity, _oMax = -Infinity;
+    for (const ds of datasets) for (const v of ds.points) if (v != null) {
+      if (v < _oMin) _oMin = v;
+      if (v > _oMax) _oMax = v;
+    }
+    const _oMinVal = _oMin === Infinity ? 0 : _oMin;
+    const _oMaxVal = _oMax === -Infinity ? 1 : _oMax;
     this._chartData[canvasId] = {
       datasets, opts,
       padding: { left: 40, right: 10, top: 10, bottom: 25 },
@@ -147,10 +168,10 @@ export class ChartManager {
       padLeft: 40,
       padTop: 10,
       dpr,
-      minVal: opts.minY ?? (overlayVals.length ? Math.min(...overlayVals) : 0),
+      minVal: opts.minY ?? _oMinVal,
       maxVal: (() => {
-        const mn = opts.minY ?? (overlayVals.length ? Math.min(...overlayVals) : 0);
-        const mx = opts.maxY ?? (overlayVals.length ? Math.max(...overlayVals) : 1);
+        const mn = opts.minY ?? _oMinVal;
+        const mx = opts.maxY ?? _oMaxVal;
         return mx === mn ? mn + 1 : mx;
       })(),
     };
@@ -342,6 +363,7 @@ export class ChartManager {
       canvas.removeEventListener('touchmove', handlers.onTouchMove);
       canvas.removeEventListener('touchend', handlers.onLeave);
     });
+    this._snapshots = {};
     this._crosshairHandlers.clear();
   }
 
@@ -356,7 +378,7 @@ export class ChartManager {
     canvas.height = rect.height * dpr;
     ctx.scale(dpr, dpr);
     ctx.clearRect(0, 0, rect.width, rect.height);
-    ctx.fillStyle = getCS('--chart-text') || 'rgba(255,255,255,0.35)';
+    ctx.fillStyle = this._cachedText;
     ctx.font = '13px Inter, sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(message, rect.width / 2, rect.height / 2);

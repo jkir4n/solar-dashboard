@@ -260,12 +260,16 @@ class SolarDashboard extends HTMLElement {
     this._flowPS1 = null;
     this._flowPS2 = null;
     this._battArcInterval = null;
+    this._boltTimeouts = [];
+    this._resizeTimeout = null;
+    this._els = {};
     this._battArcActive = false;
     this._battArcColor = null;
     this._battArcPowerW = 0;
     this._cardsRevealed = false;
     this._weatherEntityId = null;
     this._moonPhaseEntityId = null;
+    this._lastMoonBrightness = 0.5;
     this._weatherCloudFactor = 1.0;
     this._weatherAmbientC = null;
     this._solarEngineReady = false;
@@ -279,6 +283,7 @@ class SolarDashboard extends HTMLElement {
     this._cycleRatePerDay = null;
     this._pendingChanges = new Set();
     this._updateRafId = null;
+    this._chartsLoaded = false;
   }
 
   set hass(hass) {
@@ -326,6 +331,27 @@ class SolarDashboard extends HTMLElement {
     const root = this.shadowRoot;
     root.innerHTML = `<style>${STYLES}</style>${this._getHTML()}`;
 
+    // Cache frequently-queried element refs
+    this._els = {
+      battRing:      root.getElementById('battRing'),
+      battSOC:       root.getElementById('battSOC'),
+      battStatus:    root.getElementById('battStatus'),
+      battStatusDot: root.getElementById('battStatusDot'),
+      battVolt:      root.getElementById('battVolt'),
+      battCurr:      root.getElementById('battCurr'),
+      battPow:       root.getElementById('battPow'),
+      battAh:        root.getElementById('battAh'),
+      battEnergy:    root.getElementById('battEnergy'),
+      battTTELabel:  root.getElementById('battTTELabel'),
+      battTTE:       root.getElementById('battTTE'),
+      solActual:     root.getElementById('solActual'),
+      sysCycles:     root.getElementById('sysCycles'),
+      sysRuntime:    root.getElementById('sysRuntime'),
+      sysThroughput: root.getElementById('sysThroughput'),
+      sysMinCell:    root.getElementById('sysMinCell'),
+      sysMaxCell:    root.getElementById('sysMaxCell'),
+    };
+
     // Apply theme and enable JS-dependent animations
     this._applyTheme();
     const dashRoot = root.querySelector('.dashboard-root');
@@ -352,6 +378,7 @@ class SolarDashboard extends HTMLElement {
 
     // Init charts
     this._charts = new ChartManager(this._bridge);
+    this._charts.setThemeRoot(root.querySelector('.dashboard-root'));
     ['chartPower', 'chartSOC', 'chartSolar'].forEach(id => {
       this._charts.attachCrosshair(root.getElementById(id));
     });
@@ -396,7 +423,7 @@ class SolarDashboard extends HTMLElement {
 
     // Start solar estimate update
     this._updateSolarEstimate();
-    this._intervals.push(setInterval(() => this._updateSolarEstimate(), 60000));
+    this._intervals.push(setInterval(() => this._updateSolarEstimate(), 300000));
 
     // Start solar degradation UI (hourly)
     this._updateSolarUI();
@@ -409,9 +436,10 @@ class SolarDashboard extends HTMLElement {
 
     // Resize handler
     this._resizeHandler = () => {
-      if (this._weatherFx) {
-        this._weatherFx.resize(window.innerWidth, window.innerHeight);
-      }
+      if (this._resizeTimeout) clearTimeout(this._resizeTimeout);
+      this._resizeTimeout = setTimeout(() => {
+        if (this._weatherFx) this._weatherFx.resize(window.innerWidth, window.innerHeight);
+      }, 300);
     };
     window.addEventListener('resize', this._resizeHandler);
 
@@ -430,7 +458,7 @@ class SolarDashboard extends HTMLElement {
         // Restart all intervals
         this._intervals.push(setInterval(() => this._startClock(), 1000));
         this._intervals.push(setInterval(() => this._calcTodayInOut(), 300000));
-        this._intervals.push(setInterval(() => this._updateSolarEstimate(), 60000));
+        this._intervals.push(setInterval(() => this._updateSolarEstimate(), 300000));
         this._intervals.push(setInterval(() => this._updateSolarUI(), 3600000));
         this._intervals.push(setInterval(() => this._updateCycleRate(), 3600000));
         this._startBattArcs();
@@ -470,6 +498,7 @@ class SolarDashboard extends HTMLElement {
     const hass = this._bridge._hass;
     const darkMode = hass?.themes?.darkMode ?? window.matchMedia('(prefers-color-scheme: dark)').matches;
     root.dataset.theme = darkMode ? 'dark' : 'light';
+    if (this._charts) this._charts.updateTheme();
   }
 
   // ============ HTML TEMPLATE ============
@@ -824,57 +853,57 @@ class SolarDashboard extends HTMLElement {
     const battSpec = this._bridge.battSpec;
 
     const r = 80, circ = 2 * Math.PI * r;
-    const ring = root.getElementById('battRing');
+    const ring = this._els.battRing;
     if (soc != null) {
-      const socEl = root.getElementById('battSOC');
+      const socEl = this._els.battSOC;
       const oldSoc = parseFloat(socEl.textContent) || 0;
       this._animateValue(socEl, oldSoc, soc, 600, v => Math.round(v) + '%');
       ring.style.strokeDasharray = `${circ * soc / 100} ${circ}`;
       ring.style.stroke = soc < 20 ? 'var(--red)' : soc < 40 ? 'var(--orange)' : 'var(--green)';
     } else {
-      root.getElementById('battSOC').textContent = '--%';
+      this._els.battSOC.textContent = '--%';
       ring.style.strokeDasharray = `0 ${circ}`;
     }
 
     const cur = current || 0;
     const status = cur > 0.5 ? 'Charging' : cur < -0.5 ? 'Discharging' : 'Idle';
     const statusColor = status === 'Charging' ? 'var(--green)' : status === 'Discharging' ? 'var(--red)' : 'var(--text2)';
-    root.getElementById('battStatus').textContent = status;
-    root.getElementById('battStatus').style.color = statusColor;
-    root.getElementById('battStatusDot').style.background = statusColor;
+    this._els.battStatus.textContent = status;
+    this._els.battStatus.style.color = statusColor;
+    this._els.battStatusDot.style.background = statusColor;
 
     if (voltage != null) {
-      const el = root.getElementById('battVolt');
+      const el = this._els.battVolt;
       this._animateValue(el, parseFloat(el.textContent) || 0, voltage, 600, v => v.toFixed(2) + ' V');
-    } else root.getElementById('battVolt').textContent = '--';
+    } else this._els.battVolt.textContent = '--';
 
     if (current != null) {
-      const el = root.getElementById('battCurr');
+      const el = this._els.battCurr;
       this._animateValue(el, parseFloat(el.textContent) || 0, Math.abs(current), 600, v => v.toFixed(2) + ' A');
-    } else root.getElementById('battCurr').textContent = '--';
+    } else this._els.battCurr.textContent = '--';
 
     const chgPower = this._bridge.getVal(E.CHG_POWER);
     const dischgPower = this._bridge.getVal(E.DISCHG_POWER);
     const battPower = chgPower > 0 ? chgPower : dischgPower > 0 ? dischgPower : power != null ? Math.abs(power) : null;
     if (battPower != null) {
-      const el = root.getElementById('battPow');
+      const el = this._els.battPow;
       this._animateValue(el, parseFloat(el.textContent) || 0, battPower, 600, v => Math.round(v) + ' W');
-    } else root.getElementById('battPow').textContent = '--';
+    } else this._els.battPow.textContent = '--';
 
     if (remaining != null) {
-      const el = root.getElementById('battAh');
+      const el = this._els.battAh;
       this._animateValue(el, parseFloat(el.textContent) || 0, remaining, 600, v => v.toFixed(2) + ' Ah');
-    } else root.getElementById('battAh').textContent = '--';
+    } else this._els.battAh.textContent = '--';
 
     // Energy
-    const energyEl = root.getElementById('battEnergy');
+    const energyEl = this._els.battEnergy;
     if (remaining > 0 && voltage > 0) {
       this._animateValue(energyEl, parseFloat(energyEl.textContent) || 0, remaining * voltage / 1000, 600, v => v.toFixed(2) + ' kWh');
     } else energyEl.textContent = '--';
 
     // Time to empty/full
     let tte = '--';
-    const tteLabel = root.getElementById('battTTELabel');
+    const tteLabel = this._els.battTTELabel;
     const fmtDHM = (hours) => {
       let totalMin = Math.round(hours * 60);
       const d = Math.floor(totalMin / 1440);
@@ -899,17 +928,17 @@ class SolarDashboard extends HTMLElement {
       tte = '\u221E (Idle)';
       if (tteLabel) tteLabel.textContent = 'Time to Empty';
     }
-    root.getElementById('battTTE').textContent = tte;
+    this._els.battTTE.textContent = tte;
 
     // Update actual solar (charging power = solar input)
     const solarActual = chgPower > 0 ? chgPower : (cur > 0 ? Math.abs(power || 0) : 0);
-    const solActualEl = root.getElementById('solActual');
+    const solActualEl = this._els.solActual;
     this._animateValue(solActualEl, parseFloat(solActualEl.textContent) || 0, solarActual, 600, v => Math.round(v) + ' W');
 
     // System info updates
     const cycles = this._bridge.getVal(E.CYCLES);
     if (cycles != null) {
-      const el = root.getElementById('sysCycles');
+      const el = this._els.sysCycles;
       const old = parseFloat(el.textContent) || 0;
       this._animateValue(el, old, cycles, 600, v => {
         const rate = this._cycleRatePerDay;
@@ -918,11 +947,11 @@ class SolarDashboard extends HTMLElement {
     }
 
     const runtime = this._bridge.getStrVal(E.RUNTIME);
-    root.getElementById('sysRuntime').textContent = runtime ?? '--';
+    this._els.sysRuntime.textContent = runtime ?? '--';
 
     const throughput = this._bridge.getVal(E.THROUGHPUT);
     if (throughput != null) {
-      const el = root.getElementById('sysThroughput');
+      const el = this._els.sysThroughput;
       const nomV = this._bridge.battSpec?.nomV || 52;
       const throughputKwh = throughput * nomV / 1000;
       const old = parseFloat(el.textContent) || 0;
@@ -931,19 +960,19 @@ class SolarDashboard extends HTMLElement {
 
     const minCellV = this._bridge.getVal(E.MIN_CELL_V);
     if (minCellV != null) {
-      const el = root.getElementById('sysMinCell');
+      const el = this._els.sysMinCell;
       const old = parseFloat(el.textContent) || 0;
       const cellNum = parseInt(this._bridge.getStrVal(E.MIN_V_CELL)) || '?';
       this._animateValue(el, old, minCellV, 600, v => v.toFixed(3) + ' V (C' + cellNum + ')');
-    } else root.getElementById('sysMinCell').textContent = '-- V';
+    } else this._els.sysMinCell.textContent = '-- V';
 
     const maxCellV = this._bridge.getVal(E.MAX_CELL_V);
     if (maxCellV != null) {
-      const el = root.getElementById('sysMaxCell');
+      const el = this._els.sysMaxCell;
       const old = parseFloat(el.textContent) || 0;
       const cellNum = parseInt(this._bridge.getStrVal(E.MAX_V_CELL)) || '?';
       this._animateValue(el, old, maxCellV, 600, v => v.toFixed(3) + ' V (C' + cellNum + ')');
-    } else root.getElementById('sysMaxCell').textContent = '-- V';
+    } else this._els.sysMaxCell.textContent = '-- V';
 
     const firmware = this._bridge.getStrVal(E.FIRMWARE);
     root.getElementById('sysFirmware').textContent = firmware ? firmware.replace(/[^\x20-\x7E]/g, '').replace(/_+/g, ' ').trim() : '--';
@@ -1182,15 +1211,15 @@ class SolarDashboard extends HTMLElement {
         this._drawAnimeBolt(svg, this._genBranch(), color, 0.8, 2);
       }
     }
-    setTimeout(() => {
+    this._boltTimeouts.push(setTimeout(() => {
       svg.style.opacity = '0.4';
       svg.style.transition = 'opacity 0.12s ease-out';
-    }, 80);
-    setTimeout(() => {
+    }, 80));
+    this._boltTimeouts.push(setTimeout(() => {
       svg.innerHTML = '';
       svg.style.opacity = '1';
       svg.style.transition = '';
-    }, 200);
+    }, 200));
   }
 
   _startBattArcs(color) {
@@ -1216,6 +1245,8 @@ class SolarDashboard extends HTMLElement {
     if (!this._battArcActive) return;
     this._battArcActive = false;
     clearTimeout(this._battArcInterval);
+    this._boltTimeouts.forEach(id => clearTimeout(id));
+    this._boltTimeouts = [];
     const svg = this.shadowRoot.getElementById('battArcs');
     if (svg) svg.innerHTML = '';
   }
@@ -1368,7 +1399,9 @@ class SolarDashboard extends HTMLElement {
     // Moon phase brightness (0=new, 1=full) — auto-discovered entity
     if (!this._moonPhaseEntityId) this._moonPhaseEntityId = this._discoverMoonPhaseEntity();
     const moonState = this._moonPhaseEntityId ? this._bridge.getState(this._moonPhaseEntityId) : null;
-    const moonBrightness = moonState ? (MOON_PHASE_BRIGHTNESS[moonState.state] ?? 0) : 0;
+    const _mb = moonState ? MOON_PHASE_BRIGHTNESS[moonState.state] : undefined;
+    if (_mb !== undefined) this._lastMoonBrightness = _mb;
+    const moonBrightness = this._lastMoonBrightness;
 
     // Moon position from Meeus algorithm
     let moonElevation = -90, moonAzimuth = 180;
@@ -1493,7 +1526,7 @@ class SolarDashboard extends HTMLElement {
     const { vmin, vmax } = cellBounds(this._bridge.battSpec.chemistry);
     allV.forEach((v, gi) => {
       const globalI = startIdx - 1 + gi;
-      const pct = Math.max(2, Math.min(100, ((v - vmin) / (vmax - vmin)) * 100));
+      const pct = Math.max(2, Math.min(100, ((v - vmin) / (vmax - vmin || 0.001)) * 100));
       const row = rows[gi];
       const isHigh = globalI === globalMaxI;
       const isLow = globalI === globalMinI;
@@ -1666,11 +1699,11 @@ class SolarDashboard extends HTMLElement {
       soc: E.SOC,
       _signed: !E.DISCHG_POWER,
     };
-    const result = await this._charts.loadRange(range, canvases, entityIds, this._bridge.timezone);
-
-    // Load solar chart data from CHG_POWER
     const solarEntityIds = { power: E.CHG_POWER || E.POWER, _signed: !E.CHG_POWER };
-    const solarResult = await this._charts.loadRange(range, { solar: canvases.solar }, solarEntityIds, this._bridge.timezone);
+    const [result, solarResult] = await Promise.all([
+      this._charts.loadRange(range, canvases, entityIds, this._bridge.timezone),
+      this._charts.loadRange(range, { solar: canvases.solar }, solarEntityIds, this._bridge.timezone),
+    ]);
 
     // Overlay estimated solar line on solar chart
     // For Live: use current weather conditions for fair comparison

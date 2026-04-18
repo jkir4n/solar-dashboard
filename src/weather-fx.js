@@ -329,7 +329,7 @@ export class WeatherFX {
 
     if (!state._animFrameId) {
       const loop = (ts) => {
-        if (ts - state._lastFrame >= 33) {
+        if (ts - state._lastFrame >= 16) {
           state._lastFrame = ts;
           if (state._currentType) {
             state._render(ts);
@@ -973,8 +973,8 @@ export class WeatherFX {
     ctx.globalAlpha = state._alpha;
 
     // ---- Sun disc — rendered for all daytime conditions, dimmed by cloud cover ----
+    const cloudDim = state._calcCloudDim(state._cloudCoverage, state._weatherCondition);
     if (!state._isNight && state._sunElevation > 0) {
-      const cloudDim = state._calcCloudDim(state._cloudCoverage, state._weatherCondition);
       if (cloudDim > 0) {
         const elev = state._sunElevation;
         const sunX = w * (state._sunAzimuth / 360);
@@ -1082,7 +1082,6 @@ export class WeatherFX {
 
     // ---- Moon disc — rendered for all night conditions, dimmed by cloud cover ----
     if (state._isNight && state._moonElevation > 0) {
-      const cloudDim = state._calcCloudDim(state._cloudCoverage, state._weatherCondition);
       const mb = state._moonBrightness;
       const totalBright = mb * cloudDim; // phase × cloud transmittance
       if (totalBright > 0 || cloudDim > 0) {
