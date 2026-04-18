@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.25.3 (2026-04-18)
+
+### Bug Fixes
+- Resolve all remaining non-deferred bugs (B2, B11, B14, B16, B21, B23, B24)
+
+
 ## v0.25.2 (2026-04-18)
 
 ### Bug Fixes
