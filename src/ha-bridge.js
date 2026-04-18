@@ -238,12 +238,7 @@ export class HABridge {
         });
         console.log('[Solar] Created BMS prefix helper');
       } catch (e) {
-        const haYear = parseInt((this._hass.config.version || '0').split('.')[0]);
-        if (haYear >= 2025) {
-          console.warn('[solar-dashboard] Helper creation failed on HA 2025+. Please create helpers manually or via HA UI.');
-        } else {
-          console.warn('[Solar] Failed to create BMS prefix helper:', e);
-        }
+        console.warn('[Solar] Failed to create BMS prefix helper:', e);
       }
     }
   }

@@ -770,7 +770,9 @@ class SolarDashboard extends HTMLElement {
         el.classList.remove('val-flash');
         void el.offsetWidth;
         el.classList.add('val-flash');
-        el.addEventListener('animationend', () => { if (el.isConnected) el.classList.remove('val-flash'); }, { once: true, passive: true });
+        const _cleanFlash = () => el.classList.remove('val-flash');
+        const _flashTimer = setTimeout(_cleanFlash, 1000);
+        el.addEventListener('animationend', () => { clearTimeout(_flashTimer); _cleanFlash(); }, { once: true, passive: true });
       }
     };
     this._activeAnimations.set(el, requestAnimationFrame(tick));
@@ -1607,7 +1609,10 @@ class SolarDashboard extends HTMLElement {
       if (svFmt.format(candidate) < todayStr) candidate = new Date(candidate.getTime() + 86400000);
       if (svFmt.format(candidate) > todayStr) candidate = new Date(candidate.getTime() - 86400000);
       const [lh, lm] = timeFmt.format(candidate).split(':').map(Number);
-      const midnightUTC = new Date(candidate.getTime() - (lh * 3600 + lm * 60) * 1000);
+      let midnightUTC = new Date(candidate.getTime() - (lh * 3600 + lm * 60) * 1000);
+      // DST correction: noon offset may differ from midnight offset (spring-forward); verify and nudge
+      const [vh, vm] = timeFmt.format(midnightUTC).split(':').map(Number);
+      if (vh !== 0 || vm !== 0) midnightUTC = new Date(midnightUTC.getTime() - (vh * 3600 + vm * 60) * 1000);
 
       // Helper: integrate Watts history → kWh (rectangular rule, gap cap 1h)
       const integrateWatts = (states) => {
@@ -1646,8 +1651,8 @@ class SolarDashboard extends HTMLElement {
           if (prevV === null) continue;
           const dtHours = (states[i].t.getTime() - states[i - 1].t.getTime()) / 3600000;
           if (dtHours > 0 && dtHours < 1) {
-            if (prevV > 0.5) inAh += prevV * dtHours;
-            else if (prevV < -0.5) outAh += Math.abs(prevV) * dtHours;
+            if (prevV > 0.1) inAh += prevV * dtHours;
+            else if (prevV < -0.1) outAh += Math.abs(prevV) * dtHours;
           }
         }
         if (states.length > 0) {
@@ -1655,8 +1660,8 @@ class SolarDashboard extends HTMLElement {
           if (last.v !== null) {
             const dtHours = (now.getTime() - last.t.getTime()) / 3600000;
             if (dtHours > 0 && dtHours < 1) {
-              if (last.v > 0.5) inAh += last.v * dtHours;
-              else if (last.v < -0.5) outAh += Math.abs(last.v) * dtHours;
+              if (last.v > 0.1) inAh += last.v * dtHours;
+              else if (last.v < -0.1) outAh += Math.abs(last.v) * dtHours;
             }
           }
         }
