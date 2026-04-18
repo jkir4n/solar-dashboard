@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.25.4 (2026-04-18)
+
+### Bug Fixes
+- Apply B9/B11/B21 bug fixes; revert false-positive B2
+
+
 ## v0.25.3 (2026-04-18)
 
 ### Bug Fixes
