@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.25.1 (2026-04-18)
+
+### Bug Fixes
+- Sun shafts radiate away from sun toward canvas center
+
+
 ## v0.25.0 (2026-04-18)
 
 ### Features
