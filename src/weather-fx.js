@@ -414,13 +414,10 @@ export class WeatherFX {
   _createParticles(type, canvas) {
     const w = canvas.width, h = canvas.height;
     const particles = [];
-    // 0 at calm, 1 at ~54 km/h (Beaufort 7 gale)
-    const windFactor = Math.min((this._windSpeed || 0) / 54, 1.0);
-    // Convert meteorological bearing to downwind canvas direction
-    // Bearing = direction wind comes FROM; downwind = bearing + 180
-    const downwindRad = ((this._windBearing + 180) % 360) * Math.PI / 180;
-    const windDx = Math.sin(downwindRad); // +1 = right, -1 = left
-    const windDy = Math.cos(downwindRad); // +1 = down, -1 = up (minor effect on fall speed)
+    // Use cached wind values (updated by _updateWindCache() on each start() call)
+    const windFactor = this._windFactor;
+    const windDx     = this._windDx;
+    const windDy     = this._windDy; // +1 = down (spawn convention)
 
     if (type === 'sunny') {
       // Dust motes floating upward
