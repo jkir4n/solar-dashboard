@@ -977,7 +977,7 @@ class SolarDashboard extends HTMLElement {
       const nomV = this._bridge.battSpec?.nomV || 52;
       const throughputKwh = throughput * nomV / 1000;
       const old = parseFloat(el.textContent) || 0;
-      this._animateValue(el, old, throughputKwh, 600, v => v.toFixed(1) + ' kWh (' + Math.round(throughput) + ' Ah)');
+      this._animateValue(el, old, throughputKwh, 600, v => Math.round(v) + ' kWh (' + Math.round(throughput) + ' Ah)');
     }
 
     const minCellV = this._bridge.getVal(E.MIN_CELL_V);
