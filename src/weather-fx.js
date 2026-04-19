@@ -797,13 +797,13 @@ export class WeatherFX {
 
   // ---- Private: ambient overlay (night: stars/aurora, day: sunrays/diffuse glow) ----
 
-  _renderOverlay(now) {
+  _renderOverlay(now, cloudDim) {
     const canvas = this.canvas;
     const ctx = this.ctx;
     const w = canvas.width, h = canvas.height;
     // Night star overlay: scale by cloud transmittance so dense clouds occlude stars
     const cloudTransmit = (this._overlayType === 'night' && this._cloudCoverage !== null)
-      ? this._calcCloudDim(this._cloudCoverage, this._weatherCondition)
+      ? cloudDim
       : 1.0;
     const scale = this._alpha * this._overlayAlpha * cloudTransmit;
     const light = this._theme === 'light';
@@ -1003,12 +1003,12 @@ export class WeatherFX {
     ctx.clearRect(0, 0, w, h);
 
     // Draw ambient overlay (stars/aurora at night; sun rays/glow by day) behind weather particles
-    if (state._overlayType) state._renderOverlay(now);
+    const cloudDim = state._calcCloudDim(state._cloudCoverage, state._weatherCondition);
+    if (state._overlayType) state._renderOverlay(now, cloudDim);
 
     ctx.globalAlpha = state._alpha;
 
     // ---- Sun disc — rendered for all daytime conditions, dimmed by cloud cover ----
-    const cloudDim = state._calcCloudDim(state._cloudCoverage, state._weatherCondition);
     if (!state._isNight && state._sunElevation > 0) {
       if (cloudDim > 0) {
         const elev = state._sunElevation;
@@ -1097,9 +1097,10 @@ export class WeatherFX {
           // Prismatic ring — screen composite makes it glow additively
           ctx.globalCompositeOperation = 'screen';
           const ringGrd = ctx.createRadialGradient(sunX, sunY, haloR - halfW, sunX, sunY, haloR + halfW);
-          ringGrd.addColorStop(0,    `rgba(255,  80,  20, ${(haloStrength * 0.70).toFixed(3)})`);  // red inner
-          ringGrd.addColorStop(0.30, `rgba(255, 170,  80, ${(haloStrength * 0.65).toFixed(3)})`);  // orange
-          ringGrd.addColorStop(0.60, `rgba(255, 255, 230, ${(haloStrength * 0.55).toFixed(3)})`);  // white-yellow peak
+          ringGrd.addColorStop(0,    'rgba(255,  80,  20, 0)');                                     // transparent inner edge
+          ringGrd.addColorStop(0.18, `rgba(255,  80,  20, ${(haloStrength * 0.70).toFixed(3)})`);  // red inner
+          ringGrd.addColorStop(0.42, `rgba(255, 170,  80, ${(haloStrength * 0.65).toFixed(3)})`);  // orange
+          ringGrd.addColorStop(0.68, `rgba(255, 255, 230, ${(haloStrength * 0.55).toFixed(3)})`);  // white-yellow peak
           ringGrd.addColorStop(1,    'rgba(220, 235, 255, 0)');                                     // transparent blue-white
           ctx.globalAlpha = state._alpha;
           ctx.beginPath();
@@ -1169,9 +1170,10 @@ export class WeatherFX {
 
           // Ring — silvery: faint orange inner → white → transparent blue-silver outer
           const mRingGrd = ctx.createRadialGradient(moonX, moonY, mHaloR - mHalfW, moonX, moonY, mHaloR + mHalfW);
-          mRingGrd.addColorStop(0,    `rgba(210, 185, 155, ${(moonHaloStrength * 0.35).toFixed(3)})`);
-          mRingGrd.addColorStop(0.40, `rgba(230, 230, 220, ${(moonHaloStrength * 0.30).toFixed(3)})`);
-          mRingGrd.addColorStop(0.70, `rgba(220, 228, 245, ${(moonHaloStrength * 0.22).toFixed(3)})`);
+          mRingGrd.addColorStop(0,    'rgba(210, 185, 155, 0)');                                       // transparent inner edge
+          mRingGrd.addColorStop(0.20, `rgba(210, 185, 155, ${(moonHaloStrength * 0.35).toFixed(3)})`);
+          mRingGrd.addColorStop(0.50, `rgba(230, 230, 220, ${(moonHaloStrength * 0.30).toFixed(3)})`);
+          mRingGrd.addColorStop(0.75, `rgba(220, 228, 245, ${(moonHaloStrength * 0.22).toFixed(3)})`);
           mRingGrd.addColorStop(1,    'rgba(200, 215, 240, 0)');
           ctx.globalAlpha = state._alpha;
           ctx.beginPath();
