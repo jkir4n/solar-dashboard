@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.25.6 (2026-04-19)
+
+### Bug Fixes
+- Cache DOM lookups and entity scans; move BATT_SPEC to instance; guard chart load errors
+
+
 ## v0.25.5 (2026-04-19)
 
 ### Bug Fixes
