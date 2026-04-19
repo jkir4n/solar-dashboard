@@ -427,6 +427,7 @@ class SolarDashboard extends HTMLElement {
     // Start solar estimate update
     this._updateSolarEstimate();
     this._intervals.push(setInterval(() => this._updateSolarEstimate(), 300000));
+    this._intervals.push(setInterval(() => this._updateSunMoonPosition(), 60000));
 
     // Start solar degradation UI (hourly)
     this._updateSolarUI();
@@ -462,6 +463,7 @@ class SolarDashboard extends HTMLElement {
         this._intervals.push(setInterval(() => this._startClock(), 1000));
         this._intervals.push(setInterval(() => this._calcTodayInOut(), 300000));
         this._intervals.push(setInterval(() => this._updateSolarEstimate(), 300000));
+        this._intervals.push(setInterval(() => this._updateSunMoonPosition(), 60000));
         this._intervals.push(setInterval(() => this._updateSolarUI(), 3600000));
         this._intervals.push(setInterval(() => this._updateCycleRate(), 3600000));
         this._startBattArcs();
@@ -1401,6 +1403,7 @@ class SolarDashboard extends HTMLElement {
       sunElevation = sp.elevation;
       sunAzimuth   = sp.azimuth;
       isNight = sunElevation < 0;
+      this._lastSunNight = isNight;
     }
 
     let key = CONDITION_PALETTE_MAP[condition] || null;
@@ -1447,6 +1450,22 @@ class SolarDashboard extends HTMLElement {
       model: this._bridge.panelModel,
       type: this._bridge.panelType,
     };
+  }
+
+  _updateSunMoonPosition() {
+    if (!this._weatherFx || !this._engine || this._bridge.latitude == null) return;
+    const now = new Date();
+    const sp = this._engine.getPosition(now);
+    const mp = this._engine.getMoonPosition(now);
+    const isNight = sp.elevation < 0;
+    if (isNight !== this._lastSunNight) {
+      this._lastSunNight = isNight;
+      this._applyWeatherBackdrop();
+      return;
+    }
+    const moonState = this._moonPhaseEntityId ? this._hass.states[this._moonPhaseEntityId] : null;
+    const moonBrightness = moonState ? (MOON_PHASE_BRIGHTNESS[moonState.state] ?? 0.5) : 0.5;
+    this._weatherFx.updateSunMoon(sp.elevation, sp.azimuth, mp.elevation, mp.azimuth, moonBrightness);
   }
 
   _updateSolarEstimate() {

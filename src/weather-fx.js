@@ -85,6 +85,11 @@ export class WeatherFX {
     this._moonAzimuth = 180;
     this._sunElevation = -90;
     this._sunAzimuth = 180;
+    this._sunElevCur  = -90;
+    this._sunAzCur    = 180;
+    this._moonElevCur = -90;
+    this._moonAzCur   = 180;
+    this._posInitialized = false;
     this._cloudCoverage = null;
     this._particlesByType = {};        // keyed by particle.kind
     this._overlayParticlesByType = {}; // same for overlay particles
@@ -174,6 +179,14 @@ export class WeatherFX {
     return dim * (MOD[condition] ?? 1.0);
   }
 
+  updateSunMoon(sunElevation, sunAzimuth, moonElevation, moonAzimuth, moonBrightness) {
+    this._sunElevation   = sunElevation;
+    this._sunAzimuth     = sunAzimuth;
+    this._moonElevation  = moonElevation;
+    this._moonAzimuth    = moonAzimuth;
+    this._moonBrightness = moonBrightness;
+  }
+
   start(weatherCondition, isNight, theme = 'dark', windSpeed = 0, moonBrightness = 0, moonElevation = -90, moonAzimuth = 180, sunElevation = -90, sunAzimuth = 180, cloudCoverage = null, windBearing = 180) {
     this._theme = theme;
     this._isNight = isNight;
@@ -186,6 +199,13 @@ export class WeatherFX {
     this._moonAzimuth    = moonAzimuth;
     this._sunElevation   = sunElevation;
     this._sunAzimuth     = sunAzimuth;
+    if (!this._posInitialized) {
+      this._sunElevCur  = sunElevation;
+      this._sunAzCur    = sunAzimuth;
+      this._moonElevCur = moonElevation;
+      this._moonAzCur   = moonAzimuth;
+      this._posInitialized = true;
+    }
     this._cloudCoverage  = cloudCoverage;
     // Determine particle type
     let particleType = CONDITION_PARTICLE_MAP[weatherCondition] || null;
@@ -1000,6 +1020,16 @@ export class WeatherFX {
     const light = this._theme === 'light';
     const night = this._isNight;
 
+    const _L = 0.015;
+    state._sunElevCur += (state._sunElevation - state._sunElevCur) * _L;
+    let _dSA = state._sunAzimuth - state._sunAzCur;
+    if (_dSA > 180) _dSA -= 360; if (_dSA < -180) _dSA += 360;
+    state._sunAzCur = (state._sunAzCur + _dSA * _L + 360) % 360;
+    state._moonElevCur += (state._moonElevation - state._moonElevCur) * _L;
+    let _dMA = state._moonAzimuth - state._moonAzCur;
+    if (_dMA > 180) _dMA -= 360; if (_dMA < -180) _dMA += 360;
+    state._moonAzCur = (state._moonAzCur + _dMA * _L + 360) % 360;
+
     ctx.clearRect(0, 0, w, h);
 
     // Draw ambient overlay (stars/aurora at night; sun rays/glow by day) behind weather particles
@@ -1009,10 +1039,10 @@ export class WeatherFX {
     ctx.globalAlpha = state._alpha;
 
     // ---- Sun disc — rendered for all daytime conditions, dimmed by cloud cover ----
-    if (!state._isNight && state._sunElevation > 0) {
+    if (!state._isNight && state._sunElevCur > 0) {
       if (cloudDim > 0) {
-        const elev = state._sunElevation;
-        const { x: sunX, y: sunY } = WeatherFX._getSunCanvasPos(w, h, state._sunAzimuth, elev);
+        const elev = state._sunElevCur;
+        const { x: sunX, y: sunY } = WeatherFX._getSunCanvasPos(w, h, state._sunAzCur, elev);
 
         // Color by elevation — deep orange at horizon, pale yellow-white at zenith
         let r, g, b;
@@ -1116,12 +1146,12 @@ export class WeatherFX {
     }
 
     // ---- Moon disc — rendered for all night conditions, dimmed by cloud cover ----
-    if (state._isNight && state._moonElevation > 0) {
+    if (state._isNight && state._moonElevCur > 0) {
       const mb = state._moonBrightness;
       const totalBright = mb * cloudDim; // phase × cloud transmittance
       if (totalBright > 0 || cloudDim > 0) {
-        const moonX = w * (state._moonAzimuth / 360);
-        const moonY = h * (0.8 - state._moonElevation / 90 * 0.75);
+        const moonX = w * (state._moonAzCur / 360);
+        const moonY = h * (0.8 - state._moonElevCur / 90 * 0.75);
         const moonR  = 20 + mb * 14;
         const glowR  = moonR * (2.5 + mb * 2) * (1 + (1 - cloudDim) * 1.5);
 
@@ -1153,7 +1183,7 @@ export class WeatherFX {
         }
         // Lunar halo — same radial-gradient ring technique, silvery tones
         const moonHaloStrength = Math.max(0, cloudDim - 0.45) / 0.55 * mb;
-        if (moonHaloStrength > 0 && state._moonElevation > 5) {
+        if (moonHaloStrength > 0 && state._moonElevCur > 5) {
           const mHaloR = moonR * 4.2;
           const mHalfW = moonR * 0.9;
           ctx.save();
@@ -1190,16 +1220,16 @@ export class WeatherFX {
 
     // ---- Rainbow arc — rainy/pouring daytime, sun above 5° ----
     const isRainyCond = state._weatherCondition === 'rainy' || state._weatherCondition === 'pouring';
-    if (isRainyCond && !night && state._sunElevation > 5) {
+    if (isRainyCond && !night && state._sunElevCur > 5) {
       state._rainbowFade = Math.min(1, state._rainbowFade + 1 / 180); // fade in over ~3s at 60fps
     } else {
       state._rainbowFade = Math.max(0, state._rainbowFade - 0.05);    // fade out quickly
     }
-    if (state._rainbowFade > 0 && isRainyCond && !night && state._sunElevation > 5) {
-      const antisolarAz = (state._sunAzimuth + 180) % 360;
+    if (state._rainbowFade > 0 && isRainyCond && !night && state._sunElevCur > 5) {
+      const antisolarAz = (state._sunAzCur + 180) % 360;
       const arcX = w * (antisolarAz / 360);
       const arcRadius = h * 0.55;
-      const arcCenterY = h * (0.62 + (state._sunElevation / 90) * 0.35);
+      const arcCenterY = h * (0.62 + (state._sunElevCur / 90) * 0.35);
       const baseAlpha = (state._weatherCondition === 'pouring' ? 0.28 : 0.22)
         * state._rainbowFade * state._alpha;
       // 6 spectral bands, inner (red) to outer (violet), each 5px wide
@@ -1226,14 +1256,14 @@ export class WeatherFX {
     if (state._currentType === 'sunny') {
       // God rays
       const rayColor = light ? 'rgba(255,190,50,1)' : 'rgba(255,220,100,1)';
-      const { x: _raySunX, y: _raySunY } = WeatherFX._getSunCanvasPos(w, h, state._sunAzimuth, state._sunElevation);
+      const { x: _raySunX, y: _raySunY } = WeatherFX._getSunCanvasPos(w, h, state._sunAzCur, state._sunElevCur);
       // Crepuscular rays: full below 6.5°, fade to invisible at 15°
-      const _rayElevFade = Math.max(0, 1 - Math.max(0, elev - 6.5) / 8.5);
+      const _rayElevFade = Math.max(0, 1 - Math.max(0, state._sunElevCur - 6.5) / 8.5);
       if (_rayElevFade > 0) {
         ctx.save();
         ctx.globalCompositeOperation = 'screen';
         (state._particlesByType.ray || []).forEach(p => {
-          if (state._sunElevation <= 0) return;
+          if (state._sunElevCur <= 0) return;
           const pulse = 0.7 + 0.3 * Math.sin(now * 0.001 * p.speed + p.phase);
           const cx = _raySunX, cy = _raySunY;
           const aMid = p.angle;
