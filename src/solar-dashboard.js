@@ -1030,7 +1030,7 @@ class SolarDashboard extends HTMLElement {
     } else root.getElementById('battMosfetTemp').textContent = '--';
 
     // Dynamic battery specs
-    const strings = this._bridge.getVal(E.STRINGS);
+    const strings = snap.strings;
     if (strings > 0) {
       this._bridge.battSpec.strings = strings;
       this._bridge.battSpec.nomV = strings * this._bridge.battSpec.voltsPerCell;
