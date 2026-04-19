@@ -1720,11 +1720,10 @@ export class WeatherFX {
       ctx.globalAlpha = state._alpha;
 
     } else if (state._currentType === 'cloudy') {
-      // Wind variables for cloud movement (spec §5)
-      const windFactor   = Math.min((state._windSpeed || 0) / 54, 1.0);
-      const downwindRad  = ((state._windBearing + 180) % 360) * Math.PI / 180;
-      const windDx       = Math.sin(downwindRad);          // +1 = rightward on canvas
-      const windDy       = -Math.cos(downwindRad);         // +1 = downward on canvas
+      // Use cached wind values (updated by _updateWindCache() on each start() call)
+      const windFactor = state._windFactor;
+      const windDx     = state._windDx;
+      const windDy     = state._windDyRender; // +1 = downward on canvas (negated vs spawn convention)
       // Sort by layer (far → near) for correct depth order
       const clouds = [...(state._particlesByType.cloud || [])].sort((a, b) => a.layer - b.layer);
       clouds.forEach(p => {
