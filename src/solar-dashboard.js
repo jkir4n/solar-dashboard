@@ -1068,7 +1068,6 @@ class SolarDashboard extends HTMLElement {
 
   _updatePowerFlow(snap) {
     const root = this.shadowRoot;
-    const E = this._bridge.E;
     const current = snap.current || 0;
     const dischgPower = snap.dischgPower;
     const chgPower = snap.chgPower;
