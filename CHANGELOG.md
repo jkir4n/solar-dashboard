@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.28.0 (2026-04-19)
+
+### Features
+- Continuous smooth transitions for all weather/day-night animations
+
+
 ## v0.27.0 (2026-04-19)
 
 ### Features
