@@ -974,7 +974,7 @@ class SolarDashboard extends HTMLElement {
     this._animateValue(solActualEl, parseFloat(solActualEl.textContent) || 0, solarActual, 600, v => Math.round(v) + ' W');
 
     // System info updates
-    const cycles = this._bridge.getVal(E.CYCLES);
+    const cycles = snap.cycles;
     if (cycles != null) {
       const el = this._els.sysCycles;
       const old = parseFloat(el.textContent) || 0;
