@@ -287,6 +287,9 @@ class SolarDashboard extends HTMLElement {
     this._pendingChanges = new Set();
     this._updateRafId = null;
     this._chartsLoaded = false;
+    this._meshCur    = [null, null, null];
+    this._meshTarget = null;
+    this._meshRafId  = null;
   }
 
   set hass(hass) {
@@ -458,6 +461,7 @@ class SolarDashboard extends HTMLElement {
         this._activeAnimations.forEach(id => cancelAnimationFrame(id));
         this._activeAnimations.clear();
         if (this._weatherFx) this._weatherFx.stop();
+        if (this._meshRafId) { cancelAnimationFrame(this._meshRafId); this._meshRafId = null; }
       } else {
         // Restart all intervals
         this._intervals.push(setInterval(() => this._startClock(), 1000));
@@ -466,12 +470,16 @@ class SolarDashboard extends HTMLElement {
         this._intervals.push(setInterval(() => this._updateSunMoonPosition(), 60000));
         this._intervals.push(setInterval(() => this._updateSolarUI(), 3600000));
         this._intervals.push(setInterval(() => this._updateCycleRate(), 3600000));
+        this._startMeshLerp();
         this._startBattArcs();
         this._updateWeather();
         this._refreshAllUI();
       }
     };
     document.addEventListener('visibilitychange', this._visibilityHandler);
+
+    // Start mesh gradient lerp loop
+    this._startMeshLerp();
 
     // Initial full refresh + reveal
     this._refreshAllUI();
@@ -494,6 +502,7 @@ class SolarDashboard extends HTMLElement {
     this._stopBattArcs();
     this._activeAnimations.forEach(id => cancelAnimationFrame(id));
     this._activeAnimations.clear();
+    if (this._meshRafId) { cancelAnimationFrame(this._meshRafId); this._meshRafId = null; }
   }
 
   // ============ THEME ============
@@ -1412,9 +1421,9 @@ class SolarDashboard extends HTMLElement {
     const colors = palettes[key];
     if (!colors) return;
 
-    rootEl.style.setProperty('--mesh-1', colors[0]);
-    rootEl.style.setProperty('--mesh-2', colors[1]);
-    rootEl.style.setProperty('--mesh-3', colors[2]);
+    const newTargets = colors.map(c => this._parseRgba(c));
+    if (!this._meshCur[0]) this._meshCur = newTargets.map(t => ({ ...t }));
+    this._meshTarget = newTargets;
 
     // Moon phase brightness (0=new, 1=full) — auto-discovered entity
     if (!this._moonPhaseEntityId) this._moonPhaseEntityId = this._discoverMoonPhaseEntity();
@@ -1450,6 +1459,33 @@ class SolarDashboard extends HTMLElement {
       model: this._bridge.panelModel,
       type: this._bridge.panelType,
     };
+  }
+
+  _parseRgba(str) {
+    const m = str && str.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*([\d.]+))?\s*\)/);
+    return m ? { r: +m[1], g: +m[2], b: +m[3], a: m[4] != null ? +m[4] : 1 } : null;
+  }
+
+  _startMeshLerp() {
+    if (this._meshRafId) return;
+    const step = () => {
+      if (!this._meshTarget) { this._meshRafId = requestAnimationFrame(step); return; }
+      const root = this.shadowRoot && this.shadowRoot.querySelector('.dashboard-root');
+      if (root && this._meshCur[0]) {
+        const L = 0.004;
+        for (let i = 0; i < 3; i++) {
+          const c = this._meshCur[i], t = this._meshTarget[i];
+          if (!c || !t) continue;
+          c.r += (t.r - c.r) * L; c.g += (t.g - c.g) * L;
+          c.b += (t.b - c.b) * L; c.a += (t.a - c.a) * L;
+        }
+        root.style.setProperty('--mesh-1', `rgba(${Math.round(this._meshCur[0].r)},${Math.round(this._meshCur[0].g)},${Math.round(this._meshCur[0].b)},${this._meshCur[0].a.toFixed(3)})`);
+        root.style.setProperty('--mesh-2', `rgba(${Math.round(this._meshCur[1].r)},${Math.round(this._meshCur[1].g)},${Math.round(this._meshCur[1].b)},${this._meshCur[1].a.toFixed(3)})`);
+        root.style.setProperty('--mesh-3', `rgba(${Math.round(this._meshCur[2].r)},${Math.round(this._meshCur[2].g)},${Math.round(this._meshCur[2].b)},${this._meshCur[2].a.toFixed(3)})`);
+      }
+      this._meshRafId = requestAnimationFrame(step);
+    };
+    this._meshRafId = requestAnimationFrame(step);
   }
 
   _updateSunMoonPosition() {

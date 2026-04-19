@@ -90,6 +90,9 @@ export class WeatherFX {
     this._moonElevCur = -90;
     this._moonAzCur   = 180;
     this._posInitialized = false;
+    this._cloudCovCur  = null;
+    this._moonBrightCur = 0;
+    this._overlayAlphaCur = 0;
     this._cloudCoverage = null;
     this._particlesByType = {};        // keyed by particle.kind
     this._overlayParticlesByType = {}; // same for overlay particles
@@ -205,6 +208,10 @@ export class WeatherFX {
       this._moonElevCur = moonElevation;
       this._moonAzCur   = moonAzimuth;
       this._posInitialized = true;
+    }
+    if (this._cloudCovCur === null) {
+      this._cloudCovCur   = cloudCoverage ?? 50;
+      this._moonBrightCur = moonBrightness;
     }
     this._cloudCoverage  = cloudCoverage;
     // Determine particle type
@@ -822,20 +829,20 @@ export class WeatherFX {
     const ctx = this.ctx;
     const w = canvas.width, h = canvas.height;
     // Night star overlay: scale by cloud transmittance so dense clouds occlude stars
-    const cloudTransmit = (this._overlayType === 'night' && this._cloudCoverage !== null)
+    const cloudTransmit = (this._overlayType === 'night' && this._cloudCovCur !== null)
       ? cloudDim
       : 1.0;
-    const scale = this._alpha * this._overlayAlpha * cloudTransmit;
+    const scale = this._alpha * this._overlayAlphaCur * cloudTransmit;
     const light = this._theme === 'light';
     if (scale <= 0 || !this._overlayParticles.length) return;
 
     // ---- Day overlays ----
     if (this._overlayType === 'sunrays') {
-      if (this._sunElevation <= 0) return;
-      const { x: sunX, y: sunY } = WeatherFX._getSunCanvasPos(w, h, this._sunAzimuth, this._sunElevation);
+      if (this._sunElevCur <= 0) return;
+      const { x: sunX, y: sunY } = WeatherFX._getSunCanvasPos(w, h, this._sunAzCur, this._sunElevCur);
 
       // Cloud intensity gate: shafts peak at 40-70% coverage, fade on clear or overcast
-      const cc = this._cloudCoverage ?? 50;
+      const cc = this._cloudCovCur ?? 50;
       const cloudGate = cc < 15  ? cc / 15 * 0.35
                       : cc < 40  ? 0.35 + (cc - 15) / 25 * 0.65
                       : cc < 70  ? 1.0
@@ -1029,6 +1036,15 @@ export class WeatherFX {
     let _dMA = state._moonAzimuth - state._moonAzCur;
     if (_dMA > 180) _dMA -= 360; if (_dMA < -180) _dMA += 360;
     state._moonAzCur = (state._moonAzCur + _dMA * _L + 360) % 360;
+    if (state._cloudCovCur === null) state._cloudCovCur = state._cloudCoverage ?? 50;
+    state._cloudCovCur   += ((state._cloudCoverage ?? 50) - state._cloudCovCur) * 0.005;
+    state._moonBrightCur += (state._moonBrightness - state._moonBrightCur) * 0.01;
+    const _elevScaleDay   = Math.max(0, Math.min(1, state._sunElevCur / 10));
+    const _elevScaleNight = Math.max(0, Math.min(1, -state._sunElevCur / 8));
+    const _oaTarget = state._overlayType === 'night'
+      ? state._overlayAlpha * _elevScaleNight
+      : state._overlayAlpha * _elevScaleDay;
+    state._overlayAlphaCur += (_oaTarget - state._overlayAlphaCur) * 0.02;
 
     ctx.clearRect(0, 0, w, h);
 
@@ -1039,10 +1055,13 @@ export class WeatherFX {
     ctx.globalAlpha = state._alpha;
 
     // ---- Sun disc — rendered for all daytime conditions, dimmed by cloud cover ----
-    if (!state._isNight && state._sunElevCur > 0) {
-      if (cloudDim > 0) {
+    if (state._sunElevCur > -2) {
+      const sunHorizonFade = Math.max(0, Math.min(1, state._sunElevCur / 5));
+      if (cloudDim > 0 && sunHorizonFade > 0) {
         const elev = state._sunElevCur;
         const { x: sunX, y: sunY } = WeatherFX._getSunCanvasPos(w, h, state._sunAzCur, elev);
+        ctx.save();
+        ctx.globalAlpha = sunHorizonFade;
 
         // Color by elevation — deep orange at horizon, pale yellow-white at zenith
         let r, g, b;
@@ -1142,12 +1161,14 @@ export class WeatherFX {
           ctx.restore();
         }
         ctx.globalAlpha = state._alpha;
+        ctx.restore();
       }
     }
 
     // ---- Moon disc — rendered for all night conditions, dimmed by cloud cover ----
-    if (state._isNight && state._moonElevCur > 0) {
-      const mb = state._moonBrightness;
+    if (state._moonElevCur > -2) {
+      const moonHorizonFade = Math.max(0, Math.min(1, state._moonElevCur / 5));
+      const mb = state._moonBrightCur * moonHorizonFade;
       const totalBright = mb * cloudDim; // phase × cloud transmittance
       if (totalBright > 0 || cloudDim > 0) {
         const moonX = w * (state._moonAzCur / 360);
