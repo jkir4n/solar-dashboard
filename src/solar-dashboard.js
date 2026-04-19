@@ -1489,7 +1489,7 @@ class SolarDashboard extends HTMLElement {
   }
 
   _updateSunMoonPosition() {
-    if (!this._weatherFx || !this._engine || this._bridge.latitude == null) return;
+    if (!this._weatherFx || !this._engine || !this._hass || this._bridge.latitude == null) return;
     const now = new Date();
     const sp = this._engine.getPosition(now);
     const mp = this._engine.getMoonPosition(now);
