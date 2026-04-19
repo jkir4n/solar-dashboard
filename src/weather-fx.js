@@ -1166,9 +1166,10 @@ export class WeatherFX {
     }
 
     // ---- Moon disc — rendered for all night conditions, dimmed by cloud cover ----
-    if (state._moonElevCur > -2) {
+    if (state._moonElevCur > -2 && state._sunElevCur < 5) {
       const moonHorizonFade = Math.max(0, Math.min(1, state._moonElevCur / 5));
-      const mb = state._moonBrightCur * moonHorizonFade;
+      const sunFade = Math.max(0, Math.min(1, (5 - state._sunElevCur) / 10));
+      const mb = state._moonBrightCur * moonHorizonFade * sunFade;
       const totalBright = mb * cloudDim; // phase × cloud transmittance
       if (totalBright > 0 || cloudDim > 0) {
         const moonX = w * (state._moonAzCur / 360);
