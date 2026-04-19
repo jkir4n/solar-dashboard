@@ -987,7 +987,7 @@ class SolarDashboard extends HTMLElement {
     const runtime = this._bridge.getStrVal(E.RUNTIME);
     this._els.sysRuntime.textContent = runtime ?? '--';
 
-    const throughput = this._bridge.getVal(E.THROUGHPUT);
+    const throughput = snap.throughput;
     if (throughput != null) {
       const el = this._els.sysThroughput;
       const nomV = this._bridge.battSpec?.nomV || 52;
