@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.29.1 (2026-04-19)
+
+### Bug Fixes
+- Cache weather params in _applyWeatherBackdrop; fix dawn backdrop bug; tighten sun/moon update to 10s
+
+
 ## v0.29.0 (2026-04-19)
 
 ### Features
