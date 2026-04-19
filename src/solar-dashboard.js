@@ -880,14 +880,14 @@ class SolarDashboard extends HTMLElement {
   }
 
   // ============ BATTERY UPDATE ============
-  _updateBattery() {
+  _updateBattery(snap) {
     const root = this.shadowRoot;
     const E = this._bridge.E;
-    const soc = this._bridge.getVal(E.SOC);
-    const voltage = this._bridge.getVal(E.VOLTAGE);
-    const current = this._bridge.getVal(E.CURRENT);
-    const power = this._bridge.getVal(E.POWER);
-    const remaining = this._bridge.getVal(E.REMAINING);
+    const soc = snap.soc;
+    const voltage = snap.voltage;
+    const current = snap.current;
+    const power = snap.power;
+    const remaining = snap.remaining;
     const battSpec = this._bridge.battSpec;
 
     const r = 80, circ = 2 * Math.PI * r;
