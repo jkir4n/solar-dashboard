@@ -920,8 +920,8 @@ class SolarDashboard extends HTMLElement {
       this._animateValue(el, parseFloat(el.textContent) || 0, Math.abs(current), 600, v => v.toFixed(2) + ' A');
     } else this._els.battCurr.textContent = '--';
 
-    const chgPower = this._bridge.getVal(E.CHG_POWER);
-    const dischgPower = this._bridge.getVal(E.DISCHG_POWER);
+    const chgPower = snap.chgPower;
+    const dischgPower = snap.dischgPower;
     const battPower = chgPower > 0 ? chgPower : dischgPower > 0 ? dischgPower : power != null ? Math.abs(power) : null;
     if (battPower != null) {
       const el = this._els.battPow;
