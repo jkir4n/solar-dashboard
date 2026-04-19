@@ -1937,8 +1937,24 @@ class SolarDashboard extends HTMLElement {
 
   // ============ REFRESH ALL ============
   _refreshAllUI() {
-    this._updateBattery();
-    this._updatePowerFlow();
+    const E = this._bridge.E;
+    const snap = {
+      soc:        this._bridge.getVal(E.SOC),
+      voltage:    this._bridge.getVal(E.VOLTAGE),
+      current:    this._bridge.getVal(E.CURRENT),
+      power:      this._bridge.getVal(E.POWER),
+      remaining:  this._bridge.getVal(E.REMAINING),
+      chgPower:   this._bridge.getVal(E.CHG_POWER),
+      dischgPower:this._bridge.getVal(E.DISCHG_POWER),
+      cycles:     this._bridge.getVal(E.CYCLES),
+      throughput: this._bridge.getVal(E.THROUGHPUT),
+      minCellV:   this._bridge.getVal(E.MIN_CELL_V),
+      maxCellV:   this._bridge.getVal(E.MAX_CELL_V),
+      mosfetTemp: this._bridge.getVal(E.MOSFET_TEMP),
+      strings:    this._bridge.getVal(E.STRINGS),
+    };
+    this._updateBattery(snap);
+    this._updatePowerFlow(snap);
     this._calcTodayInOut();
     this._updateCellBalance();
     this._updateWeather();
