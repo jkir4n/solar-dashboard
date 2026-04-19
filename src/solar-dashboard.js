@@ -996,7 +996,7 @@ class SolarDashboard extends HTMLElement {
       this._animateValue(el, old, throughputKwh, 600, v => Math.round(v) + ' kWh (' + Math.round(throughput) + ' Ah)');
     }
 
-    const minCellV = this._bridge.getVal(E.MIN_CELL_V);
+    const minCellV = snap.minCellV;
     if (minCellV != null) {
       const el = this._els.sysMinCell;
       const old = parseFloat(el.textContent) || 0;
