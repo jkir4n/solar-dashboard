@@ -79,6 +79,10 @@ export class WeatherFX {
     this._fadeGen = 0;
     this._windSpeed = 0;         // km/h
     this._windBearing = 180;     // meteorological: direction wind comes FROM (0=N,90=E,180=S,270=W)
+    this._windFactor = 0;        // cached: 0→1 at Beaufort 7
+    this._windDx = 0;            // cached: downwind X component (+1=right)
+    this._windDy = 0;            // cached: downwind Y component (+1=down, spawn convention)
+    this._windDyRender = 0;      // cached: downwind Y component for render loop (+1=down, canvas convention)
     this._weatherCondition = null;
     this._moonBrightness = 0;    // 0=new moon, 1=full moon
     this._moonElevation = -90;
