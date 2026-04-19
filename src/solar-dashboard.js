@@ -1129,7 +1129,6 @@ class SolarDashboard extends HTMLElement {
   // ============ CHART VALUE DISPLAYS ============
   _updateChartValues(snap) {
     const root = this.shadowRoot;
-    const E = this._bridge.E;
 
     // Live view: show real-time values from HA
     if (this._activeChartRange === 'Live') {
