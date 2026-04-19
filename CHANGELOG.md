@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.28.3 (2026-04-19)
+
+### Bug Fixes
+- Natural moon daytime visibility via sky-wash factor
+
+
 ## v0.28.2 (2026-04-19)
 
 ### Bug Fixes
