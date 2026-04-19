@@ -39,7 +39,7 @@ const SWITCH_KEYWORDS = {
 };
 
 // Dynamic battery specs — updated from BMS entities (v9 line 748)
-const BATT_SPEC = { fullAh: 215, strings: 16, nomV: 51.2, voltsPerCell: 3.2, chemistry: 'LiFePO₄' };
+// BATT_SPEC moved to HABridge instance property (_battSpec) to support multiple cards
 
 // Helper definitions for auto-creation
 const HELPER_DEFS = [
@@ -66,10 +66,14 @@ export class HABridge {
     this._helperCreated = false;
     this._prefixBeforeChange = null;
     this._cachedWeatherEntityId = null;
+    this._cellVoltageIds = null;
+    this._cachedMoonEntityId = null;
+    this._battSpec = { fullAh: 215, strings: 16, nomV: 51.2, voltsPerCell: 3.2, chemistry: 'LiFePO₄' };
+    this._lastChemInput = null;
   }
 
   get E() { return this._entities || {}; }
-  get battSpec() { return BATT_SPEC; }
+  get battSpec() { return this._battSpec; }
 
   // Called on every set hass(hass) from the main component
   update(hass) {
@@ -83,6 +87,7 @@ export class HABridge {
     const currentPrefix = this.getStrVal('input_text.bms_entity_prefix');
     if (!hasKeyEntities || this._discoveryRun === 0 || (currentPrefix && currentPrefix !== this._prefixBeforeChange)) {
       this._entities = this._discoverEntities(hass);
+      this._cellVoltageIds = null;
       this._discoveryRun++;
       this._prefixBeforeChange = currentPrefix;
       // Warn once after first discovery if critical sensors are absent
@@ -106,8 +111,9 @@ export class HABridge {
         this._helperCreated = true;
       }
     }
-    // Resolve battery chemistry (runs every update to catch late-arriving entities)
-    this._resolveChemistry();
+    // Resolve battery chemistry only when relevant inputs change
+    const _ci = `${this.getStrVal(this.E.BATTERY_TYPE)}|${this.getVal(this.E.VOLTAGE)}|${this.getVal(this.E.STRINGS)}`;
+    if (_ci !== this._lastChemInput) { this._lastChemInput = _ci; this._resolveChemistry(); }
   }
 
   _resolveChemistry() {
@@ -116,13 +122,13 @@ export class HABridge {
     if (batteryType) {
       const bt = batteryType.toLowerCase();
       if (bt.includes('iron phosphate') || bt.includes('lifepo4') || bt.includes('lfp')) {
-        BATT_SPEC.voltsPerCell = 3.2; BATT_SPEC.chemistry = 'LiFePO₄'; return;
+        this._battSpec.voltsPerCell = 3.2; this._battSpec.chemistry = 'LiFePO₄'; return;
       }
       if (bt.includes('nmc') || bt.includes('li-ion') || bt.includes('lithium') || bt.includes('ternary')) {
-        BATT_SPEC.voltsPerCell = 3.7; BATT_SPEC.chemistry = 'NMC'; return;
+        this._battSpec.voltsPerCell = 3.7; this._battSpec.chemistry = 'NMC'; return;
       }
       if (bt.includes('titanate') || bt.includes('lto')) {
-        BATT_SPEC.voltsPerCell = 2.3; BATT_SPEC.chemistry = 'LTO'; return;
+        this._battSpec.voltsPerCell = 2.3; this._battSpec.chemistry = 'LTO'; return;
       }
     }
     // Fallback: voltage-based detection
@@ -131,12 +137,12 @@ export class HABridge {
     if (totalV > 0 && strings > 0) {
       const vpc = totalV / strings;
       // LFP can reach 3.5-3.55V at full charge, so range extends to 3.65V
-      if (vpc >= 2.5 && vpc <= 3.65) { BATT_SPEC.voltsPerCell = 3.2; BATT_SPEC.chemistry = 'LiFePO₄'; return; }
-      if (vpc > 3.65) { BATT_SPEC.voltsPerCell = 3.7; BATT_SPEC.chemistry = 'NMC'; return; }
-      if (vpc >= 2.1 && vpc < 2.5) { BATT_SPEC.voltsPerCell = 2.3; BATT_SPEC.chemistry = 'LTO'; return; }
+      if (vpc >= 2.5 && vpc <= 3.65) { this._battSpec.voltsPerCell = 3.2; this._battSpec.chemistry = 'LiFePO₄'; return; }
+      if (vpc > 3.65) { this._battSpec.voltsPerCell = 3.7; this._battSpec.chemistry = 'NMC'; return; }
+      if (vpc >= 2.1 && vpc < 2.5) { this._battSpec.voltsPerCell = 2.3; this._battSpec.chemistry = 'LTO'; return; }
     }
     // Default
-    BATT_SPEC.voltsPerCell = 3.2; BATT_SPEC.chemistry = 'LiFePO₄';
+    this._battSpec.voltsPerCell = 3.2; this._battSpec.chemistry = 'LiFePO₄';
   }
 
   _buildFallbacks(prefix) {
@@ -314,14 +320,17 @@ export class HABridge {
     } else {
       this._cachedWeatherEntityId = null;
     }
-    for (const eid of Object.keys(this._hass.states)) {
-      if (eid.includes('cell_voltage_')) tracked.push(eid);
-      if (eid.startsWith('weather.')) {
-        tracked.push(eid);
-        if (!this._cachedWeatherEntityId) this._cachedWeatherEntityId = eid;
+    // Build dynamic entity caches on first call or after discovery reset — avoids scanning all states every update
+    if (!this._cellVoltageIds) {
+      this._cellVoltageIds = [];
+      for (const eid of Object.keys(this._hass.states)) {
+        if (eid.includes('cell_voltage_')) this._cellVoltageIds.push(eid);
+        if (!this._cachedWeatherEntityId && eid.startsWith('weather.')) this._cachedWeatherEntityId = eid;
+        if (!this._cachedMoonEntityId && eid.startsWith('sensor.') && eid.includes('moon')) this._cachedMoonEntityId = eid;
       }
-      if (eid.startsWith('sensor.') && eid.includes('moon')) tracked.push(eid);
     }
+    tracked.push(...this._cellVoltageIds);
+    if (this._cachedMoonEntityId) tracked.push(this._cachedMoonEntityId);
     for (const eid of tracked) {
       const s = this._hass.states[eid];
       const prev = this._prevStates[eid];

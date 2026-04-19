@@ -1049,8 +1049,14 @@ class SolarDashboard extends HTMLElement {
 
     this._setIconGlow('iconSolar', solarW > 10 ? 'icon-sun-active' : 'glow-dim', solarW);
 
-    const wrap1 = root.getElementById('flowWrap1');
-    const watt1 = root.getElementById('flowWatt1');
+    if (!this._els.flowWrap1) {
+      this._els.flowWrap1 = root.getElementById('flowWrap1');
+      this._els.flowWatt1 = root.getElementById('flowWatt1');
+      this._els.flowWrap2 = root.getElementById('flowWrap2');
+      this._els.flowWatt2 = root.getElementById('flowWatt2');
+    }
+    const wrap1 = this._els.flowWrap1;
+    const watt1 = this._els.flowWatt1;
     if (charging) {
       wrap1.classList.remove('flow-idle');
       this._animateValue(watt1, parseFloat(watt1.textContent) || 0, Math.round(solarW), 600, v => Math.round(v) + ' W');
@@ -1072,8 +1078,8 @@ class SolarDashboard extends HTMLElement {
       this._stopBattArcs();
     }
 
-    const wrap2 = root.getElementById('flowWrap2');
-    const watt2 = root.getElementById('flowWatt2');
+    const wrap2 = this._els.flowWrap2;
+    const watt2 = this._els.flowWatt2;
     if (discharging) {
       wrap2.classList.remove('flow-idle');
       this._animateValue(watt2, parseFloat(watt2.textContent) || 0, Math.round(Math.abs(batteryW)), 600, v => Math.round(v) + ' W');
@@ -1100,9 +1106,14 @@ class SolarDashboard extends HTMLElement {
       const chgPower = this._bridge.getVal(E.CHG_POWER);
       const power = this._bridge.getVal(E.POWER);
       const soc = this._bridge.getVal(E.SOC);
-      const pwrEl = root.getElementById('pwrVal');
-      const socEl = root.getElementById('socVal');
-      const solEl = root.getElementById('solVal');
+      if (!this._els.pwrVal) {
+        this._els.pwrVal = root.getElementById('pwrVal');
+        this._els.socVal = root.getElementById('socVal');
+        this._els.solVal = root.getElementById('solVal');
+      }
+      const pwrEl = this._els.pwrVal;
+      const socEl = this._els.socVal;
+      const solEl = this._els.solVal;
       // Power shows discharging power only
       if (pwrEl) {
         const dischargeVal = dischgPower > 0 ? dischgPower : (power != null && power < -0.5 ? Math.abs(power) : null);
@@ -1125,9 +1136,9 @@ class SolarDashboard extends HTMLElement {
     const socData = this._charts.getChartData('chartSOC');
     const solarData = this._charts.getChartData('chartSolar');
 
-    const pwrEl = root.getElementById('pwrVal');
-    const socEl = root.getElementById('socVal');
-    const solEl = root.getElementById('solVal');
+    const pwrEl = this._els.pwrVal || (this._els.pwrVal = root.getElementById('pwrVal'));
+    const socEl = this._els.socVal || (this._els.socVal = root.getElementById('socVal'));
+    const solEl = this._els.solVal || (this._els.solVal = root.getElementById('solVal'));
     if (pwrEl && powerData?.length) {
       const avg = powerData.reduce((s, v) => s + (v || 0), 0) / powerData.length;
       pwrEl.textContent = Math.round(Math.abs(avg)) + ' W';
@@ -1719,10 +1730,16 @@ class SolarDashboard extends HTMLElement {
       _signed: !E.DISCHG_POWER,
     };
     const solarEntityIds = { power: E.CHG_POWER || E.POWER, _signed: !E.CHG_POWER };
-    const [result, solarResult] = await Promise.all([
-      this._charts.loadRange(range, canvases, entityIds, this._bridge.timezone),
-      this._charts.loadRange(range, { solar: canvases.solar }, solarEntityIds, this._bridge.timezone),
-    ]);
+    let result, solarResult;
+    try {
+      [result, solarResult] = await Promise.all([
+        this._charts.loadRange(range, canvases, entityIds, this._bridge.timezone),
+        this._charts.loadRange(range, { solar: canvases.solar }, solarEntityIds, this._bridge.timezone),
+      ]);
+    } catch (e) {
+      console.warn('[Solar] Chart data load failed:', e);
+      return;
+    }
 
     // Overlay estimated solar line on solar chart
     // For Live: use current weather conditions for fair comparison
