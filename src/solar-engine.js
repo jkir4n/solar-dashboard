@@ -196,6 +196,113 @@ export class SolarEngine {
     return { elevation, azimuth };
   }
 
+  getPlanetPositions(date) {
+    const JD = date.getTime() / 86400000 + 2440587.5;
+    const d  = JD - 2451543.5; // days since J2000.0 (Schlyter epoch)
+
+    // Obliquity of ecliptic (degrees → radians)
+    const eps = toRad(23.4393 - 3.563e-7 * d);
+
+    // Orbital elements helper — returns { N, i, w, a, e, M } all in radians
+    // Schlyter Table: N=asc.node, i=inclination, w=arg.perihelion, a=semi-major axis (AU), e=eccentricity, M=mean anomaly
+    const el = (N0, Nr, i0, ir, w0, wr, a, e0, er, M0, Mr) => ({
+      N: toRad(N0 + Nr * d),
+      i: toRad(i0 + ir * d),
+      w: toRad(w0 + wr * d),
+      a,
+      e: e0 + er * d,
+      M: toRad(((M0 + Mr * d) % 360 + 360) % 360),
+    });
+
+    // Earth (used to compute geocentric positions)
+    const earth = el(0, 0, 0, 0, 282.9404, 4.70935e-5, 1.000000, 0.016709, -1.151e-9, 356.0470, 0.9856002585);
+
+    // Visible planets
+    const PLANET_DEFS = [
+      { name: 'Venus',   color: [255, 252, 220], radius: 3.5,
+        ...el(76.6799, 2.46590e-5, 3.3946,  2.75e-8,   54.8910,  1.38374e-5, 0.723330, 0.006773, -1.302e-9,  48.0052, 1.6021302244) },
+      { name: 'Mars',    color: [255, 110, 55],  radius: 2.5,
+        ...el(49.5574, 2.11081e-5, 1.8497, -1.78e-8,  286.5016,  2.92961e-5, 1.523688, 0.093405,  2.516e-9,  18.6021, 0.5240207766) },
+      { name: 'Jupiter', color: [255, 220, 175], radius: 3.0,
+        ...el(100.4542,2.76854e-5, 1.3030, -1.557e-7, 273.8777,  1.64505e-5, 5.202560, 0.048498,  4.469e-9,  19.8950, 0.0830853001) },
+      { name: 'Saturn',  color: [255, 240, 185], radius: 2.5,
+        ...el(113.6634,2.38980e-5, 2.4886, -1.081e-7, 339.3939,  2.97661e-5, 9.554750, 0.055546, -9.499e-9, 316.9670, 0.0334442282) },
+    ];
+
+    // Solve Kepler's equation: E = M + e·sin(E), iterate until convergence
+    const kepler = (M, e) => {
+      let E = M;
+      for (let i = 0; i < 12; i++) {
+        const dE = (M - E + e * Math.sin(E)) / (1 - e * Math.cos(E));
+        E += dE;
+        if (Math.abs(dE) < 1e-9) break;
+      }
+      return E;
+    };
+
+    // Heliocentric ecliptic XYZ (AU)
+    const helio = ({ N, i, w, a, e, M }) => {
+      const E  = kepler(M, e);
+      const xv = a * (Math.cos(E) - e);
+      const yv = a * Math.sqrt(1 - e * e) * Math.sin(E);
+      const v  = Math.atan2(yv, xv);
+      const r  = Math.sqrt(xv * xv + yv * yv);
+      const lon = v + w; // argument of latitude = true anomaly + arg of perihelion
+      return {
+        x: r * (Math.cos(N) * Math.cos(lon) - Math.sin(N) * Math.sin(lon) * Math.cos(i)),
+        y: r * (Math.sin(N) * Math.cos(lon) + Math.cos(N) * Math.sin(lon) * Math.cos(i)),
+        z: r * Math.sin(lon) * Math.sin(i),
+      };
+    };
+
+    // Greenwich Sidereal Time
+    const GST  = toRad(((280.46061837 + 360.98564736629 * (JD - 2451545.0)) % 360 + 360) % 360);
+    const latR = toRad(this.lat);
+    const lonR = toRad(this.lon);
+
+    const earthXYZ = helio(earth);
+
+    return PLANET_DEFS.map(p => {
+      const ph = helio(p);
+      // Geocentric ecliptic
+      const gx = ph.x - earthXYZ.x;
+      const gy = ph.y - earthXYZ.y;
+      const gz = ph.z - earthXYZ.z;
+      // Ecliptic → equatorial
+      const x2 = gx;
+      const y2 = gy * Math.cos(eps) - gz * Math.sin(eps);
+      const z2 = gy * Math.sin(eps) + gz * Math.cos(eps);
+      const RA  = Math.atan2(y2, x2);
+      const Dec = Math.atan2(z2, Math.sqrt(x2 * x2 + y2 * y2));
+      // Local Hour Angle
+      const HA = GST + lonR - RA;
+      // Equatorial → horizontal
+      const sinAlt = Math.sin(Dec) * Math.sin(latR) + Math.cos(Dec) * Math.cos(latR) * Math.cos(HA);
+      const elevation = toDeg(Math.asin(Math.max(-1, Math.min(1, sinAlt))));
+      const cosAz = (Math.sin(Dec) - sinAlt * Math.sin(latR))
+        / (Math.cos(toRad(elevation)) * Math.cos(latR));
+      let azimuth = toDeg(Math.acos(Math.max(-1, Math.min(1, cosAz))));
+      if (Math.sin(HA) > 0) azimuth = 360 - azimuth;
+      return { name: p.name, elevation, azimuth, color: p.color, radius: p.radius };
+    });
+  }
+
+  getGalacticCenterPos(date) {
+    const JD = date.getTime() / 86400000 + 2440587.5;
+    const GST  = toRad(((280.46061837 + 360.98564736629 * (JD - 2451545.0)) % 360 + 360) % 360);
+    const RA   = toRad(266.417);
+    const Dec  = toRad(-29.008);
+    const latR = toRad(this.lat);
+    const HA   = GST + toRad(this.lon) - RA;
+    const sinAlt = Math.sin(Dec) * Math.sin(latR) + Math.cos(Dec) * Math.cos(latR) * Math.cos(HA);
+    const elevation = toDeg(Math.asin(Math.max(-1, Math.min(1, sinAlt))));
+    const cosAz = (Math.sin(Dec) - sinAlt * Math.sin(latR))
+      / (Math.cos(toRad(elevation)) * Math.cos(latR));
+    let azimuth = toDeg(Math.acos(Math.max(-1, Math.min(1, cosAz))));
+    if (Math.sin(HA) > 0) azimuth = 360 - azimuth;
+    return { elevation, azimuth };
+  }
+
   // Air mass — Kasten-Young 1989 (v9 line 1870)
   _airMass(zenithDeg) {
     if (zenithDeg >= 90) return Infinity;

@@ -100,6 +100,13 @@ export class WeatherFX {
     this._flashDecay = 0;
     this._boltCache = null;
     this._rainbowFade = 0;             // reserved for Task 9
+    this._planets = [];           // [{name, elevation, azimuth, color:[r,g,b], radius}]
+    this._galCenterEl = -90;
+    this._galCenterAz = 180;
+    this._issPos = null;          // {elevation, azimuth} when visible, else null
+    this._issElevCur = -90;
+    this._issAzCur   = 180;
+    this._milkyWayAlpha = 0;      // lerped opacity for Milky Way
   }
 
   /**
@@ -188,6 +195,13 @@ export class WeatherFX {
     this._moonElevation  = moonElevation;
     this._moonAzimuth    = moonAzimuth;
     this._moonBrightness = moonBrightness;
+  }
+
+  updateNightSky(planets, galCenterAz, galCenterEl, issPos) {
+    this._planets    = planets   || [];
+    this._galCenterAz = galCenterAz;
+    this._galCenterEl = galCenterEl;
+    this._issPos     = issPos;
   }
 
   start(weatherCondition, isNight, theme = 'dark', windSpeed = 0, moonBrightness = 0, moonElevation = -90, moonAzimuth = 180, sunElevation = -90, sunAzimuth = 180, cloudCoverage = null, windBearing = 180) {
@@ -285,6 +299,7 @@ export class WeatherFX {
     this._overlayType = null;
     this._overlayAlpha = 0;
     this._flashAlpha = 0; this._flashDecay = 0; this._rainbowFade = 0; this._boltCache = null;
+    this._planets = []; this._issPos = null; this._milkyWayAlpha = 0;
     if (this.ctx && this.canvas) {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
@@ -1045,6 +1060,16 @@ export class WeatherFX {
       ? state._overlayAlpha * _elevScaleNight
       : state._overlayAlpha * _elevScaleDay;
     state._overlayAlphaCur += (_oaTarget - state._overlayAlphaCur) * 0.02;
+    // ISS position lerp — uses faster factor since ISS moves quickly
+    if (state._issPos) {
+      const _issL = 0.06;
+      state._issElevCur += (state._issPos.elevation - state._issElevCur) * _issL;
+      let _dIA = state._issPos.azimuth - state._issAzCur;
+      if (_dIA > 180) _dIA -= 360; if (_dIA < -180) _dIA += 360;
+      state._issAzCur = (state._issAzCur + _dIA * _issL + 360) % 360;
+    } else {
+      state._issElevCur += (-90 - state._issElevCur) * 0.04; // fade below horizon
+    }
 
     ctx.clearRect(0, 0, w, h);
 
@@ -1236,6 +1261,91 @@ export class WeatherFX {
 
           ctx.restore();
         }
+        ctx.globalAlpha = state._alpha;
+      }
+    }
+
+    // ---- Milky Way band — faint galactic glow on clear nights ----
+    if (night && state._galCenterEl > -20) {
+      const mwTarget = state._isNight
+        ? Math.max(0, Math.min(1, (state._galCenterEl + 20) / 40)) * cloudDim * (1 - state._moonBrightCur * 0.7) * 0.06
+        : 0;
+      state._milkyWayAlpha += (mwTarget - state._milkyWayAlpha) * 0.01;
+      if (state._milkyWayAlpha > 0.002) {
+        const { x: gcX, y: gcY } = WeatherFX._getSunCanvasPos(w, h, state._galCenterAz, Math.max(0, state._galCenterEl));
+        // Draw a wide soft band through the galactic center — orientation based on azimuth
+        // Band runs perpendicular to the direction from galactic center toward zenith on canvas
+        const _zenithX = w * 0.5, _zenithY = h * 0.05;
+        const bandAngle = Math.atan2(_zenithY - gcY, _zenithX - gcX) + Math.PI / 2;
+        ctx.save();
+        ctx.globalAlpha = state._milkyWayAlpha;
+        // Core blob at galactic center
+        const coreGrd = ctx.createRadialGradient(gcX, gcY, 0, gcX, gcY, h * 0.55);
+        coreGrd.addColorStop(0,   'rgba(200, 210, 255, 0.9)');
+        coreGrd.addColorStop(0.3, 'rgba(180, 195, 240, 0.4)');
+        coreGrd.addColorStop(0.7, 'rgba(160, 180, 230, 0.15)');
+        coreGrd.addColorStop(1,   'rgba(140, 165, 220, 0)');
+        ctx.fillStyle = coreGrd;
+        ctx.beginPath(); ctx.arc(gcX, gcY, h * 0.55, 0, Math.PI * 2); ctx.fill();
+        // Extended band — two offset lobes perpendicular to galactic center direction
+        const perpX = Math.cos(bandAngle + Math.PI / 2);
+        const perpY = Math.sin(bandAngle + Math.PI / 2);
+        [0.45, -0.45].forEach(t => {
+          const bx = gcX + perpX * h * t;
+          const by = gcY + perpY * h * t;
+          const bGrd = ctx.createRadialGradient(bx, by, 0, bx, by, h * 0.38);
+          bGrd.addColorStop(0,   'rgba(160, 175, 230, 0.5)');
+          bGrd.addColorStop(0.5, 'rgba(140, 160, 215, 0.15)');
+          bGrd.addColorStop(1,   'rgba(120, 145, 200, 0)');
+          ctx.fillStyle = bGrd;
+          ctx.beginPath(); ctx.arc(bx, by, h * 0.38, 0, Math.PI * 2); ctx.fill();
+        });
+        ctx.restore();
+      }
+    }
+
+    // ---- Planets — bright dots at calculated sky positions ----
+    if (night && state._planets.length) {
+      const moonWash = state._moonBrightCur * 0.55; // full moon dims all but brightest planets
+      state._planets.forEach(p => {
+        if (p.elevation < 1) return;
+        const horizFade = Math.min(1, p.elevation / 8);
+        const pAlpha = state._alpha * cloudDim * (1 - moonWash) * horizFade;
+        if (pAlpha < 0.02) return;
+        const { x: px, y: py } = WeatherFX._getSunCanvasPos(w, h, p.azimuth, p.elevation);
+        const pr = p.radius;
+        const [r, g, b] = p.color;
+        // Glow
+        const pGlowR = pr * 4.5;
+        const pGrd = ctx.createRadialGradient(px, py, pr * 0.2, px, py, pGlowR);
+        pGrd.addColorStop(0,   `rgba(${r},${g},${b},${(pAlpha * 0.35).toFixed(3)})`);
+        pGrd.addColorStop(1,   `rgba(${r},${g},${b},0)`);
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = pGrd;
+        ctx.beginPath(); ctx.arc(px, py, pGlowR, 0, Math.PI * 2); ctx.fill();
+        // Sharp disc
+        ctx.globalAlpha = pAlpha;
+        ctx.fillStyle = `rgb(${r},${g},${b})`;
+        ctx.beginPath(); ctx.arc(px, py, pr, 0, Math.PI * 2); ctx.fill();
+      });
+      ctx.globalAlpha = state._alpha;
+    }
+
+    // ---- ISS — bright moving dot when visible pass ----
+    if (state._issElevCur > 5 && night) {
+      const { x: issX, y: issY } = WeatherFX._getSunCanvasPos(w, h, state._issAzCur, state._issElevCur);
+      const issAlpha = state._alpha * Math.min(1, (state._issElevCur - 5) / 15) * cloudDim;
+      if (issAlpha > 0.05) {
+        // Bright white-blue dot with a small glow
+        const issGrd = ctx.createRadialGradient(issX, issY, 0, issX, issY, 12);
+        issGrd.addColorStop(0,   `rgba(220,240,255,${(issAlpha * 0.6).toFixed(3)})`);
+        issGrd.addColorStop(1,   'rgba(200,225,255,0)');
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = issGrd;
+        ctx.beginPath(); ctx.arc(issX, issY, 12, 0, Math.PI * 2); ctx.fill();
+        ctx.globalAlpha = issAlpha;
+        ctx.fillStyle = 'rgb(240,248,255)';
+        ctx.beginPath(); ctx.arc(issX, issY, 2.5, 0, Math.PI * 2); ctx.fill();
         ctx.globalAlpha = state._alpha;
       }
     }

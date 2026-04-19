@@ -270,6 +270,7 @@ class SolarDashboard extends HTMLElement {
     this._cardsRevealed = false;
     this._weatherEntityId = null;
     this._moonPhaseEntityId = null;
+    this._issPos = null;
     this._lastMoonBrightness = 0.5;
     this._weatherCloudFactor = 1.0;
     this._weatherAmbientC = null;
@@ -431,6 +432,8 @@ class SolarDashboard extends HTMLElement {
     this._updateSolarEstimate();
     this._intervals.push(setInterval(() => this._updateSolarEstimate(), 300000));
     this._intervals.push(setInterval(() => this._updateSunMoonPosition(), 60000));
+    this._intervals.push(setInterval(() => this._fetchISSPosition(), 10000));
+    this._fetchISSPosition();
 
     // Start solar degradation UI (hourly)
     this._updateSolarUI();
@@ -468,6 +471,8 @@ class SolarDashboard extends HTMLElement {
         this._intervals.push(setInterval(() => this._calcTodayInOut(), 300000));
         this._intervals.push(setInterval(() => this._updateSolarEstimate(), 300000));
         this._intervals.push(setInterval(() => this._updateSunMoonPosition(), 60000));
+        this._intervals.push(setInterval(() => this._fetchISSPosition(), 10000));
+        this._fetchISSPosition();
         this._intervals.push(setInterval(() => this._updateSolarUI(), 3600000));
         this._intervals.push(setInterval(() => this._updateCycleRate(), 3600000));
         this._startMeshLerp();
@@ -1502,6 +1507,45 @@ class SolarDashboard extends HTMLElement {
     const moonState = this._moonPhaseEntityId ? this._hass.states[this._moonPhaseEntityId] : null;
     const moonBrightness = moonState ? (MOON_PHASE_BRIGHTNESS[moonState.state] ?? 0.5) : 0.5;
     this._weatherFx.updateSunMoon(sp.elevation, sp.azimuth, mp.elevation, mp.azimuth, moonBrightness);
+    const planets = this._engine.getPlanetPositions ? this._engine.getPlanetPositions(now) : [];
+    const gc = this._engine.getGalacticCenterPos ? this._engine.getGalacticCenterPos(now) : { elevation: -90, azimuth: 180 };
+    this._weatherFx.updateNightSky(planets, gc.azimuth, gc.elevation, this._issPos);
+  }
+
+  async _fetchISSPosition() {
+    if (this._bridge.latitude == null) return;
+    try {
+      const resp = await fetch('https://api.wheretheiss.at/v1/satellites/25544');
+      if (!resp.ok) return;
+      const data = await resp.json();
+      const { latitude: iLat, longitude: iLon, altitude: iAlt, visibility } = data;
+      // Only show when ISS is in sunlight and observer is in darkness
+      if (visibility !== 'visible') { this._issPos = null; return; }
+      // ECEF → ENU elevation/azimuth
+      const toR = d => d * Math.PI / 180;
+      const toD = r => r * 180 / Math.PI;
+      const R = 6371;
+      const latO = toR(this._bridge.latitude);
+      const lonO = toR(this._bridge.longitude);
+      const latI = toR(iLat);
+      const lonI = toR(iLon);
+      const rI = R + iAlt;
+      const xO = R * Math.cos(latO) * Math.cos(lonO);
+      const yO = R * Math.cos(latO) * Math.sin(lonO);
+      const zO = R * Math.sin(latO);
+      const xI = rI * Math.cos(latI) * Math.cos(lonI);
+      const yI = rI * Math.cos(latI) * Math.sin(lonI);
+      const zI = rI * Math.sin(latI);
+      const dx = xI - xO, dy = yI - yO, dz = zI - zO;
+      const E = -Math.sin(lonO) * dx + Math.cos(lonO) * dy;
+      const N = -Math.sin(latO)*Math.cos(lonO)*dx - Math.sin(latO)*Math.sin(lonO)*dy + Math.cos(latO)*dz;
+      const U = Math.cos(latO)*Math.cos(lonO)*dx + Math.cos(latO)*Math.sin(lonO)*dy + Math.sin(latO)*dz;
+      const elev = toD(Math.atan2(U, Math.sqrt(E*E + N*N)));
+      const az   = (toD(Math.atan2(E, N)) + 360) % 360;
+      this._issPos = elev > 5 ? { elevation: elev, azimuth: az } : null;
+    } catch (_) {
+      this._issPos = null;
+    }
   }
 
   _updateSolarEstimate() {
