@@ -1004,7 +1004,7 @@ class SolarDashboard extends HTMLElement {
       this._animateValue(el, old, minCellV, 600, v => v.toFixed(3) + ' V (C' + cellNum + ')');
     } else this._els.sysMinCell.textContent = '-- V';
 
-    const maxCellV = this._bridge.getVal(E.MAX_CELL_V);
+    const maxCellV = snap.maxCellV;
     if (maxCellV != null) {
       const el = this._els.sysMaxCell;
       const old = parseFloat(el.textContent) || 0;
