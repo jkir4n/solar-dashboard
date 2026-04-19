@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.25.5 (2026-04-19)
+
+### Bug Fixes
+- Soften halo inner edge with transparent gradient stop
+
+
 ## v0.25.4 (2026-04-18)
 
 ### Bug Fixes
