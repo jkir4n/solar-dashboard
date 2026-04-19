@@ -1128,16 +1128,16 @@ class SolarDashboard extends HTMLElement {
   }
 
   // ============ CHART VALUE DISPLAYS ============
-  _updateChartValues() {
+  _updateChartValues(snap) {
     const root = this.shadowRoot;
     const E = this._bridge.E;
 
     // Live view: show real-time values from HA
     if (this._activeChartRange === 'Live') {
-      const dischgPower = this._bridge.getVal(E.DISCHG_POWER);
-      const chgPower = this._bridge.getVal(E.CHG_POWER);
-      const power = this._bridge.getVal(E.POWER);
-      const soc = this._bridge.getVal(E.SOC);
+      const dischgPower = snap ? snap.dischgPower : this._bridge.getVal(E.DISCHG_POWER);
+      const chgPower    = snap ? snap.chgPower    : this._bridge.getVal(E.CHG_POWER);
+      const power       = snap ? snap.power       : this._bridge.getVal(E.POWER);
+      const soc         = snap ? snap.soc         : this._bridge.getVal(E.SOC);
       if (!this._els.pwrVal) {
         this._els.pwrVal = root.getElementById('pwrVal');
         this._els.socVal = root.getElementById('socVal');
