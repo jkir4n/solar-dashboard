@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.29.0 (2026-04-19)
+
+### Features
+- Add planets, Milky Way, and ISS to night sky
+
+
 ## v0.28.4 (2026-04-19)
 
 ### Bug Fixes
