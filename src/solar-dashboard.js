@@ -1836,6 +1836,14 @@ class SolarDashboard extends HTMLElement {
       setTimeout(() => card.classList.add('revealed'), i * 60);
     });
   }
+
+  setConfig(config) {
+    this._config = config || {};
+  }
+
+  static getStubConfig() {
+    return {};
+  }
 }
 
 customElements.define('solar-dashboard', SolarDashboard);
