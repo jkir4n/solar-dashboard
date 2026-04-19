@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.29.2 (2026-04-19)
+
+### Bug Fixes
+- Round throughput kWh to nearest integer
+- Solar-dashboard.js
+
+
 ## v0.29.1 (2026-04-19)
 
 ### Bug Fixes
