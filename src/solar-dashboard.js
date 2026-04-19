@@ -1022,7 +1022,7 @@ class SolarDashboard extends HTMLElement {
       root.getElementById('sysBmsModel').textContent = m ? m[0] : c;
     } else root.getElementById('sysBmsModel').textContent = '--';
 
-    const mosfetTemp = this._bridge.getVal(E.MOSFET_TEMP);
+    const mosfetTemp = snap.mosfetTemp;
     if (mosfetTemp != null) {
       const el = root.getElementById('battMosfetTemp');
       const old = parseFloat(el.textContent) || 0;
