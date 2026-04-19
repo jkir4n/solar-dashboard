@@ -111,6 +111,16 @@ export class WeatherFX {
     this._issElevCur = -90;
     this._issAzCur   = 180;
     this._milkyWayAlpha = 0;      // lerped opacity for Milky Way
+    this._updateWindCache();
+  }
+
+  /** Recompute cached wind derived values after _windSpeed or _windBearing change. */
+  _updateWindCache() {
+    this._windFactor = Math.min((this._windSpeed || 0) / 54, 1.0);
+    const downwindRad = ((this._windBearing + 180) % 360) * Math.PI / 180;
+    this._windDx       =  Math.sin(downwindRad); // +1 = right
+    this._windDy       =  Math.cos(downwindRad); // +1 = down (spawn convention, Y increases down)
+    this._windDyRender = -Math.cos(downwindRad); // +1 = down (render convention, negated for canvas)
   }
 
   /**
