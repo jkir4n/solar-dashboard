@@ -805,9 +805,25 @@ class SolarDashboard extends HTMLElement {
     const hasBatteryChange = changedEntities.some(id => batteryEntities.includes(id));
 
     if (hasBatteryChange) {
-      this._updateBattery();
-      this._updatePowerFlow();
-      this._updateChartValues();
+      // Build a single snapshot so each entity's getVal (parseFloat) is called exactly once.
+      const snap = {
+        soc:        this._bridge.getVal(E.SOC),
+        voltage:    this._bridge.getVal(E.VOLTAGE),
+        current:    this._bridge.getVal(E.CURRENT),
+        power:      this._bridge.getVal(E.POWER),
+        remaining:  this._bridge.getVal(E.REMAINING),
+        chgPower:   this._bridge.getVal(E.CHG_POWER),
+        dischgPower:this._bridge.getVal(E.DISCHG_POWER),
+        cycles:     this._bridge.getVal(E.CYCLES),
+        throughput: this._bridge.getVal(E.THROUGHPUT),
+        minCellV:   this._bridge.getVal(E.MIN_CELL_V),
+        maxCellV:   this._bridge.getVal(E.MAX_CELL_V),
+        mosfetTemp: this._bridge.getVal(E.MOSFET_TEMP),
+        strings:    this._bridge.getVal(E.STRINGS),
+      };
+      this._updateBattery(snap);
+      this._updatePowerFlow(snap);
+      this._updateChartValues(snap);
     }
 
     const hasCellChange = changedEntities.some(id =>
