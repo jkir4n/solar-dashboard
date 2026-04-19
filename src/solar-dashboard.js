@@ -431,7 +431,7 @@ class SolarDashboard extends HTMLElement {
     // Start solar estimate update
     this._updateSolarEstimate();
     this._intervals.push(setInterval(() => this._updateSolarEstimate(), 300000));
-    this._intervals.push(setInterval(() => this._updateSunMoonPosition(), 60000));
+    this._intervals.push(setInterval(() => this._updateSunMoonPosition(), 10000));
     this._intervals.push(setInterval(() => this._fetchISSPosition(), 10000));
     this._fetchISSPosition();
 
@@ -470,7 +470,7 @@ class SolarDashboard extends HTMLElement {
         this._intervals.push(setInterval(() => this._startClock(), 1000));
         this._intervals.push(setInterval(() => this._calcTodayInOut(), 300000));
         this._intervals.push(setInterval(() => this._updateSolarEstimate(), 300000));
-        this._intervals.push(setInterval(() => this._updateSunMoonPosition(), 60000));
+        this._intervals.push(setInterval(() => this._updateSunMoonPosition(), 10000));
         this._intervals.push(setInterval(() => this._fetchISSPosition(), 10000));
         this._fetchISSPosition();
         this._intervals.push(setInterval(() => this._updateSolarUI(), 3600000));
@@ -1407,6 +1407,18 @@ class SolarDashboard extends HTMLElement {
   _applyWeatherBackdrop(condition, windSpeed = 0, cloudCoverage = null, windBearing = 180) {
     const rootEl = this.shadowRoot.querySelector('.dashboard-root');
     if (!rootEl) return;
+    if (condition !== undefined) {
+      this._lastWeatherCondition = condition;
+      this._lastWindSpeed        = windSpeed;
+      this._lastCloudCoverage    = cloudCoverage;
+      this._lastWindBearing      = windBearing;
+    } else {
+      condition     = this._lastWeatherCondition;
+      windSpeed     = this._lastWindSpeed    ?? 0;
+      cloudCoverage = this._lastCloudCoverage ?? null;
+      windBearing   = this._lastWindBearing  ?? 180;
+    }
+    if (!condition) return;
     const theme = rootEl.dataset.theme || 'dark';
     const palettes = WEATHER_PALETTES[theme] || WEATHER_PALETTES.dark;
 
