@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.28.2 (2026-04-19)
+
+### Bug Fixes
+- Hide moon disc when sun is above 5deg elevation
+
+
 ## v0.28.1 (2026-04-19)
 
 ### Bug Fixes
