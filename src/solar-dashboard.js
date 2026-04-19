@@ -1066,13 +1066,13 @@ class SolarDashboard extends HTMLElement {
     if (watts != null) el.style.setProperty('--anim-speed', this._powerToAnimSpeed(watts));
   }
 
-  _updatePowerFlow() {
+  _updatePowerFlow(snap) {
     const root = this.shadowRoot;
     const E = this._bridge.E;
-    const current = this._bridge.getVal(E.CURRENT) || 0;
-    const dischgPower = this._bridge.getVal(E.DISCHG_POWER);
-    const chgPower = this._bridge.getVal(E.CHG_POWER);
-    const netPower = Math.abs(this._bridge.getVal(E.POWER) || 0);
+    const current = snap.current || 0;
+    const dischgPower = snap.dischgPower;
+    const chgPower = snap.chgPower;
+    const netPower = Math.abs(snap.power || 0);
     const power = dischgPower > 0 ? dischgPower : chgPower > 0 ? chgPower : netPower;
     const solarW = chgPower > 0 ? chgPower : (current > 0 ? power : 0);
     const batteryW = dischgPower > 0 ? dischgPower : power;
