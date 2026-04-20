@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.29.3 (2026-04-20)
+
+### Bug Fixes
+- Cache wind vars once per weather update; deduplicate getVal calls in _updateUI
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+
+
 ## v0.29.2 (2026-04-19)
 
 ### Bug Fixes
