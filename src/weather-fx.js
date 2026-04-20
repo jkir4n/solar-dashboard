@@ -97,6 +97,7 @@ export class WeatherFX {
     this._cloudCovCur  = null;
     this._moonBrightCur = 0;
     this._overlayAlphaCur = 0;
+    this._haloStrengthCur = 0;
     this._cloudCoverage = null;
     this._particlesByType = {};        // keyed by particle.kind
     this._overlayParticlesByType = {}; // same for overlay particles
