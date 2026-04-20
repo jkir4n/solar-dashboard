@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.29.4 (2026-04-20)
+
+### Bug Fixes
+- Animate solar halo with lerped strength and shimmer
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+
+
 ## v0.29.3 (2026-04-20)
 
 ### Bug Fixes
