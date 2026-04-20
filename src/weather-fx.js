@@ -1715,7 +1715,9 @@ export class WeatherFX {
         : (night ? 'rgba(120,120,140,1)' : 'rgba(200,200,210,1)');
       const t = now * 0.001;
       (state._particlesByType.fogBlob || []).forEach(p => {
-        p.x += p.vx;
+        const wf = state._windFactorCur ?? 0;
+        const wDx = Math.sin(((state._windBearing + 180) % 360) * Math.PI / 180);
+        p.x += p.vx + wf * 0.5 * wDx;
         if (p.x > w + p.rx) p.x = -p.rx;
         if (p.x < -p.rx) p.x = w + p.rx;
         const y = p.yBase + Math.sin(p.x * 0.04 + t * 0.025 + p.blobIndex) * p.amp;
