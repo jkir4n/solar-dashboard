@@ -1166,8 +1166,8 @@ export class WeatherFX {
         // Solar halo — thin prismatic ring via screen composite
         const haloStrength = Math.max(0, cloudDim - 0.45) / 0.55;
         if (haloStrength > 0 && elev > 5) {
-          const haloR = sunR * 4.2;
-          const halfW = sunR * 0.35;           // thin ring — matches real halo thinness
+          const haloR = sunR * 2.8;
+          const halfW = sunR * (0.45 + (1 - haloStrength) * 0.55); // wider in thin cirrus, sharper when clear
           ctx.save();
 
           // Inner darkening — sky is depleted inside the 22° ring
