@@ -334,9 +334,9 @@ export class HABridge {
     for (const eid of tracked) {
       const s = this._hass.states[eid];
       const prev = this._prevStates[eid];
-      if (s && (!prev || prev.state !== s.state || prev.last_updated !== s.last_updated)) {
+      if (s && (!prev || prev.state !== s.state || prev.last_updated !== s.last_updated || prev.last_changed !== s.last_changed)) {
         changed.push(eid);
-        this._prevStates[eid] = { state: s.state, last_updated: s.last_updated };
+        this._prevStates[eid] = { state: s.state, last_updated: s.last_updated, last_changed: s.last_changed };
       }
     }
     return changed;
