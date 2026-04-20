@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.30.0 (2026-04-20)
+
+### Features
+- Add 5-minute periodic weather refresh interval
+- Overlapping fade transition eliminates blank-frame gap on weather change
+- Regenerate cloud particles when coverage crosses archetype thresholds
+- Snowflakes react to live wind changes in render loop
+- Fog blobs react to live wind changes in render loop
+- Add wind lerp for smooth acceleration/deceleration in weather particles
+- Detect weather attribute changes via last_changed in getChangedEntities
+
+
 ## v0.29.5 (2026-04-20)
 
 ### Bug Fixes
