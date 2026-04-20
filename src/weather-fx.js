@@ -368,7 +368,7 @@ export class WeatherFX {
     // Early return: if new type is null and no current type
     if (!type && !state._currentType) return;
 
-    // Fade out current, then switch
+    // Fade out current, then switch — overlap fade-in to avoid blank frame
     if (state._currentType && state._currentType !== type) {
       state._fading = true;
       state._nextType = type;
@@ -376,27 +376,31 @@ export class WeatherFX {
       const fadeStep = () => {
         if (state._fadeGen !== gen) return; // cancelled by stop() or a newer transition
         state._alpha -= 0.02;
-        if (state._alpha <= 0) {
-          state._alpha = 0;
-          state._fading = false;
-          state._currentType = state._nextType;
-          state._particles = state._currentType
-            ? state._createParticles(state._currentType, canvas) : [];
-          state._particlesByType = state._currentType ? state._bucketize(state._particles) : {};
-          if (state._currentType) {
-            const fadeIn = () => {
-              if (state._fadeGen !== gen) return;
-              state._alpha = Math.min(state._alpha + 0.02, 1);
-              if (state._alpha < 1) state._animFrameId = requestAnimationFrame(fadeIn);
-              else state._animFrameId = null;
-            };
-            state._animFrameId = requestAnimationFrame(fadeIn);
+        if (state._alpha <= 0.15) {
+          // Start fade-in before fade-out completes — overlap avoids blank frame
+          if (!state._newParticlesCreated) {
+            state._alpha = 0.15;
+            state._newParticlesCreated = true;
+            state._currentType = state._nextType;
+            state._particles = state._currentType
+              ? state._createParticles(state._currentType, canvas) : [];
+            state._particlesByType = state._currentType ? state._bucketize(state._particles) : {};
           }
+          state._alpha += 0.02;
+          if (state._alpha >= 1) {
+            state._alpha = 1;
+            state._fading = false;
+            state._newParticlesCreated = false;
+            state._animFrameId = null;
+            return;
+          }
+          state._animFrameId = requestAnimationFrame(fadeStep);
           return;
         }
-        requestAnimationFrame(fadeStep);
+        state._animFrameId = requestAnimationFrame(fadeStep);
       };
-      requestAnimationFrame(fadeStep);
+      state._newParticlesCreated = false;
+      state._animFrameId = requestAnimationFrame(fadeStep);
       return;
     }
 
