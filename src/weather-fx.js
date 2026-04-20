@@ -1164,17 +1164,20 @@ export class WeatherFX {
           ctx.fill();
           ctx.restore();
         }
-        // Solar halo — thin prismatic ring via screen composite
+        // Solar halo — lerped strength for smooth fade, shimmer for organic life
         const haloStrength = Math.max(0, cloudDim - 0.45) / 0.55;
-        if (haloStrength > 0 && elev > 5) {
-          const haloR = sunR * 2.8;
-          const halfW = sunR * (0.45 + (1 - haloStrength) * 0.55); // wider in thin cirrus, sharper when clear
+        state._haloStrengthCur += (haloStrength - state._haloStrengthCur) * 0.006;
+        const hs = state._haloStrengthCur;
+        if (hs > 0.005 && elev > 5) {
+          const shimmer  = 1 + 0.07 * Math.sin(ts * 0.0005);
+          const haloR    = sunR * 2.8 * (1 + 0.012 * Math.sin(ts * 0.00032));
+          const halfW    = sunR * (0.45 + (1 - hs) * 0.55) * shimmer;
           ctx.save();
 
           // Inner darkening — sky is depleted inside the 22° ring
           const darkGrd = ctx.createRadialGradient(sunX, sunY, sunR * 1.8, sunX, sunY, haloR - halfW);
           darkGrd.addColorStop(0, 'rgba(0,0,0,0)');
-          darkGrd.addColorStop(1, `rgba(0,0,0,${(haloStrength * 0.09).toFixed(3)})`);
+          darkGrd.addColorStop(1, `rgba(0,0,0,${(hs * 0.09).toFixed(3)})`);
           ctx.globalAlpha = state._alpha;
           ctx.fillStyle = darkGrd;
           ctx.beginPath();
@@ -1183,12 +1186,13 @@ export class WeatherFX {
 
           // Prismatic ring — screen composite makes it glow additively
           ctx.globalCompositeOperation = 'screen';
+          const shimmerA = 1 + 0.08 * Math.sin(ts * 0.0007 + 1.3);
           const ringGrd = ctx.createRadialGradient(sunX, sunY, haloR - halfW, sunX, sunY, haloR + halfW);
-          ringGrd.addColorStop(0,    'rgba(255,  80,  20, 0)');                                     // transparent inner edge
-          ringGrd.addColorStop(0.18, `rgba(255,  80,  20, ${(haloStrength * 0.70).toFixed(3)})`);  // red inner
-          ringGrd.addColorStop(0.42, `rgba(255, 170,  80, ${(haloStrength * 0.65).toFixed(3)})`);  // orange
-          ringGrd.addColorStop(0.68, `rgba(255, 255, 230, ${(haloStrength * 0.55).toFixed(3)})`);  // white-yellow peak
-          ringGrd.addColorStop(1,    'rgba(220, 235, 255, 0)');                                     // transparent blue-white
+          ringGrd.addColorStop(0,    'rgba(255,  80,  20, 0)');
+          ringGrd.addColorStop(0.18, `rgba(255,  80,  20, ${(hs * 0.70 * shimmerA).toFixed(3)})`);
+          ringGrd.addColorStop(0.42, `rgba(255, 170,  80, ${(hs * 0.65 * shimmerA).toFixed(3)})`);
+          ringGrd.addColorStop(0.68, `rgba(255, 255, 230, ${(hs * 0.55 * shimmerA).toFixed(3)})`);
+          ringGrd.addColorStop(1,    'rgba(220, 235, 255, 0)');
           ctx.globalAlpha = state._alpha;
           ctx.beginPath();
           ctx.arc(sunX, sunY, haloR, 0, Math.PI * 2);
