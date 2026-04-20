@@ -1066,6 +1066,9 @@ export class WeatherFX {
     state._moonAzCur = (state._moonAzCur + _dMA * _L + 360) % 360;
     if (state._cloudCovCur === null) state._cloudCovCur = state._cloudCoverage ?? 50;
     state._cloudCovCur   += ((state._cloudCoverage ?? 50) - state._cloudCovCur) * 0.005;
+    // Lerp wind factor for smooth acceleration/deceleration
+    if (state._windFactorCur === undefined) state._windFactorCur = state._windFactor ?? 0;
+    state._windFactorCur += ((state._windFactor ?? 0) - state._windFactorCur) * 0.02;
     state._moonBrightCur += (state._moonBrightness - state._moonBrightCur) * 0.01;
     const _elevScaleDay   = Math.max(0, Math.min(1, state._sunElevCur / 10));
     const _elevScaleNight = Math.max(0, Math.min(1, -state._sunElevCur / 8));
@@ -1461,7 +1464,7 @@ export class WeatherFX {
       const dropColor = light
         ? (night ? 'rgba(30,50,105,1)' : 'rgba(55,80,145,1)')
         : (night ? 'rgba(85,115,175,1)' : 'rgba(120,155,210,1)');
-      const windFactor = Math.min((state._windSpeed || 0) / 54, 1.0);
+      const windFactor = state._windFactorCur ?? 0;
       const downwindRad = ((state._windBearing + 180) % 360) * Math.PI / 180;
       const windDx = Math.sin(downwindRad);
       state._renderDrops(ctx, state._particlesByType.drop || [], now, night, light, windFactor, windDx, state._alpha);
@@ -1488,7 +1491,7 @@ export class WeatherFX {
         ? (night ? 'rgba(50,70,120,1)' : 'rgba(80,110,160,1)')
         : (night ? 'rgba(100,130,190,1)' : 'rgba(150,180,220,1)');
       const rippleColor = dropColor;
-      const windFactor = Math.min((state._windSpeed || 0) / 54, 1.0);
+      const windFactor = state._windFactorCur ?? 0;
       const downwindRad = ((state._windBearing + 180) % 360) * Math.PI / 180;
       const windDx = Math.sin(downwindRad);
       state._renderDrops(ctx, state._particlesByType.drop || [], now, night, light, windFactor, windDx, state._alpha);
@@ -1725,8 +1728,8 @@ export class WeatherFX {
       ctx.globalAlpha = state._alpha;
 
     } else if (state._currentType === 'cloudy') {
-      // Use cached wind values (updated by _updateWindCache() on each start() call)
-      const windFactor = state._windFactor;
+      // Use lerped wind factor for smooth acceleration
+      const windFactor = state._windFactorCur ?? 0;
       const windDx     = state._windDx;
       const windDy     = state._windDyRender; // +1 = downward on canvas (negated vs spawn convention)
       // Sort by layer (far → near) for correct depth order
@@ -1772,7 +1775,7 @@ export class WeatherFX {
       const dropColor = light
         ? (night ? 'rgba(60,85,130,1)' : 'rgba(100,130,180,1)')
         : (night ? 'rgba(110,140,190,1)' : 'rgba(160,190,230,1)');
-      const windFactor = Math.min((state._windSpeed || 0) / 54, 1.0);
+      const windFactor = state._windFactorCur ?? 0;
       const downwindRad = ((state._windBearing + 180) % 360) * Math.PI / 180;
       const windDx = Math.sin(downwindRad);
       state._renderDrops(ctx, state._particlesByType.drop || [], now, night, light, windFactor, windDx, state._alpha);
