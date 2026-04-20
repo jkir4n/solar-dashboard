@@ -1645,7 +1645,9 @@ export class WeatherFX {
       (state._particlesByType.flake || []).forEach(p => {
         p.y += p.vy;
         p.sway += p.swaySpeed * 0.02;
-        p.x += Math.sin(p.sway) * p.swayAmp + p.windDrift;
+        const wf = state._windFactorCur ?? 0;
+        const wDx = Math.sin(((state._windBearing + 180) % 360) * Math.PI / 180);
+        p.x += Math.sin(p.sway) * p.swayAmp * (1 - wf * 0.7) + wDx * wf * 2.0 * p.depth;
         p.angle += 0.008;
         if (p.y > h + 10) { p.y = -10; p.x = Math.random() * w; }
         if (p.x > w + 10) p.x = -10;
