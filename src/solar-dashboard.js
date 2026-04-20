@@ -1960,7 +1960,6 @@ class SolarDashboard extends HTMLElement {
     this._updateSolarUI();
 
     // Dispatch all system entities
-    const E = this._bridge.E;
     const systemEntities = [E.TEMP1, E.TEMP2, E.MOSFET_TEMP, E.CYCLES, E.RUNTIME, E.THROUGHPUT,
       E.MIN_CELL_V, E.MAX_CELL_V, E.FIRMWARE, E.MANUFACTURER, E.BAL_SWITCH, E.CHG_SWITCH, E.DISCHG_SWITCH,
       E.STRINGS, E.REMAINING];
