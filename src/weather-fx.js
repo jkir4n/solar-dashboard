@@ -244,6 +244,7 @@ export class WeatherFX {
       this._moonBrightCur = moonBrightness;
     }
     this._cloudCoverage  = cloudCoverage;
+    this._lastArchetypeCov = cloudCoverage;
     // Determine particle type
     let particleType = CONDITION_PARTICLE_MAP[weatherCondition] || null;
     if (isNight && (!particleType || particleType === 'sunny')) particleType = 'night';
@@ -350,8 +351,19 @@ export class WeatherFX {
     const canvas = this.canvas;
     const state = this;
 
-    // Same type — no change needed
-    if (state._currentType === type && !state._fading) return;
+    // Same type — check if cloud coverage crossed an archetype threshold
+    if (state._currentType === type && !state._fading) {
+      if (type === 'cloudy') {
+        const cov = state._cloudCoverage ?? 50;
+        const prevCov = state._lastArchetypeCov ?? cov;
+        const thresholds = [25, 50, 75, 85];
+        const crossed = thresholds.some(t => (prevCov < t && cov >= t) || (prevCov >= t && cov < t));
+        if (!crossed) return;
+        state._lastArchetypeCov = cov;
+      } else {
+        return;
+      }
+    }
 
     // Early return: if new type is null and no current type
     if (!type && !state._currentType) return;
@@ -385,6 +397,13 @@ export class WeatherFX {
         requestAnimationFrame(fadeStep);
       };
       requestAnimationFrame(fadeStep);
+      return;
+    }
+
+    // Same type but threshold crossed — rebuild clouds without fade
+    if (state._currentType === type && type === 'cloudy') {
+      state._particles = state._createParticles(type, canvas);
+      state._particlesByType = state._bucketize(state._particles);
       return;
     }
 
