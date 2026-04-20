@@ -1169,8 +1169,8 @@ export class WeatherFX {
         state._haloStrengthCur += (haloStrength - state._haloStrengthCur) * 0.006;
         const hs = state._haloStrengthCur;
         if (hs > 0.005 && elev > 5) {
-          const shimmer  = 1 + 0.07 * Math.sin(ts * 0.0005);
-          const haloR    = sunR * 2.8 * (1 + 0.012 * Math.sin(ts * 0.00032));
+          const shimmer  = 1 + 0.07 * Math.sin(now * 0.0005);
+          const haloR    = sunR * 2.8 * (1 + 0.012 * Math.sin(now * 0.00032));
           const halfW    = sunR * (0.45 + (1 - hs) * 0.55) * shimmer;
           ctx.save();
 
@@ -1186,7 +1186,7 @@ export class WeatherFX {
 
           // Prismatic ring — screen composite makes it glow additively
           ctx.globalCompositeOperation = 'screen';
-          const shimmerA = 1 + 0.08 * Math.sin(ts * 0.0007 + 1.3);
+          const shimmerA = 1 + 0.08 * Math.sin(now * 0.0007 + 1.3);
           const ringGrd = ctx.createRadialGradient(sunX, sunY, haloR - halfW, sunX, sunY, haloR + halfW);
           ringGrd.addColorStop(0,    'rgba(255,  80,  20, 0)');
           ringGrd.addColorStop(0.18, `rgba(255,  80,  20, ${(hs * 0.70 * shimmerA).toFixed(3)})`);
