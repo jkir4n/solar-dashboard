@@ -431,6 +431,7 @@ class SolarDashboard extends HTMLElement {
     // Start solar estimate update
     this._updateSolarEstimate();
     this._intervals.push(setInterval(() => this._updateSolarEstimate(), 300000));
+    this._intervals.push(setInterval(() => this._updateWeather(), 300000));
     this._intervals.push(setInterval(() => this._updateSunMoonPosition(), 10000));
     this._intervals.push(setInterval(() => this._fetchISSPosition(), 10000));
     this._fetchISSPosition();
@@ -470,6 +471,7 @@ class SolarDashboard extends HTMLElement {
         this._intervals.push(setInterval(() => this._startClock(), 1000));
         this._intervals.push(setInterval(() => this._calcTodayInOut(), 300000));
         this._intervals.push(setInterval(() => this._updateSolarEstimate(), 300000));
+        this._intervals.push(setInterval(() => this._updateWeather(), 300000));
         this._intervals.push(setInterval(() => this._updateSunMoonPosition(), 10000));
         this._intervals.push(setInterval(() => this._fetchISSPosition(), 10000));
         this._fetchISSPosition();
