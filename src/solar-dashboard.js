@@ -903,6 +903,7 @@ class SolarDashboard extends HTMLElement {
     } else {
       this._els.battSOC.textContent = '--%';
       ring.style.strokeDasharray = `0 ${circ}`;
+      ring.style.stroke = 'var(--secondary-text)';
     }
 
     const cur = current || 0;
@@ -1566,7 +1567,10 @@ class SolarDashboard extends HTMLElement {
   async _fetchISSPosition() {
     if (this._bridge.latitude == null) return;
     try {
-      const resp = await fetch('https://api.wheretheiss.at/v1/satellites/25544');
+      const ctl = new AbortController();
+      const tid = setTimeout(() => ctl.abort(), 8000);
+      const resp = await fetch('https://api.wheretheiss.at/v1/satellites/25544', { signal: ctl.signal });
+      clearTimeout(tid);
       if (!resp.ok) return;
       const data = await resp.json();
       const { latitude: iLat, longitude: iLon, altitude: iAlt, visibility } = data;
@@ -1706,7 +1710,13 @@ class SolarDashboard extends HTMLElement {
       const tag = isHigh ? '<span class="cell-tag high">\u25B2</span>' : isLow ? '<span class="cell-tag low">\u25BC</span>' : '';
       const idEl = row.querySelector('.cell-id');
       const newId = `C${startIdx + gi}${tag}`;
-      if (idEl.innerHTML !== newId) idEl.innerHTML = newId;
+      // NB3: Compare textContent (reliable) instead of innerHTML (fragile due to browser normalization)
+      const newText = `C${startIdx + gi}`;
+      const newState = isHigh ? 'high' : isLow ? 'low' : 'normal';
+      if (idEl.textContent !== newText || row.dataset.cellState !== newState) {
+        idEl.innerHTML = newId;
+        row.dataset.cellState = newState;
+      }
       row.querySelector('.cell-bar').style.width = pct + '%';
       const cellValEl = row.querySelector('.cell-val');
       this._animateValue(cellValEl, parseFloat(cellValEl.textContent) || 0, v, 600, val => val.toFixed(3) + ' V');
