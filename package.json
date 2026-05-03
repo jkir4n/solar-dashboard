@@ -1,6 +1,6 @@
 {
   "name": "solar-dashboard",
-  "version": "0.30.0",
+  "version": "0.30.1",
   "description": "Solar monitoring dashboard for Home Assistant",
   "type": "module",
   "scripts": {
