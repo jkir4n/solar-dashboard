@@ -365,7 +365,7 @@ export class HABridge {
       });
     } catch (e) {
       console.warn('[Solar] History fetch failed:', e);
-      return [];
+      return null;
     }
   }
 

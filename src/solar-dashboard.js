@@ -507,7 +507,10 @@ class SolarDashboard extends HTMLElement {
     if (this._visibilityHandler) document.removeEventListener('visibilitychange', this._visibilityHandler);
     if (this._mediaQuery && this._themeHandler) this._mediaQuery.removeEventListener('change', this._themeHandler);
     this._stopBattArcs();
-    this._activeAnimations.forEach(id => cancelAnimationFrame(id));
+    this._activeAnimations.forEach((_rafId, el) => {
+      cancelAnimationFrame(_rafId);
+      if (el._flashTimer) { clearTimeout(el._flashTimer); el._flashTimer = null; }
+    });
     this._activeAnimations.clear();
     if (this._meshRafId) { cancelAnimationFrame(this._meshRafId); this._meshRafId = null; }
   }
@@ -790,7 +793,8 @@ class SolarDashboard extends HTMLElement {
         el.classList.add('val-flash');
         const _cleanFlash = () => el.classList.remove('val-flash');
         const _flashTimer = setTimeout(_cleanFlash, 1000);
-        el.addEventListener('animationend', () => { clearTimeout(_flashTimer); _cleanFlash(); }, { once: true, passive: true });
+        el._flashTimer = _flashTimer;
+        el.addEventListener('animationend', () => { clearTimeout(el._flashTimer); _cleanFlash(); el._flashTimer = null; }, { once: true, passive: true });
       }
     };
     this._activeAnimations.set(el, requestAnimationFrame(tick));
@@ -1810,29 +1814,31 @@ class SolarDashboard extends HTMLElement {
           this._bridge.fetchHistoryRange(E.CHG_POWER,    midnightUTC, now, true),
           this._bridge.fetchHistoryRange(E.DISCHG_POWER, midnightUTC, now, true),
         ]);
-        this._todayIn  = integrateWatts(chgStates);
-        this._todayOut = integrateWatts(dischgStates);
+        this._todayIn  = chgStates ? integrateWatts(chgStates) : 0;
+        this._todayOut = dischgStates ? integrateWatts(dischgStates) : 0;
       } else {
         // Fallback: signed current sensor (Ah → kWh)
         const nomV = this._bridge.battSpec.nomV;
         const states = await this._bridge.fetchHistoryRange(E.CURRENT, midnightUTC, now, true);
         let inAh = 0, outAh = 0;
-        for (let i = 1; i < states.length; i++) {
-          const prevV = states[i - 1].v;
-          if (prevV === null) continue;
-          const dtHours = (states[i].t.getTime() - states[i - 1].t.getTime()) / 3600000;
-          if (dtHours > 0 && dtHours < 1) {
-            if (prevV > 0.1) inAh += prevV * dtHours;
-            else if (prevV < -0.1) outAh += Math.abs(prevV) * dtHours;
-          }
-        }
-        if (states.length > 0) {
-          const last = states[states.length - 1];
-          if (last.v !== null) {
-            const dtHours = (now.getTime() - last.t.getTime()) / 3600000;
+        if (states) {
+          for (let i = 1; i < states.length; i++) {
+            const prevV = states[i - 1].v;
+            if (prevV === null) continue;
+            const dtHours = (states[i].t.getTime() - states[i - 1].t.getTime()) / 3600000;
             if (dtHours > 0 && dtHours < 1) {
-              if (last.v > 0.1) inAh += last.v * dtHours;
-              else if (last.v < -0.1) outAh += Math.abs(last.v) * dtHours;
+              if (prevV > 0.1) inAh += prevV * dtHours;
+              else if (prevV < -0.1) outAh += Math.abs(prevV) * dtHours;
+            }
+          }
+          if (states.length > 0) {
+            const last = states[states.length - 1];
+            if (last.v !== null) {
+              const dtHours = (now.getTime() - last.t.getTime()) / 3600000;
+              if (dtHours > 0 && dtHours < 1) {
+                if (last.v > 0.1) inAh += last.v * dtHours;
+                else if (last.v < -0.1) outAh += Math.abs(last.v) * dtHours;
+              }
             }
           }
         }
