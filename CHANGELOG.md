@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.30.2 (2026-05-03)
+
+### Bug Fixes
+- ISS fetch timeout (NB1), SOC ring stroke reset (NB5), innerHTML comparison (NB3)
+- Remove docs/ from tracking (gitignored)
+
+
 ## v0.30.1 (2026-05-03)
 
 ### Bug Fixes
