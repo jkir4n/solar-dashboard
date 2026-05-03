@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.30.3 (2026-05-03)
+
+### Bug Fixes
+- FetchHistoryRange error handling (NB6) and animation listener cleanup (B21)
+
+
 ## v0.30.2 (2026-05-03)
 
 ### Bug Fixes
