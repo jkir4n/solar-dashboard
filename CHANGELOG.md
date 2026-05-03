@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.31.0 (2026-05-03)
+
+### Features
+- Integrate HA theme CSS custom properties (I9)
+
+
 ## v0.30.3 (2026-05-03)
 
 ### Bug Fixes
