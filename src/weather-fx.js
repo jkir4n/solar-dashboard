@@ -365,6 +365,10 @@ export class WeatherFX {
       }
     }
 
+    // B23: Guard against redundant calls during active fade
+    if (state._fading && type === state._currentType) return;
+    if (state._fading && type === state._nextType) return;
+
     // Early return: if new type is null and no current type
     if (!type && !state._currentType) return;
 

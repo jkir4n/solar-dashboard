@@ -1457,6 +1457,8 @@ class SolarDashboard extends HTMLElement {
     const newTargets = colors.map(c => this._parseRgba(c));
     if (!this._meshCur[0]) this._meshCur = newTargets.map(t => ({ ...t }));
     this._meshTarget = newTargets;
+    // NB2: Restart mesh lerp if it was stopped after previous convergence
+    if (!this._meshRafId) this._startMeshLerp();
 
     // Moon phase brightness (0=new, 1=full) — auto-discovered entity
     if (!this._moonPhaseEntityId) this._moonPhaseEntityId = this._discoverMoonPhaseEntity();
@@ -1475,8 +1477,13 @@ class SolarDashboard extends HTMLElement {
 
     // Update weather FX particles — pass original HA condition, not the palette key,
     // because WeatherFX.start() does its own condition-to-particle mapping
+    // B23: Skip if parameters haven't changed (prevents redundant fade loops)
     if (this._weatherFx) {
-      this._weatherFx.start(condition, isNight, theme, windSpeed, moonBrightness, moonElevation, moonAzimuth, sunElevation, sunAzimuth, cloudCoverage, windBearing);
+      const fxKey = `${condition}|${isNight}|${windSpeed.toFixed(0)}|${moonBrightness.toFixed(2)}`;
+      if (fxKey !== this._fxKey) {
+        this._weatherFx.start(condition, isNight, theme, windSpeed, moonBrightness, moonElevation, moonAzimuth, sunElevation, sunAzimuth, cloudCoverage, windBearing);
+        this._fxKey = fxKey;
+      }
     }
   }
 
@@ -1502,19 +1509,35 @@ class SolarDashboard extends HTMLElement {
   _startMeshLerp() {
     if (this._meshRafId) return;
     const step = () => {
-      if (!this._meshTarget) { this._meshRafId = requestAnimationFrame(step); return; }
+      if (!this._meshTarget) {
+        this._meshRafId = null;
+        return;
+      }
       const root = this.shadowRoot && this.shadowRoot.querySelector('.dashboard-root');
       if (root && this._meshCur[0]) {
         const L = 0.004;
+        let converged = true;
         for (let i = 0; i < 3; i++) {
           const c = this._meshCur[i], t = this._meshTarget[i];
-          if (!c || !t) continue;
+          if (!c || !t) { converged = false; continue; }
           c.r += (t.r - c.r) * L; c.g += (t.g - c.g) * L;
           c.b += (t.b - c.b) * L; c.a += (t.a - c.a) * L;
+          if (Math.abs(c.r - t.r) > 0.5 || Math.abs(c.g - t.g) > 0.5 ||
+              Math.abs(c.b - t.b) > 0.5 || Math.abs(c.a - t.a) > 0.001) {
+            converged = false;
+          }
         }
         root.style.setProperty('--mesh-1', `rgba(${Math.round(this._meshCur[0].r)},${Math.round(this._meshCur[0].g)},${Math.round(this._meshCur[0].b)},${this._meshCur[0].a.toFixed(3)})`);
         root.style.setProperty('--mesh-2', `rgba(${Math.round(this._meshCur[1].r)},${Math.round(this._meshCur[1].g)},${Math.round(this._meshCur[1].b)},${this._meshCur[1].a.toFixed(3)})`);
         root.style.setProperty('--mesh-3', `rgba(${Math.round(this._meshCur[2].r)},${Math.round(this._meshCur[2].g)},${Math.round(this._meshCur[2].b)},${this._meshCur[2].a.toFixed(3)})`);
+        if (converged) {
+          // Snap to exact target and stop the loop — no CPU waste after convergence (NB2)
+          for (let i = 0; i < 3; i++) {
+            this._meshCur[i] = { ...this._meshTarget[i] };
+          }
+          this._meshRafId = null;
+          return;
+        }
       }
       this._meshRafId = requestAnimationFrame(step);
     };
