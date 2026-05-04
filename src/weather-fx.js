@@ -228,7 +228,7 @@ export class WeatherFX {
     this._updateWindCache();
     this._weatherCondition = weatherCondition;
     // Moon values update every call — position changes continuously, no particle rebuild needed
-    this._moonBrightness = moonBrightness;
+    this._moonBrightness = Number.isFinite(moonBrightness) ? moonBrightness : 0;
     this._moonElevation  = moonElevation;
     this._moonAzimuth    = moonAzimuth;
     this._sunElevation   = sunElevation;
