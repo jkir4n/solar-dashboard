@@ -477,6 +477,10 @@ export class ChartManager {
       }
     } catch (e) {
       console.warn('Chart fetch failed', e);
+      // NI9: Show error placeholder on all requested canvases
+      if (canvases.power) this.showPlaceholder(canvases.power, 'Failed to load');
+      if (canvases.soc) this.showPlaceholder(canvases.soc, 'Failed to load');
+      if (canvases.solar) this.showPlaceholder(canvases.solar, 'Failed to load');
     }
 
     // Build x-label function from timestamps
