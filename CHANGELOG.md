@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.31.11 (2026-05-04)
+
+### Bug Fixes
+- Skip solar estimate at night, deduplicate POWER fetches, centralized animation loop
+- P7: Single centralized animation loop — replaces 30+ independent rAF chains with one loop iterating all active animations per frame
+- NI3: Deduplicate POWER entity fetches — when CHG_POWER and DISCHG_POWER both missing, fetch E.POWER once instead of twice
+- NI1: Skip solar estimate at night — early return when sun elevation <= 0, avoiding ~144 wasted calcSolarOutput/getDegradationInfo calls per night
+- Ignore .superpowers, .tmp, and MEMORY.md in .gitignore
+
+
 ## v0.31.9 (2026-05-04)
 
 ### Bug Fixes
