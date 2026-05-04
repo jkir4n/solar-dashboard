@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.31.1 (2026-05-04)
+
+### Bug Fixes
+- _updateSunMoonPosition dead code (C1) and NaN wind bearing (C2)
+
+
 ## v0.31.0 (2026-05-03)
 
 ### Features
