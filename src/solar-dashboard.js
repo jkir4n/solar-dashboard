@@ -1459,9 +1459,10 @@ class SolarDashboard extends HTMLElement {
 
   // ============ UI UPDATE DISPATCHER ============
   _updateUI(changedEntities) {
-    const E = this._bridge.E;
     const root = this.shadowRoot;
-    const lang = this._bridge._hass?.language || 'en';
+    if (!root || !this._bridge._hass) return;
+    const E = this._bridge.E;
+    const lang = this._bridge._hass.language || 'en';
     const batteryEntities = [E.SOC, E.VOLTAGE, E.CURRENT, E.POWER, E.REMAINING,
       E.CYCLES, E.RUNTIME, E.THROUGHPUT, E.MIN_CELL_V, E.MAX_CELL_V,
       E.MIN_V_CELL, E.MAX_V_CELL, E.FIRMWARE, E.MANUFACTURER, E.STRINGS,

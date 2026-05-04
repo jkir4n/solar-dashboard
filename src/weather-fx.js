@@ -392,7 +392,7 @@ export class WeatherFX {
           }
         } catch (e) {
           console.error('[WeatherFX] render error:', e);
-          state.ctx.clearRect(0, 0, canvas.width, canvas.height);
+          if (state.ctx) state.ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
       }
       state._animFrameId = requestAnimationFrame(loop);
@@ -1117,6 +1117,7 @@ export class WeatherFX {
   _render(now) {
     const canvas = this.canvas;
     const ctx = this.ctx;
+    if (!canvas || !ctx) return;
     const w = canvas.width, h = canvas.height;
     const state = this;
     const light = this._theme === 'light';

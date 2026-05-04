@@ -41,6 +41,8 @@ export class ChartManager {
   // Ported from v9 line 2033-2131
   drawChart(canvas, datasets, opts = {}, animate = false) {
     if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
     const canvasId = canvas.id || canvas.dataset.chartId || 'anon';
 
     if (this._chartAnimIds[canvasId]) {
@@ -50,7 +52,6 @@ export class ChartManager {
 
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
     canvas.width = rect.width * dpr;
     canvas.height = rect.height * dpr;
     ctx.scale(dpr, dpr);
