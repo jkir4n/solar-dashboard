@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.31.8 (2026-05-04)
+
+### Bug Fixes
+- Include cloud cover and ambient temp in forecast cache key (C8)
+
+
 ## v0.31.7 (2026-05-04)
 
 ### Bug Fixes
