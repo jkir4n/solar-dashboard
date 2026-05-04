@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.31.21 (2026-05-04)
+
+### Bug Fixes
+- Reset _newParticlesCreated flag in stop() for cleanliness (NI17)
+
+
 ## v0.31.20 (2026-05-04)
 
 ### Bug Fixes
