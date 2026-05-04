@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.31.6 (2026-05-04)
+
+### Bug Fixes
+- Wrap weather-fx rAF loop in try/catch for error recovery (C4)
+
+
 ## v0.31.5 (2026-05-04)
 
 ### Bug Fixes
