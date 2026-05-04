@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.35.0 (2026-05-04)
+
+### Features
+- Add 500px breakpoint with tighter spacing and font sizes for phone screens (I8)
+
+
 ## v0.34.0 (2026-05-04)
 
 ### Features
