@@ -284,6 +284,7 @@ class SolarDashboard extends HTMLElement {
     this._resizeHandler = null;
     this._activeChartRange = 'Live';
     this._lastLiveChartFetch = 0;
+    this._chartFetchDebounce = {}; // P22: debounce guard for tab clicks / visibility resume
     this._cycleRatePerDay = null;
     this._pendingChanges = new Set();
     this._updateRafId = null;
@@ -357,6 +358,17 @@ class SolarDashboard extends HTMLElement {
       sysThroughput: root.getElementById('sysThroughput'),
       sysMinCell:    root.getElementById('sysMinCell'),
       sysMaxCell:    root.getElementById('sysMaxCell'),
+      // P4: Additional cached refs to eliminate per-update getElementById calls
+      sysFirmware:   root.getElementById('sysFirmware'),
+      sysBmsModel:   root.getElementById('sysBmsModel'),
+      battMosfetTemp:root.getElementById('battMosfetTemp'),
+      sysConfig:     root.getElementById('sysConfig'),
+      sysNominal:    root.getElementById('sysNominal'),
+      sysCapacity:   root.getElementById('sysCapacity'),
+      sysChemistry:  root.getElementById('sysChemistry'),
+      wxSource:      root.getElementById('wxSource'),
+      // NI2: Cache dashboard root to eliminate repeated queries
+      dashRoot:      root.querySelector('.dashboard-root'),
     };
 
     // Apply theme and enable JS-dependent animations
@@ -1020,42 +1032,42 @@ class SolarDashboard extends HTMLElement {
     } else this._els.sysMaxCell.textContent = '-- V';
 
     const firmware = this._bridge.getStrVal(E.FIRMWARE);
-    root.getElementById('sysFirmware').textContent = firmware ? firmware.replace(/[^\x20-\x7E]/g, '').replace(/_+/g, ' ').trim() : '--';
+    if (this._els.sysFirmware) this._els.sysFirmware.textContent = firmware ? firmware.replace(/[^\x20-\x7E]/g, '').replace(/_+/g, ' ').trim() : '--';
 
     const manufacturer = this._bridge.getStrVal(E.MANUFACTURER);
     if (manufacturer) {
       const c = manufacturer.replace(/[^\x20-\x7E]/g, '').trim();
       const m = c.match(/JK\S*/);
-      root.getElementById('sysBmsModel').textContent = m ? m[0] : c;
-    } else root.getElementById('sysBmsModel').textContent = '--';
+      if (this._els.sysBmsModel) this._els.sysBmsModel.textContent = m ? m[0] : c;
+    } else if (this._els.sysBmsModel) this._els.sysBmsModel.textContent = '--';
 
     const mosfetTemp = snap.mosfetTemp;
     if (mosfetTemp != null) {
-      const el = root.getElementById('battMosfetTemp');
+      const el = this._els.battMosfetTemp;
       const old = parseFloat(el.textContent) || 0;
       this._animateValue(el, old, mosfetTemp, 600, v => v.toFixed(1) + ' \u00B0C');
-    } else root.getElementById('battMosfetTemp').textContent = '--';
+    } else if (this._els.battMosfetTemp) this._els.battMosfetTemp.textContent = '--';
 
     // Dynamic battery specs
     const strings = snap.strings;
     if (strings > 0) {
       this._bridge.battSpec.strings = strings;
       this._bridge.battSpec.nomV = strings * this._bridge.battSpec.voltsPerCell;
-      root.getElementById('sysConfig').textContent = strings + 'S';
-      const nomEl = root.getElementById('sysNominal');
+      if (this._els.sysConfig) this._els.sysConfig.textContent = strings + 'S';
+      const nomEl = this._els.sysNominal;
       const oldNom = parseFloat(nomEl.textContent) || 0;
       this._animateValue(nomEl, oldNom, this._bridge.battSpec.nomV, 600, v => v.toFixed(1) + ' V');
     }
 
     if (remaining > 0 && soc > 10) {
       this._bridge.battSpec.fullAh = Math.round(remaining / (soc / 100));
-      const capEl = root.getElementById('sysCapacity');
+      const capEl = this._els.sysCapacity;
       const oldCap = parseFloat(capEl.textContent) || 0;
       this._animateValue(capEl, oldCap, this._bridge.battSpec.fullAh, 600, v => Math.round(v) + ' Ah');
     }
 
     // Update chemistry display
-    const chemEl = root.getElementById('sysChemistry');
+    const chemEl = this._els.sysChemistry;
     if (chemEl) chemEl.textContent = this._bridge.battSpec.chemistry;
   }
 
@@ -1066,7 +1078,8 @@ class SolarDashboard extends HTMLElement {
   }
 
   _setIconGlow(id, cls, watts) {
-    const el = this.shadowRoot.getElementById(id);
+    // P4: Lazy-cache dynamic icon refs (iconSolar, iconGrid, iconHome)
+    const el = this._els[id] || (this._els[id] = this.shadowRoot.getElementById(id));
     if (!el) return;
     const newClass = 'flow-icon ' + cls;
     if (el.className !== newClass) el.className = newClass;
@@ -1308,6 +1321,10 @@ class SolarDashboard extends HTMLElement {
   // ============ WEATHER UPDATE ============
   _discoverWeatherEntity() {
     if (!this._bridge._hass) return null;
+    // NI15: Reuse cached entity if still available — avoids scanning all hass.states every 5 min
+    if (this._weatherEntityId && this._bridge._hass.states[this._weatherEntityId]) {
+      return this._weatherEntityId;
+    }
     const states = this._bridge._hass.states;
     const now = Date.now();
     const STALE_MS = 30 * 60 * 1000; // 30 minutes
@@ -1381,7 +1398,7 @@ class SolarDashboard extends HTMLElement {
     }
 
     // Update weather source indicator — dynamic, works with any integration
-    const sourceEl = root.getElementById('wxSource');
+    const sourceEl = this._els.wxSource;
     if (sourceEl) {
       const att = attrs.attribution || '';
       const friendly = attrs.friendly_name || '';
@@ -1426,7 +1443,7 @@ class SolarDashboard extends HTMLElement {
   }
 
   _applyWeatherBackdrop(condition, windSpeed = 0, cloudCoverage = null, windBearing = 180) {
-    const rootEl = this.shadowRoot.querySelector('.dashboard-root');
+    const rootEl = this._els.dashRoot;
     if (!rootEl) return;
     if (condition !== undefined) {
       this._lastWeatherCondition = condition;
@@ -1518,7 +1535,7 @@ class SolarDashboard extends HTMLElement {
         this._meshRafId = null;
         return;
       }
-      const root = this.shadowRoot && this.shadowRoot.querySelector('.dashboard-root');
+      const root = this._els.dashRoot;
       if (root && this._meshCur[0]) {
         const L = 0.004;
         let converged = true;
@@ -1879,6 +1896,10 @@ class SolarDashboard extends HTMLElement {
   async _loadChartRange(range) {
     this._activeChartRange = range;
     if (!this._charts) return;
+    // P22: Debounce to prevent API spam from rapid tab clicks / visibility resume
+    const now = Date.now();
+    if (this._chartFetchDebounce[range] && now - this._chartFetchDebounce[range] < 2000) return;
+    this._chartFetchDebounce[range] = now;
     const root = this.shadowRoot;
     const E = this._bridge.E;
     // Guard: wait for entity discovery to complete

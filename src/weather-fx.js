@@ -150,13 +150,13 @@ export class WeatherFX {
     const ox = -minX + pad;   // origin offset within offscreen canvas
     const oy = -minY + pad;
 
-    const poolKey = `${Math.max(offW, 1)}x${Math.max(offH, 1)}`;
-    const off = _cloudCanvasPool.get(poolKey) || (() => {
+    // C6: Per-cloud offscreen canvas — eliminates pool collision where same-dimension clouds share lobe shapes
+    if (!p.off || p.off.width !== Math.max(offW, 1) || p.off.height !== Math.max(offH, 1)) {
       const el = document.createElement('canvas');
       el.width = Math.max(offW, 1); el.height = Math.max(offH, 1);
-      return el;
-    })();
-    _cloudCanvasPool.set(poolKey, off);
+      p.off = el;
+    }
+    const off = p.off;
     const octx = off.getContext('2d');
 
     // Sort lobes bottom → top so top lobes are painted last (on top)

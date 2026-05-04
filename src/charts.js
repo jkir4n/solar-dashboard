@@ -13,6 +13,7 @@ export class ChartManager {
     this._crosshairHandlers = new Map(); // canvas -> { handlers } for cleanup
     this._lastUpdate = 0;
     this._throttleMs = 5000;
+    this._hoverRafId = null; // NI8: expose hover RAF for cancellation in detachAll
     this._themeRoot = null;
     this._cachedGrid = 'rgba(255,255,255,0.06)';
     this._cachedText = 'rgba(255,255,255,0.35)';
@@ -344,11 +345,10 @@ export class ChartManager {
 
     const onMouseEnter = () => { this._canvasRect = canvas.getBoundingClientRect(); };
 
-    let _hoverRafId = null;
     const onMouseMove = (e) => {
       const clientX = e.clientX;
-      if (_hoverRafId) return;
-      _hoverRafId = requestAnimationFrame(() => { _hoverRafId = null; handleMove(clientX); });
+      if (this._hoverRafId) return;
+      this._hoverRafId = requestAnimationFrame(() => { this._hoverRafId = null; handleMove(clientX); });
     };
     const onTouchStart = (e) => { e.preventDefault(); handleMove(e.touches[0].clientX); };
     const onTouchMove = (e) => { e.preventDefault(); handleMove(e.touches[0].clientX); };
@@ -364,6 +364,18 @@ export class ChartManager {
   }
 
   detachAll() {
+    // NI8: Cancel pending chart animations
+    for (const canvasId of Object.keys(this._chartAnimIds)) {
+      if (this._chartAnimIds[canvasId]) {
+        cancelAnimationFrame(this._chartAnimIds[canvasId]);
+        this._chartAnimIds[canvasId] = null;
+      }
+    }
+    // NI8: Cancel hover RAF
+    if (this._hoverRafId) {
+      cancelAnimationFrame(this._hoverRafId);
+      this._hoverRafId = null;
+    }
     this._crosshairHandlers.forEach((handlers, canvas) => {
       if (handlers.onMouseEnter) canvas.removeEventListener('mouseenter', handlers.onMouseEnter);
       canvas.removeEventListener('mousemove', handlers.onMouseMove);
