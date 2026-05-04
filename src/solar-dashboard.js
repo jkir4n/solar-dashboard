@@ -1628,8 +1628,30 @@ class SolarDashboard extends HTMLElement {
     if (!this._solarEngineReady || !this._engine) return;
     const root = this.shadowRoot;
     const now = new Date();
+    const sunPos = this._engine.getPosition(now);
+    const isDay = sunPos.elevation > 0;
+
+    // Night: skip expensive solar math, animate to 0
+    if (!isDay) {
+      this._wasDay = false;
+      this._cachedForecastKWh = 0;
+      this._lastForecastHour = -1;
+      const solOutput = root.getElementById('solOutput');
+      if (solOutput) {
+        this._animateValue(solOutput, parseFloat(solOutput.textContent) || 0, 0, 600, v => Math.round(v) + ' W');
+      }
+      const solForecast = root.getElementById('solForecast');
+      if (solForecast) {
+        this._animateValue(solForecast, parseFloat(solForecast.textContent) || 0, 0, 600, v => v.toFixed(1) + ' kWh');
+      }
+      return;
+    }
+
+    // Day: full solar math pipeline
+    if (!this._wasDay) this._lastForecastHour = -1; // reset on sunrise
+    this._wasDay = true;
     const panelConfig = this._getPanelConfig();
-    const deg = this._engine.getDegradationInfo(now, panelConfig);
+    this._engine.getDegradationInfo(now, panelConfig);
     const result = this._engine.calcSolarOutput(now, panelConfig, (1 - this._weatherCloudFactor) * 100, this._weatherAmbientC);
 
     const solOutput = root.getElementById('solOutput');
@@ -1637,15 +1659,8 @@ class SolarDashboard extends HTMLElement {
       this._animateValue(solOutput, parseFloat(solOutput.textContent) || 0, result.watts, 600, v => Math.round(v) + ' W');
     }
 
-    const sunPos = this._engine.getPosition(now);
     const currentHour = now.getHours();
-    const isDay = sunPos.elevation > 0;
-    if (isDay && !this._wasDay) this._lastForecastHour = -1; // reset on sunrise
-    this._wasDay = isDay;
-    if (!isDay) {
-      this._cachedForecastKWh = 0;
-      this._lastForecastHour = -1; // force recalc at next sunrise
-    } else if (currentHour !== this._lastForecastHour) {
+    if (currentHour !== this._lastForecastHour) {
       this._lastForecastHour = currentHour;
       this._cachedForecastKWh = this._engine.calcDailyForecast(now, panelConfig, (1 - this._weatherCloudFactor) * 100, this._weatherAmbientC);
     }
