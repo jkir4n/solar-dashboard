@@ -230,6 +230,10 @@ export class WeatherFX {
     this._moonElevation  = moonElevation;
     this._moonAzimuth    = moonAzimuth;
     this._moonBrightness = moonBrightness;
+    // 24/7: restart rAF loop if it stopped (sun/moon may have risen)
+    if (!this._animFrameId && this._shouldKeepRendering()) {
+      this._startRenderLoop();
+    }
   }
 
   updateNightSky(planets, galCenterAz, galCenterEl, issPos) {
@@ -237,6 +241,10 @@ export class WeatherFX {
     this._galCenterAz = galCenterAz;
     this._galCenterEl = galCenterEl;
     this._issPos     = issPos;
+    // 24/7: restart rAF loop if it stopped (ISS may have become visible)
+    if (!this._animFrameId && this._shouldKeepRendering()) {
+      this._startRenderLoop();
+    }
   }
 
   start(weatherCondition, isNight, theme = 'dark', windSpeed = 0, moonBrightness = 0, moonElevation = -90, moonAzimuth = 180, sunElevation = -90, sunAzimuth = 180, cloudCoverage = null, windBearing = 180) {
@@ -395,9 +403,30 @@ export class WeatherFX {
           if (state.ctx) state.ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
       }
-      state._animFrameId = requestAnimationFrame(loop);
+      // 24/7: dirty-flag — stop rAF when nothing is animating
+      if (state._shouldKeepRendering()) {
+        state._animFrameId = requestAnimationFrame(loop);
+      } else {
+        state._animFrameId = null;
+      }
     };
     state._animFrameId = requestAnimationFrame(loop);
+  }
+
+  /** 24/7: Check if there's anything worth rendering this frame. */
+  _shouldKeepRendering() {
+    // Particles active → keep rendering
+    if (this._currentType && this._particles.length > 0) return true;
+    // Overlay active → keep rendering
+    if (this._overlayType && this._overlayAlphaCur > 0.005) return true;
+    // Sun above horizon → keep rendering
+    if (this._sunElevCur > -2) return true;
+    // Moon above horizon → keep rendering
+    if (this._moonElevCur > 0) return true;
+    // ISS tracking → keep rendering
+    if (this._issPos && this._issElevCur > 0) return true;
+    // Nothing to render — stop rAF until state changes
+    return false;
   }
 
   _startParticles(type) {
