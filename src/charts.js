@@ -184,6 +184,11 @@ export class ChartManager {
 
     if (!animate) {
       drawFrame(1);
+      // 24/7: evict stale snapshot if dimensions changed (old ImageData is unusable)
+      const old = this._snapshots[canvasId];
+      if (old && (old.width !== canvas.width || old.height !== canvas.height)) {
+        delete this._snapshots[canvasId];
+      }
       this._snapshots[canvasId] = ctx.getImageData(0, 0, canvas.width, canvas.height);
       return;
     }
@@ -198,6 +203,10 @@ export class ChartManager {
       if (t < 1) this._chartAnimIds[canvasId] = requestAnimationFrame(tick);
       else {
         this._chartAnimIds[canvasId] = null;
+        const old = this._snapshots[canvasId];
+        if (old && (old.width !== canvas.width || old.height !== canvas.height)) {
+          delete this._snapshots[canvasId];
+        }
         this._snapshots[canvasId] = ctx.getImageData(0, 0, canvas.width, canvas.height);
       }
     };
