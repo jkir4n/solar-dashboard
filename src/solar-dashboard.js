@@ -1049,24 +1049,24 @@ class SolarDashboard extends HTMLElement {
       this._intervals.push(setInterval(() => this._startClock(), 1000));
 
       // Start calcTodayInOut
-      this._calcTodayInOut();
-      this._intervals.push(setInterval(() => this._calcTodayInOut(), 300000));
+      this._calcTodayInOut().catch(() => {});
+      this._intervals.push(setInterval(() => this._calcTodayInOut().catch(() => {}), 300000));
 
       // Start solar estimate update
       this._updateSolarEstimate();
       this._intervals.push(setInterval(() => this._updateSolarEstimate(), 300000));
       this._intervals.push(setInterval(() => this._updateWeather(), 300000));
       this._intervals.push(setInterval(() => this._updateSunMoonPosition(), 10000));
-      this._intervals.push(setInterval(() => this._fetchISSPosition(), 10000));
-      this._fetchISSPosition();
+      this._intervals.push(setInterval(() => this._fetchISSPosition().catch(() => {}), 10000));
+      this._fetchISSPosition().catch(() => {});
 
       // Start solar degradation UI (hourly)
       this._updateSolarUI();
       this._intervals.push(setInterval(() => this._updateSolarUI(), 3600000));
 
       // Cycle rate (7-day rolling) — fetch once on load, refresh hourly
-      this._updateCycleRate();
-      this._intervals.push(setInterval(() => this._updateCycleRate(), 3600000));
+      this._updateCycleRate().catch(() => {});
+      this._intervals.push(setInterval(() => this._updateCycleRate().catch(() => {}), 3600000));
 
 
       // Resize handler
@@ -1092,14 +1092,14 @@ class SolarDashboard extends HTMLElement {
         } else {
           // Restart all intervals
           this._intervals.push(setInterval(() => this._startClock(), 1000));
-          this._intervals.push(setInterval(() => this._calcTodayInOut(), 300000));
+          this._intervals.push(setInterval(() => this._calcTodayInOut().catch(() => {}), 300000));
           this._intervals.push(setInterval(() => this._updateSolarEstimate(), 300000));
           this._intervals.push(setInterval(() => this._updateWeather(), 300000));
           this._intervals.push(setInterval(() => this._updateSunMoonPosition(), 10000));
-          this._intervals.push(setInterval(() => this._fetchISSPosition(), 10000));
-          this._fetchISSPosition();
+          this._intervals.push(setInterval(() => this._fetchISSPosition().catch(() => {}), 10000));
+          this._fetchISSPosition().catch(() => {});
           this._intervals.push(setInterval(() => this._updateSolarUI(), 3600000));
-          this._intervals.push(setInterval(() => this._updateCycleRate(), 3600000));
+          this._intervals.push(setInterval(() => this._updateCycleRate().catch(() => {}), 3600000));
           this._startMeshLerp();
           this._startBattArcs();
           this._refreshAllUI();
@@ -2706,7 +2706,7 @@ class SolarDashboard extends HTMLElement {
     };
     this._updateBattery(snap);
     this._updatePowerFlow(snap);
-    this._calcTodayInOut();
+    this._calcTodayInOut().catch(() => {});
     this._updateCellBalance();
     this._updateWeather();
     this._updateSolarEstimate();
