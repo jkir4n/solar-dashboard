@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.34.0 (2026-05-04)
+
+### Features
+- Add localization support for dynamic UI labels via hass.language (I12)
+
+
 ## v0.33.0 (2026-05-04)
 
 ### Features
