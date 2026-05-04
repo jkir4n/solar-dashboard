@@ -1131,6 +1131,41 @@ class SolarDashboard extends HTMLElement {
       };
       document.addEventListener('visibilitychange', this._visibilityHandler);
 
+      // 24/7: Page Lifecycle API — freeze/resume (Chrome 134+)
+      this._freezeHandler = () => {
+        // Browser is freezing the tab — stop everything to avoid stale state on thaw
+        this._intervals.forEach(id => clearInterval(id));
+        this._intervals = [];
+        if (this._flowPS1) this._flowPS1.stop();
+        if (this._flowPS2) this._flowPS2.stop();
+        this._stopBattArcs();
+        this._cancelAllAnimations();
+        if (this._weatherFx) this._weatherFx.stop();
+        if (this._meshRafId) { cancelAnimationFrame(this._meshRafId); this._meshRafId = null; }
+        if (this._connCheckInterval) { clearInterval(this._connCheckInterval); this._connCheckInterval = null; }
+        if (this._issScheduleId) { clearTimeout(this._issScheduleId); this._issScheduleId = null; }
+        if (this._initRetryId) { clearTimeout(this._initRetryId); this._initRetryId = null; }
+      };
+      this._resumeHandler = () => {
+        // Browser thawed — force full recovery
+        this._lastHassUpdate = Date.now(); // reset connection check
+        this._refreshAllUI();
+        this._intervals.push(setInterval(() => this._startClock(), 1000));
+        this._intervals.push(setInterval(() => this._calcTodayInOut().catch(() => {}), 300000));
+        this._intervals.push(setInterval(() => this._updateSolarEstimate(), 300000));
+        this._intervals.push(setInterval(() => this._updateWeather(), 300000));
+        this._intervals.push(setInterval(() => this._updateSunMoonPosition(), 10000));
+        this._scheduleISSFetch();
+        this._intervals.push(setInterval(() => this._updateSolarUI(), 3600000));
+        this._intervals.push(setInterval(() => this._updateCycleRate().catch(() => {}), 3600000));
+        this._intervals.push(setInterval(() => this._bridge.verifyEntities(), 300000));
+        this._connCheckInterval = setInterval(() => this._checkConnection(), 30000);
+        this._startMeshLerp();
+        this._startBattArcs();
+      };
+      document.addEventListener('freeze', this._freezeHandler);
+      document.addEventListener('resume', this._resumeHandler);
+
       // Start mesh gradient lerp loop
       this._startMeshLerp();
 
@@ -1178,6 +1213,8 @@ class SolarDashboard extends HTMLElement {
     if (this._charts) this._charts.detachAll();
     if (this._resizeHandler) window.removeEventListener('resize', this._resizeHandler);
     if (this._visibilityHandler) document.removeEventListener('visibilitychange', this._visibilityHandler);
+    if (this._freezeHandler) document.removeEventListener('freeze', this._freezeHandler);
+    if (this._resumeHandler) document.removeEventListener('resume', this._resumeHandler);
     if (this._mediaQuery && this._themeHandler) this._mediaQuery.removeEventListener('change', this._themeHandler);
     this._stopBattArcs();
     this._cancelAllAnimations();
