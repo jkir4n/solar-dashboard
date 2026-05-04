@@ -117,7 +117,7 @@ export class WeatherFX {
 
   /** Recompute cached wind derived values after _windSpeed or _windBearing change. */
   _updateWindCache() {
-    this._windFactor = Math.min((this._windSpeed || 0) / 54, 1.0);
+    this._windFactor = Math.max(0, Math.min((this._windSpeed || 0) / 54, 1.0));
     const bearing = Number.isFinite(this._windBearing) ? this._windBearing : 180;
     const downwindRad = ((bearing + 180) % 360) * Math.PI / 180;
     this._windDx       =  Math.sin(downwindRad); // +1 = right
