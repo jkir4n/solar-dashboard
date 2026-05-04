@@ -1926,18 +1926,34 @@ class SolarDashboard extends HTMLElement {
       soc: root.getElementById('chartSOC'),
       solar: root.getElementById('chartSolar'),
     };
-    const entityIds = {
-      power: E.DISCHG_POWER || E.POWER,
-      soc: E.SOC,
-      _signed: !E.DISCHG_POWER,
-    };
-    const solarEntityIds = { power: E.CHG_POWER || E.POWER, _signed: !E.CHG_POWER };
+    const batteryPowerEntity = E.DISCHG_POWER || E.POWER;
+    const solarPowerEntity = E.CHG_POWER || E.POWER;
+    const samePowerEntity = batteryPowerEntity === solarPowerEntity;
+
     let result, solarResult;
     try {
-      [result, solarResult] = await Promise.all([
-        this._charts.loadRange(range, canvases, entityIds, this._bridge.timezone),
-        this._charts.loadRange(range, { solar: canvases.solar }, solarEntityIds, this._bridge.timezone),
-      ]);
+      if (samePowerEntity) {
+        // NI3: Both charts use the same entity — fetch once, loadRange splits signed data
+        // (battery chart takes negative=discharge, solar chart takes positive=charge)
+        result = await this._charts.loadRange(range, canvases, {
+          power: batteryPowerEntity,
+          soc: E.SOC,
+          _signed: !E.DISCHG_POWER,
+        }, this._bridge.timezone);
+        solarResult = { powerData: result.powerData, timeXLabel: result.timeXLabel };
+      } else {
+        [result, solarResult] = await Promise.all([
+          this._charts.loadRange(range, canvases, {
+            power: batteryPowerEntity,
+            soc: E.SOC,
+            _signed: !E.DISCHG_POWER,
+          }, this._bridge.timezone),
+          this._charts.loadRange(range, { solar: canvases.solar }, {
+            power: solarPowerEntity,
+            _signed: !E.CHG_POWER,
+          }, this._bridge.timezone),
+        ]);
+      }
     } catch (e) {
       console.warn('[Solar] Chart data load failed:', e);
       return;
