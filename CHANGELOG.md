@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.31.7 (2026-05-04)
+
+### Bug Fixes
+- Add canvas context loss/restore handling (C5)
+
+
 ## v0.31.6 (2026-05-04)
 
 ### Bug Fixes
