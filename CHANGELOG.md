@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.31.3 (2026-05-04)
+
+### Bug Fixes
+- Clamp windFactor lower bound to prevent negative wind reversing particles (C3)
+
+
 ## v0.31.2 (2026-05-04)
 
 ### Bug Fixes
