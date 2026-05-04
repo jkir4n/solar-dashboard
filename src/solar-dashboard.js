@@ -1963,6 +1963,7 @@ class SolarDashboard extends HTMLElement {
     this._chartFetchDebounce[range] = now;
     const root = this.shadowRoot;
     const E = this._bridge.E;
+    const lang = this._bridge._hass?.language || 'en';
     // Guard: wait for entity discovery to complete
     if (!E || !E.POWER || !E.SOC) {
       return;
