@@ -918,18 +918,22 @@ class SolarDashboard extends HTMLElement {
     if (!this._updateRafId) {
       this._updateRafId = requestAnimationFrame(() => {
         this._updateRafId = null;
-        const pending = [...this._pendingChanges];
-        this._pendingChanges.clear();
-        if (pending.length === 0) return;
-        this._updateUI(pending);
-        if (this._activeChartRange === 'Live' && this._chartsLoaded) {
-          const E = this._bridge.E;
-          const liveEntities = new Set([E.POWER, E.CHG_POWER, E.DISCHG_POWER, E.SOC].filter(Boolean));
-          const relevant = pending.some(id => liveEntities.has(id));
-          if (relevant && Date.now() - this._lastLiveChartFetch > 60000) {
-            this._lastLiveChartFetch = Date.now();
-            this._loadChartRange('Live').catch(() => {});
+        try {
+          const pending = [...this._pendingChanges];
+          this._pendingChanges.clear();
+          if (pending.length === 0) return;
+          this._updateUI(pending);
+          if (this._activeChartRange === 'Live' && this._chartsLoaded) {
+            const E = this._bridge.E;
+            const liveEntities = new Set([E.POWER, E.CHG_POWER, E.DISCHG_POWER, E.SOC].filter(Boolean));
+            const relevant = pending.some(id => liveEntities.has(id));
+            if (relevant && Date.now() - this._lastLiveChartFetch > 60000) {
+              this._lastLiveChartFetch = Date.now();
+              this._loadChartRange('Live').catch(() => {});
+            }
           }
+        } catch (err) {
+          console.error('[Solar] Update pipeline error:', err);
         }
       });
     }
