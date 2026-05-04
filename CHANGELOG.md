@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.31.16 (2026-05-04)
+
+### Bug Fixes
+- Change console.log to console.debug for helper creation messages (NI7)
+
+
 ## v0.31.15 (2026-05-04)
 
 ### Bug Fixes
