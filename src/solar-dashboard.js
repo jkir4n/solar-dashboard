@@ -491,7 +491,6 @@ class SolarDashboard extends HTMLElement {
         this._intervals.push(setInterval(() => this._updateCycleRate(), 3600000));
         this._startMeshLerp();
         this._startBattArcs();
-        this._updateWeather();
         this._refreshAllUI();
       }
     };
