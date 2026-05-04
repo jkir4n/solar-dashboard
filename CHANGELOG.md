@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.31.22 (2026-05-04)
+
+### Bug Fixes
+- Use lerped _moonBrightCur for star overlay dimming instead of raw _moonBrightness (NI18)
+
+
 ## v0.31.21 (2026-05-04)
 
 ### Bug Fixes
