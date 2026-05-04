@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.37.13 (2026-05-04)
+
+### Bug Fixes
+- Add freeze/resume Page Lifecycle API handlers
+
+
 ## v0.37.12 (2026-05-04)
 
 ### Bug Fixes
