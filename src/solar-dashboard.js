@@ -1729,6 +1729,11 @@ class SolarDashboard extends HTMLElement {
     const validVoltages = voltages.filter(v => v != null);
     if (validVoltages.length === 0) return;
 
+    // P15: Skip if voltages haven't changed (cell voltages drift slowly, most updates are identical)
+    const key = voltages.join(',');
+    if (key === this._lastCellVoltagesKey) return;
+    this._lastCellVoltagesKey = key;
+
     const globalMaxI = voltages.indexOf(Math.max(...validVoltages));
     const globalMinI = voltages.indexOf(Math.min(...validVoltages));
     const pack1 = voltages.slice(0, 8).filter(v => v != null);
