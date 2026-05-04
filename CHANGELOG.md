@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.37.5 (2026-05-04)
+
+### Bug Fixes
+- Add .catch() guards to toggle callService calls
+
+
 ## v0.37.4 (2026-05-04)
 
 ### Bug Fixes
