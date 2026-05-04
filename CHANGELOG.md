@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.31.15 (2026-05-04)
+
+### Bug Fixes
+- Remove redundant _updateWeather() call on visibility resume (NI16)
+
+
 ## v0.31.14 (2026-05-04)
 
 ### Bug Fixes
