@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.31.14 (2026-05-04)
+
+### Bug Fixes
+- Remove unused _cloudCanvasPool Map (NI13)
+
+
 ## v0.31.13 (2026-05-04)
 
 ### Bug Fixes
