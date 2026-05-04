@@ -502,7 +502,7 @@ export class ChartManager {
           minY: 0, xLabel: timeXLabel(powerData), yFormat: v => Math.round(v) + ' W'
         }, true);
       } else {
-        this.showPlaceholder(canvases.power, 'No data available');
+        this.showPlaceholder(canvases.power, powerData === null ? 'Fetch error' : 'No data available');
       }
     }
 
@@ -514,7 +514,7 @@ export class ChartManager {
           minY: 0, maxY: 100, yFormat: v => Math.round(v) + '%', xLabel: timeXLabel(socData)
         }, true);
       } else {
-        this.showPlaceholder(canvases.soc, 'No data available');
+        this.showPlaceholder(canvases.soc, socData === null ? 'Fetch error' : 'No data available');
       }
     }
 
@@ -526,7 +526,7 @@ export class ChartManager {
           minY: 0, xLabel: timeXLabel(powerData), yFormat: v => Math.round(v) + ' W'
         }, true);
       } else {
-        this.showPlaceholder(canvases.solar, 'No data available');
+        this.showPlaceholder(canvases.solar, powerData === null ? 'Fetch error' : 'No data available');
       }
     }
 
