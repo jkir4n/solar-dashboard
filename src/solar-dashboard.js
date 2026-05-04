@@ -888,6 +888,11 @@ class SolarDashboard extends HTMLElement {
     this._connCheckInterval = null;
     this._lastHassUpdate = 0;
     this._connLost = false;
+    // 24/7 reliability: ISS API exponential backoff
+    this._issBackoffMs = 10000;
+    this._issBackoffMax = 300000; // 5 min cap
+    this._issFailCount = 0;
+    this._issScheduleId = null;
   }
 
   set hass(hass) {
@@ -1067,8 +1072,8 @@ class SolarDashboard extends HTMLElement {
       this._intervals.push(setInterval(() => this._updateSolarEstimate(), 300000));
       this._intervals.push(setInterval(() => this._updateWeather(), 300000));
       this._intervals.push(setInterval(() => this._updateSunMoonPosition(), 10000));
-      this._intervals.push(setInterval(() => this._fetchISSPosition().catch(() => {}), 10000));
-      this._fetchISSPosition().catch(() => {});
+      // 24/7: ISS fetch uses self-scheduling with exponential backoff (not fixed interval)
+      this._scheduleISSFetch();
 
       // Start solar degradation UI (hourly)
       this._updateSolarUI();
@@ -1107,8 +1112,8 @@ class SolarDashboard extends HTMLElement {
           this._intervals.push(setInterval(() => this._updateSolarEstimate(), 300000));
           this._intervals.push(setInterval(() => this._updateWeather(), 300000));
           this._intervals.push(setInterval(() => this._updateSunMoonPosition(), 10000));
-          this._intervals.push(setInterval(() => this._fetchISSPosition().catch(() => {}), 10000));
-          this._fetchISSPosition().catch(() => {});
+          // 24/7: restart ISS self-scheduling with backoff
+          this._scheduleISSFetch();
           this._intervals.push(setInterval(() => this._updateSolarUI(), 3600000));
           this._intervals.push(setInterval(() => this._updateCycleRate().catch(() => {}), 3600000));
           // 24/7: restart connection health check
@@ -1164,6 +1169,7 @@ class SolarDashboard extends HTMLElement {
     if (this._meshRafId) { cancelAnimationFrame(this._meshRafId); this._meshRafId = null; }
     if (this._updateRafId) { cancelAnimationFrame(this._updateRafId); this._updateRafId = null; }
     if (this._connCheckInterval) { clearInterval(this._connCheckInterval); this._connCheckInterval = null; }
+    if (this._issScheduleId) { clearTimeout(this._issScheduleId); this._issScheduleId = null; }
     this._cardsRevealed = false;
   }
 
@@ -2289,18 +2295,26 @@ class SolarDashboard extends HTMLElement {
     this._weatherFx.updateNightSky(planets, gc.azimuth, gc.elevation, this._issPos);
   }
 
+  // 24/7: Self-scheduling ISS fetch with exponential backoff
+  _scheduleISSFetch() {
+    if (this._issScheduleId) clearTimeout(this._issScheduleId);
+    this._issScheduleId = setTimeout(() => {
+      this._fetchISSPosition().catch(() => {});
+    }, this._issBackoffMs);
+  }
+
   async _fetchISSPosition() {
-    if (this._bridge.latitude == null) return;
+    if (this._bridge.latitude == null) { this._resetISSBackoff(); return; }
     try {
       const ctl = new AbortController();
       const tid = setTimeout(() => ctl.abort(), 8000);
       const resp = await fetch('https://api.wheretheiss.at/v1/satellites/25544', { signal: ctl.signal });
       clearTimeout(tid);
-      if (!resp.ok) return;
+      if (!resp.ok) { this._failISSBackoff(); return; }
       const data = await resp.json();
       const { latitude: iLat, longitude: iLon, altitude: iAlt, visibility } = data;
       // Only show when ISS is in sunlight and observer is in darkness
-      if (visibility !== 'visible') { this._issPos = null; return; }
+      if (visibility !== 'visible') { this._issPos = null; this._resetISSBackoff(); return; }
       // ECEF → ENU elevation/azimuth
       const toR = d => d * Math.PI / 180;
       const toD = r => r * 180 / Math.PI;
@@ -2323,9 +2337,23 @@ class SolarDashboard extends HTMLElement {
       const elev = toD(Math.atan2(U, Math.sqrt(E*E + N*N)));
       const az   = (toD(Math.atan2(E, N)) + 360) % 360;
       this._issPos = elev > 5 ? { elevation: elev, azimuth: az } : null;
+      this._resetISSBackoff();
     } catch (_) {
       this._issPos = null;
+      this._failISSBackoff();
     }
+  }
+
+  _resetISSBackoff() {
+    this._issFailCount = 0;
+    this._issBackoffMs = 10000;
+    this._scheduleISSFetch();
+  }
+
+  _failISSBackoff() {
+    this._issFailCount++;
+    this._issBackoffMs = Math.min(this._issBackoffMs * 2, this._issBackoffMax);
+    this._scheduleISSFetch();
   }
 
   _updateSolarEstimate() {
