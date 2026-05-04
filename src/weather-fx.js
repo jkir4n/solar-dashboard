@@ -426,9 +426,14 @@ export class WeatherFX {
       const loop = (ts) => {
         if (ts - state._lastFrame >= 16) {
           state._lastFrame = ts;
-          if (state._currentType) {
-            state._render(ts);
-          } else {
+          try {
+            if (state._currentType) {
+              state._render(ts);
+            } else {
+              state.ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+          } catch (e) {
+            console.error('[WeatherFX] render error:', e);
             state.ctx.clearRect(0, 0, canvas.width, canvas.height);
           }
         }
