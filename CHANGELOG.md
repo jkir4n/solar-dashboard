@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.37.14 (2026-05-04)
+
+### Bug Fixes
+- Evict stale chart ImageData snapshots when canvas dimensions change
+
+
 ## v0.37.13 (2026-05-04)
 
 ### Bug Fixes
