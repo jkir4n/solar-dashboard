@@ -331,6 +331,7 @@ export class WeatherFX {
     this._particlesByType = {};
     this._alpha = 1;
     this._fading = false;
+    this._newParticlesCreated = false;
     this._overlayParticles = [];
     this._overlayParticlesByType = {};
     this._overlayType = null;
