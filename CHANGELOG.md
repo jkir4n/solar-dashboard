@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.37.9 (2026-05-04)
+
+### Bug Fixes
+- ISS API exponential backoff with circuit breaker
+
+
 ## v0.37.8 (2026-05-04)
 
 ### Bug Fixes
