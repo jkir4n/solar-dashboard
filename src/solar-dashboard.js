@@ -1995,10 +1995,10 @@ class SolarDashboard extends HTMLElement {
       const ambientC = isLive ? this._weatherAmbientC : null;
       let overlayPts, overlayLabel;
       if (is30D) {
-        // 30D: show 7-day rolling average of actual as trend line
+        // 30D: show 7-day rolling average of actual as trend line (filter nighttime zeros)
         overlayPts = actualPts.map((_, i) => {
-          const window = actualPts.slice(Math.max(0, i - 6), i + 1);
-          return window.reduce((a, b) => a + b, 0) / window.length;
+          const window = actualPts.slice(Math.max(0, i - 6), i + 1).filter(v => v > 0);
+          return window.length > 0 ? window.reduce((a, b) => a + b, 0) / window.length : 0;
         });
         overlayLabel = '7d avg';
       } else {
