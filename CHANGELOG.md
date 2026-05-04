@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.31.12 (2026-05-04)
+
+### Bug Fixes
+- Show error placeholder on chart canvases when fetch fails (NI9)
+
+
 ## v0.31.11 (2026-05-04)
 
 ### Bug Fixes
