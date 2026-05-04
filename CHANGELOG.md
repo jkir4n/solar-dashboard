@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.31.18 (2026-05-04)
+
+### Bug Fixes
+- Show distinct 'Fetch error' vs 'No data available' on chart canvases (NI10)
+
+
 ## v0.31.17 (2026-05-04)
 
 ### Bug Fixes
