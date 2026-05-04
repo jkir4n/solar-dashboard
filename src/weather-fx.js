@@ -72,6 +72,29 @@ export class WeatherFX {
     this._fading = false;
     this._nextType = null;
     this._lastFrame = 0;
+    // C5: Canvas context loss handling
+    this._contextLost = false;
+    this._contextLostHandler = () => {
+      this._contextLost = true;
+      if (this._animFrameId) {
+        cancelAnimationFrame(this._animFrameId);
+        this._animFrameId = null;
+      }
+    };
+    this._contextRestoredHandler = () => {
+      this._contextLost = false;
+      this.ctx = this.canvas.getContext('2d');
+      // Restart particle system with last known state
+      if (this._currentType) {
+        this._particles = this._createParticles(this._currentType, this.canvas);
+        this._particlesByType = this._bucketize(this._particles);
+        this._startRenderLoop();
+      }
+    };
+    canvas.addEventListener('webglcontextlost', this._contextLostHandler);
+    canvas.addEventListener('contextlost', this._contextLostHandler);
+    canvas.addEventListener('webglcontextrestored', this._contextRestoredHandler);
+    canvas.addEventListener('contextrestored', this._contextRestoredHandler);
     // Ambient overlay — stars/aurora at night, sun rays/glow by day
     this._overlayParticles = [];
     this._overlayType = null;
@@ -342,11 +365,43 @@ export class WeatherFX {
   /** Full cleanup — call from disconnectedCallback. */
   destroy() {
     this.stop();
+    // C5: Remove context loss/restore listeners
+    if (this.canvas) {
+      this.canvas.removeEventListener('webglcontextlost', this._contextLostHandler);
+      this.canvas.removeEventListener('contextlost', this._contextLostHandler);
+      this.canvas.removeEventListener('webglcontextrestored', this._contextRestoredHandler);
+      this.canvas.removeEventListener('contextrestored', this._contextRestoredHandler);
+    }
     this.canvas = null;
     this.ctx = null;
   }
 
   // ---- Private: particle lifecycle ----
+
+  /** C5: Start the rAF render loop with error recovery. */
+  _startRenderLoop() {
+    const state = this;
+    const canvas = this.canvas;
+    if (!canvas || !state.ctx) return;
+    if (state._animFrameId) return;
+    const loop = (ts) => {
+      if (ts - state._lastFrame >= 16) {
+        state._lastFrame = ts;
+        try {
+          if (state._currentType) {
+            state._render(ts);
+          } else {
+            state.ctx.clearRect(0, 0, canvas.width, canvas.height);
+          }
+        } catch (e) {
+          console.error('[WeatherFX] render error:', e);
+          state.ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+      }
+      state._animFrameId = requestAnimationFrame(loop);
+    };
+    state._animFrameId = requestAnimationFrame(loop);
+  }
 
   _startParticles(type) {
     const canvas = this.canvas;
@@ -422,25 +477,7 @@ export class WeatherFX {
     state._particlesByType = type ? state._bucketize(state._particles) : {};
     state._alpha = 1;
 
-    if (!state._animFrameId) {
-      const loop = (ts) => {
-        if (ts - state._lastFrame >= 16) {
-          state._lastFrame = ts;
-          try {
-            if (state._currentType) {
-              state._render(ts);
-            } else {
-              state.ctx.clearRect(0, 0, canvas.width, canvas.height);
-            }
-          } catch (e) {
-            console.error('[WeatherFX] render error:', e);
-            state.ctx.clearRect(0, 0, canvas.width, canvas.height);
-          }
-        }
-        state._animFrameId = requestAnimationFrame(loop);
-      };
-      state._animFrameId = requestAnimationFrame(loop);
-    }
+    this._startRenderLoop();
   }
 
   // ---- Private: particle creation (from v9 createWeatherParticles) ----
