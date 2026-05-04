@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.31.4 (2026-05-04)
+
+### Bug Fixes
+- Guard NaN moon brightness to prevent corrupted moon rendering (C9)
+
+
 ## v0.31.3 (2026-05-04)
 
 ### Bug Fixes
