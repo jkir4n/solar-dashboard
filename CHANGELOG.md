@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.35.2 (2026-05-04)
+
+### Bug Fixes
+- I12 regression - declare lang in _loadChartRange
+
+
 ## v0.35.1 (2026-05-04)
 
 ### Bug Fixes
