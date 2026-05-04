@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.37.4 (2026-05-04)
+
+### Bug Fixes
+- Clear Promise.race timeout IDs to prevent unhandled promise rejections
+
+
 ## v0.37.3 (2026-05-04)
 
 ### Bug Fixes
