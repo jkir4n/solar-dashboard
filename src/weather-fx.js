@@ -1029,8 +1029,8 @@ export class WeatherFX {
     }
 
     // ---- Night overlay (stars + aurora) ----
-    const overlayStarDim  = 1 - this._moonBrightness * 0.65;
-    const overlayAurDim   = 1 - this._moonBrightness * 0.65;
+    const overlayStarDim  = 1 - state._moonBrightCur * 0.65;
+    const overlayAurDim   = 1 - state._moonBrightCur * 0.65;
     // Aurora bands
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
