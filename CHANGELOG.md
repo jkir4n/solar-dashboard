@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.32.0 (2026-05-04)
+
+### Features
+- Filter nighttime zeros from 30D solar chart 7-day rolling average (I14)
+
+
 ## v0.31.23 (2026-05-04)
 
 ### Bug Fixes
