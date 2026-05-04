@@ -520,6 +520,7 @@ class SolarDashboard extends HTMLElement {
     this._stopBattArcs();
     this._cancelAllAnimations();
     if (this._meshRafId) { cancelAnimationFrame(this._meshRafId); this._meshRafId = null; }
+    if (this._updateRafId) { cancelAnimationFrame(this._updateRafId); this._updateRafId = null; }
     this._cardsRevealed = false;
   }
 
