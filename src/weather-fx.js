@@ -118,7 +118,8 @@ export class WeatherFX {
   /** Recompute cached wind derived values after _windSpeed or _windBearing change. */
   _updateWindCache() {
     this._windFactor = Math.min((this._windSpeed || 0) / 54, 1.0);
-    const downwindRad = ((this._windBearing + 180) % 360) * Math.PI / 180;
+    const bearing = Number.isFinite(this._windBearing) ? this._windBearing : 180;
+    const downwindRad = ((bearing + 180) % 360) * Math.PI / 180;
     this._windDx       =  Math.sin(downwindRad); // +1 = right
     this._windDy       =  Math.cos(downwindRad); // +1 = down (spawn convention, Y increases down)
     this._windDyRender = -Math.cos(downwindRad); // +1 = down (render convention, negated for canvas)
@@ -223,7 +224,7 @@ export class WeatherFX {
     this._theme = theme;
     this._isNight = isNight;
     this._windSpeed = windSpeed;
-    this._windBearing = windBearing;
+    this._windBearing = Number.isFinite(windBearing) ? windBearing : 180;
     this._updateWindCache();
     this._weatherCondition = weatherCondition;
     // Moon values update every call — position changes continuously, no particle rebuild needed

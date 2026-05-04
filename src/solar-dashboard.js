@@ -1550,7 +1550,7 @@ class SolarDashboard extends HTMLElement {
   }
 
   _updateSunMoonPosition() {
-    if (!this._weatherFx || !this._engine || !this._hass || this._bridge.latitude == null) return;
+    if (!this._weatherFx || !this._engine || !this._bridge._hass || this._bridge.latitude == null) return;
     const now = new Date();
     const sp = this._engine.getPosition(now);
     const mp = this._engine.getMoonPosition(now);
@@ -1560,7 +1560,7 @@ class SolarDashboard extends HTMLElement {
       this._applyWeatherBackdrop();
       return;
     }
-    const moonState = this._moonPhaseEntityId ? this._hass.states[this._moonPhaseEntityId] : null;
+    const moonState = this._moonPhaseEntityId ? this._bridge._hass.states[this._moonPhaseEntityId] : null;
     const moonBrightness = moonState ? (MOON_PHASE_BRIGHTNESS[moonState.state] ?? 0.5) : 0.5;
     this._weatherFx.updateSunMoon(sp.elevation, sp.azimuth, mp.elevation, mp.azimuth, moonBrightness);
     const planets = this._engine.getPlanetPositions ? this._engine.getPlanetPositions(now) : [];
