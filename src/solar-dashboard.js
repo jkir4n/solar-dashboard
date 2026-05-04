@@ -4,6 +4,20 @@ import { WeatherFX } from './weather-fx.js';
 import { ChartManager } from './charts.js';
 import { STYLES } from './styles.js';
 
+// ============ LOCALIZATION ============
+// I12: Translation map keyed by hass.language. Falls back to 'en'.
+const L = {
+  en: {
+    charging: 'Charging', discharging: 'Discharging', idle: 'Idle', balancing: 'Balancing',
+    tte: 'Time to Empty', ttf: 'Time to Full',
+    remaining: 'Remaining', cycles: 'Cycles', minCell: 'Min Cell', maxCell: 'Max Cell',
+    runtime: 'Runtime', throughput: 'Throughput', mosfet: 'MOSFET', firmware: 'Firmware',
+    sevenDAvg: '7d avg', west: 'W est', estimated: 'Estimated',
+    mVBalancing: 'mV \u2014 Balancing', mV: 'mV',
+  },
+};
+function t(lang, key) { return (L[lang] || L.en)[key] || L.en[key] || key; }
+
 // ============ CONSTANTS ============
 
 const MOON_PHASE_BRIGHTNESS = {
@@ -898,13 +912,13 @@ class SolarDashboard extends HTMLElement {
           dot.style.boxShadow = '0 0 6px var(--red-glow)';
           desc.textContent = 'Balancer off';
         } else if (active) {
-          label.textContent = 'Balancing';
+          label.textContent = t(lang, 'balancing');
           label.style.color = 'var(--orange)';
           dot.style.background = 'var(--orange)';
           dot.style.boxShadow = '0 0 6px var(--orange-glow)';
           desc.textContent = 'Actively transferring via supercap';
         } else {
-          label.textContent = 'Idle';
+          label.textContent = t(lang, 'idle');
           label.style.color = 'var(--green)';
           dot.style.background = 'var(--green)';
           dot.style.boxShadow = '0 0 6px var(--green-glow)';
@@ -944,8 +958,9 @@ class SolarDashboard extends HTMLElement {
     const cur = current || 0;
     // I15: Derive idle threshold from battery capacity (0.5% of fullAh)
     const idleThreshold = 0.005 * (this._bridge.battSpec?.fullAh || 100);
-    const status = cur > idleThreshold ? 'Charging' : cur < -idleThreshold ? 'Discharging' : 'Idle';
-    const statusColor = status === 'Charging' ? 'var(--green)' : status === 'Discharging' ? 'var(--red)' : 'var(--text2)';
+    const lang = this._bridge._hass?.language || 'en';
+    const status = cur > idleThreshold ? t(lang, 'charging') : cur < -idleThreshold ? t(lang, 'discharging') : t(lang, 'idle');
+    const statusColor = status === t(lang, 'charging') ? 'var(--green)' : status === t(lang, 'discharging') ? 'var(--red)' : 'var(--text2)';
     this._els.battStatus.textContent = status;
     this._els.battStatus.style.color = statusColor;
     this._els.battStatusDot.style.background = statusColor;
@@ -992,19 +1007,19 @@ class SolarDashboard extends HTMLElement {
     };
     if (cur < -idleThreshold && remaining > 0) {
       tte = fmtDHM(remaining / Math.abs(cur));
-      if (tteLabel) tteLabel.textContent = 'Time to Empty';
+      if (tteLabel) tteLabel.textContent = t(lang, 'tte');
     } else if (cur > idleThreshold) {
       if (soc != null && soc < 100 && remaining > 0) {
         const toFill = battSpec.fullAh - remaining;
         if (toFill > 0) tte = fmtDHM(toFill / cur);
-        else tte = '\u221E (Charging)';
+        else tte = '\u221E (' + t(lang, 'charging') + ')';
       } else {
-        tte = '\u221E (Charging)';
+        tte = '\u221E (' + t(lang, 'charging') + ')';
       }
-      if (tteLabel) tteLabel.textContent = 'Time to Full';
+      if (tteLabel) tteLabel.textContent = t(lang, 'ttf');
     } else {
-      tte = '\u221E (Idle)';
-      if (tteLabel) tteLabel.textContent = 'Time to Empty';
+      tte = '\u221E (' + t(lang, 'idle') + ')';
+      if (tteLabel) tteLabel.textContent = t(lang, 'tte');
     }
     this._els.battTTE.textContent = tte;
 
@@ -1823,7 +1838,7 @@ class SolarDashboard extends HTMLElement {
 
     const balStatusEl = root.getElementById('balStatus');
     const oldDelta = parseFloat(balStatusEl.textContent.replace(/[^0-9.]/g, '')) || 0;
-    const suffix = balancing ? 'mV \u2014 Balancing' : 'mV';
+    const suffix = balancing ? t(lang, 'mVBalancing') : t(lang, 'mV');
     this._animateValue(balStatusEl, oldDelta, delta, 600, v => `\u0394 ${Math.round(v)}${suffix}`);
   }
 
@@ -2004,13 +2019,13 @@ class SolarDashboard extends HTMLElement {
           const window = actualPts.slice(Math.max(0, i - 6), i + 1).filter(v => v > 0);
           return window.length > 0 ? window.reduce((a, b) => a + b, 0) / window.length : 0;
         });
-        overlayLabel = '7d avg';
+        overlayLabel = t(lang, 'sevenDAvg');
       } else {
         overlayPts = solarResult.powerData.map(d => {
           const out = this._engine.calcSolarOutput(d.t, panelConfig, cloudPct, ambientC);
           return out.watts;
         });
-        overlayLabel = 'W est';
+        overlayLabel = t(lang, 'west');
       }
       this._charts.drawChart(canvases.solar, [
         { points: actualPts, color: 'rgb(34,197,94)', label: 'W', fill: true },
@@ -2018,7 +2033,7 @@ class SolarDashboard extends HTMLElement {
       ], { minY: 0, xLabel: solarResult.timeXLabel(solarResult.powerData), yFormat: v => Math.round(v) + ' W' }, false);
       this._charts.attachCrosshair(canvases.solar);
       const overlayLabelEl = root.getElementById('solarOverlayLabel');
-      if (overlayLabelEl) overlayLabelEl.textContent = '\u25A0 ' + (is30D ? '7d avg' : 'Estimated');
+      if (overlayLabelEl) overlayLabelEl.textContent = '\u25A0 ' + (is30D ? t(lang, 'sevenDAvg') : t(lang, 'estimated'));
     }
 
     // Update chart value displays with last data point
