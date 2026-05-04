@@ -1033,14 +1033,14 @@ class SolarDashboard extends HTMLElement {
       if (chgToggle) {
         chgToggle.addEventListener('change', () => {
           this._bridge._hass?.callService('switch', chgToggle.checked ? 'turn_on' : 'turn_off',
-            { entity_id: this._bridge.E.CHG_SWITCH });
+            { entity_id: this._bridge.E.CHG_SWITCH })?.catch(() => {});
         });
       }
       const dischgToggle = root.getElementById('dischgToggle');
       if (dischgToggle) {
         dischgToggle.addEventListener('change', () => {
           this._bridge._hass?.callService('switch', dischgToggle.checked ? 'turn_on' : 'turn_off',
-            { entity_id: this._bridge.E.DISCHG_SWITCH });
+            { entity_id: this._bridge.E.DISCHG_SWITCH })?.catch(() => {});
         });
       }
 
