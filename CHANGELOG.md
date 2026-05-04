@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.37.7 (2026-05-04)
+
+### Bug Fixes
+- Add WebSocket disconnection detection with connection lost banner
+
+
 ## v0.37.6 (2026-05-04)
 
 ### Bug Fixes
