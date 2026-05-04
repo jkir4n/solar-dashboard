@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.37.6 (2026-05-04)
+
+### Bug Fixes
+- Add null guards for _updateUI, WeatherFX render, and chart canvas dimensions
+
+
 ## v0.37.5 (2026-05-04)
 
 ### Bug Fixes
