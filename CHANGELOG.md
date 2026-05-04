@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.37.0 (2026-05-04)
+
+### Features
+- Add I2 error boundary for init failures and I4 device-based BMS entity discovery
+
+
 ## v0.36.0 (2026-05-04)
 
 ### Features
