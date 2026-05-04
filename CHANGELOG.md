@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.37.8 (2026-05-04)
+
+### Bug Fixes
+- Wrap update pipeline rAF callback in try/catch
+
+
 ## v0.37.7 (2026-05-04)
 
 ### Bug Fixes
