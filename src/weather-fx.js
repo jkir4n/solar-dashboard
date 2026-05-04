@@ -245,7 +245,7 @@ export class WeatherFX {
       this._moonBrightCur = moonBrightness;
     }
     this._cloudCoverage  = cloudCoverage;
-    this._lastArchetypeCov = cloudCoverage;
+    // _lastArchetypeCov is only updated in _startParticles() after threshold comparison (C7)
     // Determine particle type
     let particleType = CONDITION_PARTICLE_MAP[weatherCondition] || null;
     if (isNight && (!particleType || particleType === 'sunny')) particleType = 'night';
