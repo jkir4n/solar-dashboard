@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.31.2 (2026-05-04)
+
+### Bug Fixes
+- 6 partially-addressed items from analysis.md Pass 9
+
+
 ## v0.31.1 (2026-05-04)
 
 ### Bug Fixes
