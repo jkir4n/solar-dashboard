@@ -4,5 +4,5 @@
   "filename": "solar-dashboard.js",
   "content_in_root": false,
   "homeassistant": "2025.1.0",
-  "version": "0.35.0"
+  "version": "0.35.1"
 }
