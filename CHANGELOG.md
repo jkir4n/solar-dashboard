@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.31.23 (2026-05-04)
+
+### Bug Fixes
+- Skip cell balance re-render when voltage array unchanged (P15)
+
+
 ## v0.31.22 (2026-05-04)
 
 ### Bug Fixes
