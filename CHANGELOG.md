@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.31.9 (2026-05-04)
+
+### Bug Fixes
+- Remove double-applied wind on fog blobs (C10)
+
+
 ## v0.31.8 (2026-05-04)
 
 ### Bug Fixes
