@@ -436,16 +436,23 @@ export class HABridge {
       };
       if (significantOnly) msg.significant_changes_only = true;
       // NI14: Race against 15s timeout to prevent hung WebSocket calls
-      const result = await Promise.race([
-        this._hass.callWS(msg),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('History fetch timeout (15s)')), 15000)),
-      ]);
-      return (result?.[entityId] || []).map(d => {
-        const state = d.s ?? d.state;
-        const ts = d.lu ?? d.last_changed ?? d.last_updated;
-        const t = typeof ts === 'number' ? new Date(ts * 1000) : new Date(ts);
-        return { t, v: isNaN(parseFloat(state)) ? null : parseFloat(state) };
+      let timeoutId;
+      const timeoutPromise = new Promise((_, reject) => {
+        timeoutId = setTimeout(() => reject(new Error('History fetch timeout (15s)')), 15000);
       });
+      try {
+        const result = await Promise.race([this._hass.callWS(msg), timeoutPromise]);
+        clearTimeout(timeoutId);
+        return (result?.[entityId] || []).map(d => {
+          const state = d.s ?? d.state;
+          const ts = d.lu ?? d.last_changed ?? d.last_updated;
+          const t = typeof ts === 'number' ? new Date(ts * 1000) : new Date(ts);
+          return { t, v: isNaN(parseFloat(state)) ? null : parseFloat(state) };
+        });
+      } catch (e) {
+        clearTimeout(timeoutId);
+        throw e;
+      }
     } catch (e) {
       console.warn('[Solar] History fetch failed:', e);
       return null;
@@ -459,17 +466,27 @@ export class HABridge {
       const now = endTime || new Date();
       const start = startTime || new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
       // NI14: Race against 15s timeout to prevent hung WebSocket calls
-      const result = await Promise.race([
-        this._hass.callWS({
-          type: 'recorder/statistics_during_period',
-          start_time: start.toISOString(),
-          end_time: now.toISOString(),
-          statistic_ids: [entityId],
-          period: days <= 1 ? '5minute' : days <= 7 ? 'hour' : 'day',
-        }),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Stats fetch timeout (15s)')), 15000)),
-      ]);
-      return (result?.[entityId] || []).map(d => ({ t: new Date(d.start), v: d.mean ?? d.sum ?? 0 }));
+      let timeoutId;
+      const timeoutPromise = new Promise((_, reject) => {
+        timeoutId = setTimeout(() => reject(new Error('Stats fetch timeout (15s)')), 15000);
+      });
+      try {
+        const result = await Promise.race([
+          this._hass.callWS({
+            type: 'recorder/statistics_during_period',
+            start_time: start.toISOString(),
+            end_time: now.toISOString(),
+            statistic_ids: [entityId],
+            period: days <= 1 ? '5minute' : days <= 7 ? 'hour' : 'day',
+          }),
+          timeoutPromise,
+        ]);
+        clearTimeout(timeoutId);
+        return (result?.[entityId] || []).map(d => ({ t: new Date(d.start), v: d.mean ?? d.sum ?? 0 }));
+      } catch (e) {
+        clearTimeout(timeoutId);
+        throw e;
+      }
     } catch (e) {
       console.warn('[Solar] Stats fetch failed:', e);
       return [];
