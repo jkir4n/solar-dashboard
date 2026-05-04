@@ -903,7 +903,7 @@ class SolarDashboard extends HTMLElement {
     const E = this._bridge.E;
     if (E && E.POWER && E.SOC && !this._chartsLoaded) {
       this._chartsLoaded = true;
-      this._loadChartRange(this._activeChartRange || 'Live');
+      this._loadChartRange(this._activeChartRange || 'Live').catch(() => {});
     }
     const changed = this._bridge.getChangedEntities();
     if (changed.length > 0) {
@@ -922,7 +922,7 @@ class SolarDashboard extends HTMLElement {
           const relevant = pending.some(id => liveEntities.has(id));
           if (relevant && Date.now() - this._lastLiveChartFetch > 60000) {
             this._lastLiveChartFetch = Date.now();
-            this._loadChartRange('Live');
+            this._loadChartRange('Live').catch(() => {});
           }
         }
       });
@@ -1024,7 +1024,7 @@ class SolarDashboard extends HTMLElement {
         tab.addEventListener('click', () => {
           const range = tab.dataset.range;
           tabs.forEach(t => t.classList.toggle('active', t.dataset.range === range));
-          this._loadChartRange(range);
+          this._loadChartRange(range).catch(() => {});
         });
       });
 
