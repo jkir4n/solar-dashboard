@@ -1817,10 +1817,10 @@ export class WeatherFX {
         const baseAlpha = state._alpha * p.alpha;
         // Blit pre-rendered off-screen canvas (created once at spawn in _renderCloudToOffscreen)
         if (p.off) {
-          ctx.save();
+          const prevAlpha = ctx.globalAlpha;
           ctx.globalAlpha = baseAlpha;
           ctx.drawImage(p.off, p.x - p.ox, p.y - p.oy);
-          ctx.restore();
+          ctx.globalAlpha = prevAlpha;
         }
 
         // Moon/sun scatter highlight at cloud top (screen pass — runs on main canvas after blit)
