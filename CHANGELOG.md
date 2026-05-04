@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.31.13 (2026-05-04)
+
+### Bug Fixes
+- Add 15s timeout to HA WebSocket history/stats fetch calls (NI14)
+
+
 ## v0.31.12 (2026-05-04)
 
 ### Bug Fixes
