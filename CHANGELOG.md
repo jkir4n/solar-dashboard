@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.37.3 (2026-05-04)
+
+### Bug Fixes
+- Add .catch() to _loadChartRange calls in set hass() and tab handlers
+
+
 ## v0.37.2 (2026-05-04)
 
 ### Bug Fixes
