@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.37.2 (2026-05-04)
+
+### Bug Fixes
+- Add .catch() to all fire-and-forget async calls to prevent unhandled promise rejections
+
+
 ## v0.37.1 (2026-05-04)
 
 ### Bug Fixes
