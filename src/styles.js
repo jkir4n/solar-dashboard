@@ -152,6 +152,39 @@ export const STYLES = `
     .header h1 { font-size: 20px !important; }
     .header #clock { order: 3; width: 100%; font-size: 11px !important; }
   }
+  /* I8: Phone-specific refinements */
+  @media (max-width: 500px) {
+    .container { padding: 6px !important; }
+    .card { padding: 12px !important; border-radius: 12px !important; }
+    .section-title { font-size: 13px !important; margin-bottom: 8px !important; }
+    .header { padding: 6px 0 8px !important; }
+    .header h1 { font-size: 17px !important; }
+    .header #clock { font-size: 10px !important; }
+    .batt-soc { font-size: 28px !important; }
+    .stat-val { font-size: 12px !important; }
+    .stat-label { font-size: 9px !important; }
+    .stat-grid { gap: 2px !important; }
+    .info-row { gap: 2px !important; margin-bottom: 2px !important; }
+    .inf-v { font-size: 9px !important; }
+    .inf-k { font-size: 7px !important; }
+    .inf { padding: 3px 0 !important; }
+    .flow-icon { width: 28px !important; height: 28px !important; }
+    .flow-label { font-size: 9px !important; }
+    .flow-watt { font-size: 11px !important; }
+    .chart-wrap canvas { height: 150px !important; }
+    .chart-title { font-size: 11px !important; }
+    .chart-value { font-size: 14px !important; }
+    .chart-tabs { padding: 2px !important; gap: 2px !important; }
+    .chart-tab { font-size: 11px !important; padding: 4px 8px !important; }
+    .cell-id, .cell-val { font-size: 10px !important; }
+    .cell-row-item { padding: 3px 0 !important; }
+    .cell-bar-bg { height: 10px !important; }
+    .sol-output { font-size: 18px !important; }
+    #solOutput { font-size: 14px !important; }
+    .ctrl { padding: 8px 0 !important; }
+    .ctrl-name { font-size: 12px !important; }
+    .ctrl-desc { font-size: 9px !important; }
+  }
 
   /* Header */
   .header { display: flex; align-items: center; justify-content: space-between; padding: 12px 0 16px; }
