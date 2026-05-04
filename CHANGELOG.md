@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.33.0 (2026-05-04)
+
+### Features
+- Derive charging/discharging idle threshold from battery capacity (I15)
+
+
 ## v0.32.0 (2026-05-04)
 
 ### Features
