@@ -849,6 +849,7 @@ class SolarDashboard extends HTMLElement {
   _updateUI(changedEntities) {
     const E = this._bridge.E;
     const root = this.shadowRoot;
+    const lang = this._bridge._hass?.language || 'en';
     const batteryEntities = [E.SOC, E.VOLTAGE, E.CURRENT, E.POWER, E.REMAINING,
       E.CYCLES, E.RUNTIME, E.THROUGHPUT, E.MIN_CELL_V, E.MAX_CELL_V,
       E.MIN_V_CELL, E.MAX_V_CELL, E.FIRMWARE, E.MANUFACTURER, E.STRINGS,
@@ -1740,6 +1741,7 @@ class SolarDashboard extends HTMLElement {
   _updateCellBalance() {
     const root = this.shadowRoot;
     const E = this._bridge.E;
+    const lang = this._bridge._hass?.language || 'en';
     const voltages = [];
     for (let i = 1; i <= 16; i++) {
       const v = this._bridge.getVal(E['CELL' + i]);
@@ -1804,6 +1806,7 @@ class SolarDashboard extends HTMLElement {
 
   _applyBal(voltages) {
     const root = this.shadowRoot;
+    const lang = this._bridge._hass?.language || 'en';
     const allV = [...voltages];
     const maxI = allV.indexOf(Math.max(...allV));
     const minI = allV.indexOf(Math.min(...allV));
@@ -2072,6 +2075,7 @@ class SolarDashboard extends HTMLElement {
   // ============ REFRESH ALL ============
   _refreshAllUI() {
     const E = this._bridge.E;
+    const lang = this._bridge._hass?.language || 'en';
     const snap = {
       soc:        this._bridge.getVal(E.SOC),
       voltage:    this._bridge.getVal(E.VOLTAGE),
