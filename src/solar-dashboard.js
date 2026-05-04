@@ -8,15 +8,592 @@ import { STYLES } from './styles.js';
 // I12: Translation map keyed by hass.language. Falls back to 'en'.
 const L = {
   en: {
-    charging: 'Charging', discharging: 'Discharging', idle: 'Idle', balancing: 'Balancing',
+    solar: 'Solar', live: 'Live', battery: 'Battery', powerFlow: 'Power Flow',
+    solarPanels: 'Solar Panels', analytics: 'Analytics', controls: 'Controls',
+    cellsC1C8: 'Cells C1\u2013C8', cellsC9C16: 'Cells C9\u2013C16',
+    voltage: 'Voltage', current: 'Current', power: 'Power', remaining: 'Remaining',
+    energy: 'Energy', todayIn: 'Today In', todayOut: 'Today Out',
     tte: 'Time to Empty', ttf: 'Time to Full',
-    remaining: 'Remaining', cycles: 'Cycles', minCell: 'Min Cell', maxCell: 'Max Cell',
-    runtime: 'Runtime', throughput: 'Throughput', mosfet: 'MOSFET', firmware: 'Firmware',
-    sevenDAvg: '7d avg', west: 'W est', estimated: 'Estimated',
+    cycles: 'Cycles', capacity: 'Capacity', nominal: 'Nominal', config: 'Config',
+    minCell: 'Min Cell', maxCell: 'Max Cell', runtime: 'Runtime', throughput: 'Throughput',
+    mosfet: 'MOSFET', bmsModel: 'BMS Model', firmware: 'Firmware', chemistry: 'Chemistry',
+    batteryNode: 'Battery', home: 'Home', solarNode: 'Solar',
+    actual: 'actual', estimated: 'estimated', generatedToday: 'generated today', expected: 'expected',
+    rated: 'Rated', installed: 'Installed', age: 'Age', model: 'Model',
+    type: 'Type', year1Loss: 'Year 1 Loss', annualLoss: 'Annual Loss', nextYear: 'Next Year',
+    weather: 'WEATHER', condition: 'Condition', temp: 'Temp', cloud: 'Cloud', humidity: 'Humidity',
+    tabLive: 'Live', tabYesterday: 'Yesterday', tab7Days: '7 Days', tab30Days: '30 Days',
+    chartPower: 'Power', chartBatterySOC: 'Battery SOC', chartSolar: 'Solar',
+    legendActual: 'Actual', legendEstimated: 'Estimated',
+    temperature: 'Temperature',
+    charging: 'Charging', discharging: 'Discharging', idle: 'Idle', balancing: 'Balancing',
+    ctrlCharging: 'Charging', ctrlDischarging: 'Discharging', ctrlBalancer: 'Balancer',
+    descCharging: 'Enable or disable battery charging',
+    descDischarging: 'Enable or disable battery discharging',
+    balDisabled: 'Disabled', balOff: 'Balancer off',
+    balActive: 'Actively transferring via supercap',
+    balEnabledIdle: 'Enabled \u00B7 not currently balancing',
+    sevenDAvg: '7d avg', west: 'W est',
     mVBalancing: 'mV \u2014 Balancing', mV: 'mV',
   },
+  de: {
+    solar: 'Solar', live: 'Live', battery: 'Batterie', powerFlow: 'Leistungsfluss',
+    solarPanels: 'Solarmodule', analytics: 'Analytik', controls: 'Steuerung',
+    cellsC1C8: 'Zellen C1\u2013C8', cellsC9C16: 'Zellen C9\u2013C16',
+    voltage: 'Spannung', current: 'Strom', power: 'Leistung', remaining: 'Verbleibend',
+    energy: 'Energie', todayIn: 'Heute rein', todayOut: 'Heute raus',
+    tte: 'Zeit bis leer', ttf: 'Zeit bis voll',
+    cycles: 'Zyklen', capacity: 'Kapazit\u00E4t', nominal: 'Nennspannung', config: 'Konfig',
+    minCell: 'Min Zelle', maxCell: 'Max Zelle', runtime: 'Laufzeit', throughput: 'Durchsatz',
+    mosfet: 'MOSFET', bmsModel: 'BMS Modell', firmware: 'Firmware', chemistry: 'Chemie',
+    batteryNode: 'Batterie', home: 'Haus', solarNode: 'Solar',
+    actual: 'aktuell', estimated: 'gesch\u00E4tzt', generatedToday: 'heute erzeugt', expected: 'erwartet',
+    rated: 'Nennleistung', installed: 'Installiert', age: 'Alter', model: 'Modell',
+    type: 'Typ', year1Loss: 'Jahr 1 Verlust', annualLoss: 'J\u00E4hrl. Verlust', nextYear: 'N\u00E4chstes Jahr',
+    weather: 'WETTER', condition: 'Bedingung', temp: 'Temp', cloud: 'Bew\u00F6lkung', humidity: 'Feuchtigkeit',
+    tabLive: 'Live', tabYesterday: 'Gestern', tab7Days: '7 Tage', tab30Days: '30 Tage',
+    chartPower: 'Leistung', chartBatterySOC: 'Batterie SOC', chartSolar: 'Solar',
+    legendActual: 'Aktuell', legendEstimated: 'Gesch\u00E4tzt',
+    temperature: 'Temperatur',
+    charging: 'Laden', discharging: 'Entladen', idle: 'Leerlauf', balancing: 'Ausgleich',
+    ctrlCharging: 'Laden', ctrlDischarging: 'Entladen', ctrlBalancer: 'Ausgleicher',
+    descCharging: 'Batterieladen aktivieren oder deaktivieren',
+    descDischarging: 'Batterieentladen aktivieren oder deaktivieren',
+    balDisabled: 'Deaktiviert', balOff: 'Ausgleicher aus',
+    balActive: 'Aktiv \u00FCbertragen via Supercap',
+    balEnabledIdle: 'Aktiviert \u00B7 derzeit kein Ausgleich',
+    sevenDAvg: '7d \u00D8', west: 'W est',
+    mVBalancing: 'mV \u2014 Ausgleich', mV: 'mV',
+  },
+  fr: {
+    solar: 'Solaire', live: 'Direct', battery: 'Batterie', powerFlow: 'Flux d\'\u00E9nergie',
+    solarPanels: 'Panneaux solaires', analytics: 'Analytique', controls: 'Contr\u00F4les',
+    cellsC1C8: 'Cellules C1\u2013C8', cellsC9C16: 'Cellules C9\u2013C16',
+    voltage: 'Tension', current: 'Courant', power: 'Puissance', remaining: 'Restant',
+    energy: '\u00C9nergie', todayIn: 'Aujourd\'hui entr\u00E9e', todayOut: 'Aujourd\'hui sortie',
+    tte: 'Temps avant vide', ttf: 'Temps avant plein',
+    cycles: 'Cycles', capacity: 'Capacit\u00E9', nominal: 'Nominale', config: 'Config',
+    minCell: 'Cell min', maxCell: 'Cell max', runtime: 'Dur\u00E9e', throughput: 'D\u00E9bit',
+    mosfet: 'MOSFET', bmsModel: 'Mod\u00E8le BMS', firmware: 'Firmware', chemistry: 'Chimie',
+    batteryNode: 'Batterie', home: 'Maison', solarNode: 'Solaire',
+    actual: 'actuel', estimated: 'estim\u00E9', generatedToday: 'produit aujourd\'hui', expected: 'pr\u00E9vu',
+    rated: 'Nominale', installed: 'Install\u00E9', age: '\u00C2ge', model: 'Mod\u00E8le',
+    type: 'Type', year1Loss: 'Perte an 1', annualLoss: 'Perte annuelle', nextYear: 'Ann\u00E9e proch.',
+    weather: 'M\u00C9T\u00C9O', condition: 'Condition', temp: 'Temp', cloud: 'Nuages', humidity: 'Humidit\u00E9',
+    tabLive: 'Direct', tabYesterday: 'Hier', tab7Days: '7 jours', tab30Days: '30 jours',
+    chartPower: 'Puissance', chartBatterySOC: 'Batterie SOC', chartSolar: 'Solaire',
+    legendActual: 'Actuel', legendEstimated: 'Estim\u00E9',
+    temperature: 'Temp\u00E9rature',
+    charging: 'Charge', discharging: 'D\u00E9charge', idle: 'Inactif', balancing: '\u00C9quilibrage',
+    ctrlCharging: 'Charge', ctrlDischarging: 'D\u00E9charge', ctrlBalancer: '\u00C9quilibreur',
+    descCharging: 'Activer ou d\u00E9sactiver la charge de la batterie',
+    descDischarging: 'Activer ou d\u00E9sactiver la d\u00E9charge de la batterie',
+    balDisabled: 'D\u00E9sactiv\u00E9', balOff: '\u00C9quilibreur \u00E9teint',
+    balActive: 'Transfert actif via supercondensateur',
+    balEnabledIdle: 'Activ\u00E9 \u00B7 pas d\'\u00E9quilibrage actuel',
+    sevenDAvg: '7j moy', west: 'O est',
+    mVBalancing: 'mV \u2014 \u00C9quilibrage', mV: 'mV',
+  },
+  es: {
+    solar: 'Solar', live: 'En vivo', battery: 'Bater\u00EDa', powerFlow: 'Flujo de energ\u00EDa',
+    solarPanels: 'Paneles solares', analytics: 'An\u00E1lisis', controls: 'Controles',
+    cellsC1C8: 'Celdas C1\u2013C8', cellsC9C16: 'Celdas C9\u2013C16',
+    voltage: 'Voltaje', current: 'Corriente', power: 'Potencia', remaining: 'Restante',
+    energy: 'Energ\u00EDa', todayIn: 'Hoy entrada', todayOut: 'Hoy salida',
+    tte: 'Tiempo hasta vac\u00EDo', ttf: 'Tiempo hasta lleno',
+    cycles: 'Ciclos', capacity: 'Capacidad', nominal: 'Nominal', config: 'Config',
+    minCell: 'Celda m\u00EDn', maxCell: 'Celda m\u00E1x', runtime: 'Duraci\u00F3n', throughput: 'Rendimiento',
+    mosfet: 'MOSFET', bmsModel: 'Modelo BMS', firmware: 'Firmware', chemistry: 'Qu\u00EDmica',
+    batteryNode: 'Bater\u00EDa', home: 'Hogar', solarNode: 'Solar',
+    actual: 'actual', estimated: 'estimado', generatedToday: 'generado hoy', expected: 'esperado',
+    rated: 'Nominal', installed: 'Instalado', age: 'Edad', model: 'Modelo',
+    type: 'Tipo', year1Loss: 'P\u00E9rdida a\u00F1o 1', annualLoss: 'P\u00E9rdida anual', nextYear: 'Pr\u00F3x. a\u00F1o',
+    weather: 'CLIMA', condition: 'Condici\u00F3n', temp: 'Temp', cloud: 'Nubes', humidity: 'Humedad',
+    tabLive: 'En vivo', tabYesterday: 'Ayer', tab7Days: '7 d\u00EDas', tab30Days: '30 d\u00EDas',
+    chartPower: 'Potencia', chartBatterySOC: 'Bater\u00EDa SOC', chartSolar: 'Solar',
+    legendActual: 'Actual', legendEstimated: 'Estimado',
+    temperature: 'Temperatura',
+    charging: 'Carga', discharging: 'Descarga', idle: 'Inactivo', balancing: 'Equilibrio',
+    ctrlCharging: 'Carga', ctrlDischarging: 'Descarga', ctrlBalancer: 'Equilibrador',
+    descCharging: 'Activar o desactivar carga de bater\u00EDa',
+    descDischarging: 'Activar o desactivar descarga de bater\u00EDa',
+    balDisabled: 'Desactivado', balOff: 'Equilibrador apagado',
+    balActive: 'Transferencia activa v\u00EDa supercapacitor',
+    balEnabledIdle: 'Activado \u00B7 sin equilibrio actual',
+    sevenDAvg: '7d prom', west: 'O est',
+    mVBalancing: 'mV \u2014 Equilibrio', mV: 'mV',
+  },
+  it: {
+    solar: 'Solare', live: 'Live', battery: 'Batteria', powerFlow: 'Flusso energia',
+    solarPanels: 'Pannelli solari', analytics: 'Analisi', controls: 'Controlli',
+    cellsC1C8: 'Celle C1\u2013C8', cellsC9C16: 'Celle C9\u2013C16',
+    voltage: 'Tensione', current: 'Corrente', power: 'Potenza', remaining: 'Rimanente',
+    energy: 'Energia', todayIn: 'Oggi entrata', todayOut: 'Oggi uscita',
+    tte: 'Tempo a vuoto', ttf: 'Tempo a pieno',
+    cycles: 'Cicli', capacity: 'Capacit\u00E0', nominal: 'Nominale', config: 'Config',
+    minCell: 'Cella min', maxCell: 'Cella max', runtime: 'Durata', throughput: 'Throughput',
+    mosfet: 'MOSFET', bmsModel: 'Modello BMS', firmware: 'Firmware', chemistry: 'Chimica',
+    batteryNode: 'Batteria', home: 'Casa', solarNode: 'Solare',
+    actual: 'attuale', estimated: 'stimato', generatedToday: 'generato oggi', expected: 'previsto',
+    rated: 'Nominale', installed: 'Installato', age: 'Et\u00E0', model: 'Modello',
+    type: 'Tipo', year1Loss: 'Perdita anno 1', annualLoss: 'Perdita annuale', nextYear: 'Pross. anno',
+    weather: 'METEO', condition: 'Condizione', temp: 'Temp', cloud: 'Nuvole', humidity: 'Umidit\u00E0',
+    tabLive: 'Live', tabYesterday: 'Ieri', tab7Days: '7 giorni', tab30Days: '30 giorni',
+    chartPower: 'Potenza', chartBatterySOC: 'Batteria SOC', chartSolar: 'Solare',
+    legendActual: 'Attuale', legendEstimated: 'Stimato',
+    temperature: 'Temperatura',
+    charging: 'Carica', discharging: 'Scarica', idle: 'Inattivo', balancing: 'Bilanciamento',
+    ctrlCharging: 'Carica', ctrlDischarging: 'Scarica', ctrlBalancer: 'Bilanciatore',
+    descCharging: 'Abilita o disabilita carica batteria',
+    descDischarging: 'Abilita o disabilita scarica batteria',
+    balDisabled: 'Disabilitato', balOff: 'Bilanciatore spento',
+    balActive: 'Trasferimento attivo tramite supercap',
+    balEnabledIdle: 'Abilitato \u00B7 nessun bilanciamento attuale',
+    sevenDAvg: '7g media', west: 'O est',
+    mVBalancing: 'mV \u2014 Bilanciamento', mV: 'mV',
+  },
+  nl: {
+    solar: 'Zonne', live: 'Live', battery: 'Batterij', powerFlow: 'Energieverloop',
+    solarPanels: 'Zonnepanelen', analytics: 'Analyse', controls: 'Bediening',
+    cellsC1C8: 'Cellen C1\u2013C8', cellsC9C16: 'Cellen C9\u2013C16',
+    voltage: 'Spanning', current: 'Stroom', power: 'Vermogen', remaining: 'Resterend',
+    energy: 'Energie', todayIn: 'Vandaag in', todayOut: 'Vandaag uit',
+    tte: 'Tijd tot leeg', ttf: 'Tijd tot vol',
+    cycles: 'Cycli', capacity: 'Capaciteit', nominal: 'Nominaal', config: 'Config',
+    minCell: 'Cel min', maxCell: 'Cel max', runtime: 'Looptijd', throughput: 'Doorvoer',
+    mosfet: 'MOSFET', bmsModel: 'BMS Model', firmware: 'Firmware', chemistry: 'Chemie',
+    batteryNode: 'Batterij', home: 'Huis', solarNode: 'Zonne',
+    actual: 'actueel', estimated: 'geschat', generatedToday: 'vandaag opgewekt', expected: 'verwacht',
+    rated: 'Nominaal', installed: 'Ge\u00EFnstalleerd', age: 'Leeftijd', model: 'Model',
+    type: 'Type', year1Loss: 'Verlies jaar 1', annualLoss: 'Jaarlijks verlies', nextYear: 'Volgend jaar',
+    weather: 'WEER', condition: 'Weer', temp: 'Temp', cloud: 'Bewolking', humidity: 'Luchtvochtigheid',
+    tabLive: 'Live', tabYesterday: 'Gisteren', tab7Days: '7 dagen', tab30Days: '30 dagen',
+    chartPower: 'Vermogen', chartBatterySOC: 'Batterij SOC', chartSolar: 'Zonne',
+    legendActual: 'Actueel', legendEstimated: 'Geschat',
+    temperature: 'Temperatuur',
+    charging: 'Laden', discharging: 'Ontladen', idle: 'Inactief', balancing: 'Balancering',
+    ctrlCharging: 'Laden', ctrlDischarging: 'Ontladen', ctrlBalancer: 'Balancer',
+    descCharging: 'Batterijlading in- of uitschakelen',
+    descDischarging: 'Batterijontlading in- of uitschakelen',
+    balDisabled: 'Uitgeschakeld', balOff: 'Balancer uit',
+    balActive: 'Actief overdragen via supercondensator',
+    balEnabledIdle: 'Ingeschakeld \u00B7 momenteel geen balancering',
+    sevenDAvg: '7d gem', west: 'W est',
+    mVBalancing: 'mV \u2014 Balancering', mV: 'mV',
+  },
+  pt: {
+    solar: 'Solar', live: 'Ao vivo', battery: 'Bateria', powerFlow: 'Fluxo de energia',
+    solarPanels: 'Pain\u00E9is solares', analytics: 'An\u00E1lise', controls: 'Controles',
+    cellsC1C8: 'C\u00E9lulas C1\u2013C8', cellsC9C16: 'C\u00E9lulas C9\u2013C16',
+    voltage: 'Tens\u00E3o', current: 'Corrente', power: 'Pot\u00EAncia', remaining: 'Restante',
+    energy: 'Energia', todayIn: 'Hoje entrada', todayOut: 'Hoje sa\u00EDda',
+    tte: 'Tempo at\u00E9 vazio', ttf: 'Tempo at\u00E9 cheio',
+    cycles: 'Ciclos', capacity: 'Capacidade', nominal: 'Nominal', config: 'Config',
+    minCell: 'C\u00E9l min', maxCell: 'C\u00E9l m\u00E1x', runtime: 'Dura\u00E7\u00E3o', throughput: 'Rendimento',
+    mosfet: 'MOSFET', bmsModel: 'Modelo BMS', firmware: 'Firmware', chemistry: 'Qu\u00EDmica',
+    batteryNode: 'Bateria', home: 'Casa', solarNode: 'Solar',
+    actual: 'atual', estimated: 'estimado', generatedToday: 'gerado hoje', expected: 'esperado',
+    rated: 'Nominal', installed: 'Instalado', age: 'Idade', model: 'Modelo',
+    type: 'Tipo', year1Loss: 'Perda ano 1', annualLoss: 'Perda anual', nextYear: 'Pr\u00F3x. ano',
+    weather: 'CLIMA', condition: 'Condi\u00E7\u00E3o', temp: 'Temp', cloud: 'Nuvens', humidity: 'Umidade',
+    tabLive: 'Ao vivo', tabYesterday: 'Ontem', tab7Days: '7 dias', tab30Days: '30 dias',
+    chartPower: 'Pot\u00EAncia', chartBatterySOC: 'Bateria SOC', chartSolar: 'Solar',
+    legendActual: 'Atual', legendEstimated: 'Estimado',
+    temperature: 'Temperatura',
+    charging: 'Carga', discharging: 'Descarga', idle: 'Inativo', balancing: 'Balanceamento',
+    ctrlCharging: 'Carga', ctrlDischarging: 'Descarga', ctrlBalancer: 'Balanceador',
+    descCharging: 'Ativar ou desativar carga da bateria',
+    descDischarging: 'Ativar ou desativar descarga da bateria',
+    balDisabled: 'Desativado', balOff: 'Balanceador desligado',
+    balActive: 'Transfer\u00EAncia ativa via supercapacitor',
+    balEnabledIdle: 'Ativado \u00B7 sem balanceamento atual',
+    sevenDAvg: '7d m\u00E9d', west: 'O est',
+    mVBalancing: 'mV \u2014 Balanceamento', mV: 'mV',
+  },
+  'pt-BR': {
+    solar: 'Solar', live: 'Ao vivo', battery: 'Bateria', powerFlow: 'Fluxo de energia',
+    solarPanels: 'Pain\u00E9is solares', analytics: 'An\u00E1lise', controls: 'Controles',
+    cellsC1C8: 'C\u00E9lulas C1\u2013C8', cellsC9C16: 'C\u00E9lulas C9\u2013C16',
+    voltage: 'Tens\u00E3o', current: 'Corrente', power: 'Pot\u00EAncia', remaining: 'Restante',
+    energy: 'Energia', todayIn: 'Hoje entrada', todayOut: 'Hoje sa\u00EDda',
+    tte: 'Tempo at\u00E9 vazio', ttf: 'Tempo at\u00E9 cheio',
+    cycles: 'Ciclos', capacity: 'Capacidade', nominal: 'Nominal', config: 'Config',
+    minCell: 'C\u00E9l min', maxCell: 'C\u00E9l m\u00E1x', runtime: 'Dura\u00E7\u00E3o', throughput: 'Rendimento',
+    mosfet: 'MOSFET', bmsModel: 'Modelo BMS', firmware: 'Firmware', chemistry: 'Qu\u00EDmica',
+    batteryNode: 'Bateria', home: 'Casa', solarNode: 'Solar',
+    actual: 'atual', estimated: 'estimado', generatedToday: 'gerado hoje', expected: 'esperado',
+    rated: 'Nominal', installed: 'Instalado', age: 'Idade', model: 'Modelo',
+    type: 'Tipo', year1Loss: 'Perda ano 1', annualLoss: 'Perda anual', nextYear: 'Pr\u00F3x. ano',
+    weather: 'CLIMA', condition: 'Condi\u00E7\u00E3o', temp: 'Temp', cloud: 'Nuvens', humidity: 'Umidade',
+    tabLive: 'Ao vivo', tabYesterday: 'Ontem', tab7Days: '7 dias', tab30Days: '30 dias',
+    chartPower: 'Pot\u00EAncia', chartBatterySOC: 'Bateria SOC', chartSolar: 'Solar',
+    legendActual: 'Atual', legendEstimated: 'Estimado',
+    temperature: 'Temperatura',
+    charging: 'Carga', discharging: 'Descarga', idle: 'Inativo', balancing: 'Balanceamento',
+    ctrlCharging: 'Carga', ctrlDischarging: 'Descarga', ctrlBalancer: 'Balanceador',
+    descCharging: 'Ativar ou desativar carga da bateria',
+    descDischarging: 'Ativar ou desativar descarga da bateria',
+    balDisabled: 'Desativado', balOff: 'Balanceador desligado',
+    balActive: 'Transfer\u00EAncia ativa via supercapacitor',
+    balEnabledIdle: 'Ativado \u00B7 sem balanceamento atual',
+    sevenDAvg: '7d m\u00E9d', west: 'O est',
+    mVBalancing: 'mV \u2014 Balanceamento', mV: 'mV',
+  },
+  sv: {
+    solar: 'Sol', live: 'Live', battery: 'Batteri', powerFlow: 'Energifl\u00F6de',
+    solarPanels: 'Solpaneler', analytics: 'Analys', controls: 'Kontroller',
+    cellsC1C8: 'Celler C1\u2013C8', cellsC9C16: 'Celler C9\u2013C16',
+    voltage: 'Sp\u00E4nning', current: 'Str\u00F6m', power: 'Effekt', remaining: '\u00C5terst\u00E5ende',
+    energy: 'Energi', todayIn: 'Idag in', todayOut: 'Idag ut',
+    tte: 'Tid till tomt', ttf: 'Tid till fullt',
+    cycles: 'Cykler', capacity: 'Kapacitet', nominal: 'Nominell', config: 'Konfig',
+    minCell: 'Cell min', maxCell: 'Cell max', runtime: 'Drifttid', throughput: 'Genomstr\u00F6mning',
+    mosfet: 'MOSFET', bmsModel: 'BMS Modell', firmware: 'Firmware', chemistry: 'Kemi',
+    batteryNode: 'Batteri', home: 'Hem', solarNode: 'Sol',
+    actual: 'aktuell', estimated: 'uppskattad', generatedToday: 'genererad idag', expected: 'f\u00F6rv\u00E4ntad',
+    rated: 'Nominell', installed: 'Installerad', age: '\u00C5lder', model: 'Modell',
+    type: 'Typ', year1Loss: 'F\u00F6rlust \u00E5r 1', annualLoss: '\u00C5rlig f\u00F6rlust', nextYear: 'N\u00E4sta \u00E5r',
+    weather: 'V\u00C4DER', condition: 'F\u00F6rh\u00E5llande', temp: 'Temp', cloud: 'Moln', humidity: 'Luftfuktighet',
+    tabLive: 'Live', tabYesterday: 'Ig\u00E5r', tab7Days: '7 dagar', tab30Days: '30 dagar',
+    chartPower: 'Effekt', chartBatterySOC: 'Batteri SOC', chartSolar: 'Sol',
+    legendActual: 'Aktuell', legendEstimated: 'Uppskattad',
+    temperature: 'Temperatur',
+    charging: 'Laddning', discharging: 'Urladdning', idle: 'Inaktiv', balancing: 'Balansering',
+    ctrlCharging: 'Laddning', ctrlDischarging: 'Urladdning', ctrlBalancer: 'Balanserare',
+    descCharging: 'Aktivera eller inaktivera batteriladdning',
+    descDischarging: 'Aktivera eller inaktivera batteriurladdning',
+    balDisabled: 'Inaktiverad', balOff: 'Balanserare av',
+    balActive: 'Aktiv \u00F6verf\u00F6ring via superkondensator',
+    balEnabledIdle: 'Aktiverad \u00B7 ingen balansering just nu',
+    sevenDAvg: '7d snitt', west: 'V est',
+    mVBalancing: 'mV \u2014 Balansering', mV: 'mV',
+  },
+  no: {
+    solar: 'Sol', live: 'Live', battery: 'Batteri', powerFlow: 'Energiflyt',
+    solarPanels: 'Solpaneler', analytics: 'Analyse', controls: 'Kontroller',
+    cellsC1C8: 'Celler C1\u2013C8', cellsC9C16: 'Celler C9\u2013C16',
+    voltage: 'Spenning', current: 'Str\u00F8m', power: 'Effekt', remaining: 'Gjenst\u00E5ende',
+    energy: 'Energi', todayIn: 'I dag inn', todayOut: 'I dag ut',
+    tte: 'Tid til tomt', ttf: 'Tid til fullt',
+    cycles: 'Sykluser', capacity: 'Kapasitet', nominal: 'Nominell', config: 'Konfig',
+    minCell: 'Celle min', maxCell: 'Celle maks', runtime: 'Driftstid', throughput: 'Gjennomstr\u00F8mning',
+    mosfet: 'MOSFET', bmsModel: 'BMS Modell', firmware: 'Firmware', chemistry: 'Kjemi',
+    batteryNode: 'Batteri', home: 'Hjem', solarNode: 'Sol',
+    actual: 'faktisk', estimated: 'estimert', generatedToday: 'generert i dag', expected: 'forventet',
+    rated: 'Nominell', installed: 'Installert', age: 'Alder', model: 'Modell',
+    type: 'Type', year1Loss: 'Tap \u00E5r 1', annualLoss: '\u00C5rlig tap', nextYear: 'Neste \u00E5r',
+    weather: 'V\u00C6R', condition: 'Forhold', temp: 'Temp', cloud: 'Skyer', humidity: 'Luftfuktighet',
+    tabLive: 'Live', tabYesterday: 'I g\u00E5r', tab7Days: '7 dager', tab30Days: '30 dager',
+    chartPower: 'Effekt', chartBatterySOC: 'Batteri SOC', chartSolar: 'Sol',
+    legendActual: 'Faktisk', legendEstimated: 'Estimert',
+    temperature: 'Temperatur',
+    charging: 'Lading', discharging: 'Utlading', idle: 'Inaktiv', balancing: 'Balansering',
+    ctrlCharging: 'Lading', ctrlDischarging: 'Utlading', ctrlBalancer: 'Balanserer',
+    descCharging: 'Aktiver eller deaktiver batterilading',
+    descDischarging: 'Aktiver eller deaktiver batteriutlading',
+    balDisabled: 'Deaktivert', balOff: 'Balanserer av',
+    balActive: 'Aktiv overf\u00F8ring via superkondensator',
+    balEnabledIdle: 'Aktivert \u00B7 ingen balansering n\u00E5',
+    sevenDAvg: '7d snitt', west: 'V est',
+    mVBalancing: 'mV \u2014 Balansering', mV: 'mV',
+  },
+  da: {
+    solar: 'Sol', live: 'Live', battery: 'Batteri', powerFlow: 'Energiflow',
+    solarPanels: 'Solpaneler', analytics: 'Analyse', controls: 'Kontroller',
+    cellsC1C8: 'Celler C1\u2013C8', cellsC9C16: 'Celler C9\u2013C16',
+    voltage: 'Sp\u00E6nding', current: 'Str\u00F8m', power: 'Effekt', remaining: 'Resterende',
+    energy: 'Energi', todayIn: 'I dag ind', todayOut: 'I dag ud',
+    tte: 'Tid til tom', ttf: 'Tid til fuld',
+    cycles: 'Cyklusser', capacity: 'Kapacitet', nominal: 'Nominel', config: 'Konfig',
+    minCell: 'Celle min', maxCell: 'Celle maks', runtime: 'Driftstid', throughput: 'Gennemstr\u00F8mning',
+    mosfet: 'MOSFET', bmsModel: 'BMS Model', firmware: 'Firmware', chemistry: 'Kemi',
+    batteryNode: 'Batteri', home: 'Hjem', solarNode: 'Sol',
+    actual: 'faktisk', estimated: 'estimeret', generatedToday: 'genereret i dag', expected: 'forventet',
+    rated: 'Nominel', installed: 'Installeret', age: 'Alder', model: 'Model',
+    type: 'Type', year1Loss: 'Tab \u00E5r 1', annualLoss: '\u00C5rligt tab', nextYear: 'N\u00E6ste \u00E5r',
+    weather: 'VEJR', condition: 'Forhold', temp: 'Temp', cloud: 'Skyer', humidity: 'Luftfugtighed',
+    tabLive: 'Live', tabYesterday: 'I g\u00E5r', tab7Days: '7 dage', tab30Days: '30 dage',
+    chartPower: 'Effekt', chartBatterySOC: 'Batteri SOC', chartSolar: 'Sol',
+    legendActual: 'Faktisk', legendEstimated: 'Estimeret',
+    temperature: 'Temperatur',
+    charging: 'Opladning', discharging: 'Afladning', idle: 'Inaktiv', balancing: 'Balancering',
+    ctrlCharging: 'Opladning', ctrlDischarging: 'Afladning', ctrlBalancer: 'Balancer',
+    descCharging: 'Aktiver eller deaktiver batteriopladning',
+    descDischarging: 'Aktiver eller deaktiver batteriafladning',
+    balDisabled: 'Deaktiveret', balOff: 'Balancer slukket',
+    balActive: 'Aktiv overf\u00F8rsel via superkondensator',
+    balEnabledIdle: 'Aktiveret \u00B7 ingen balancering lige nu',
+    sevenDAvg: '7d snit', west: 'V est',
+    mVBalancing: 'mV \u2014 Balancering', mV: 'mV',
+  },
+  fi: {
+    solar: 'Aurinko', live: 'Live', battery: 'Akku', powerFlow: 'Tehonkulku',
+    solarPanels: 'Aurinkopaneelit', analytics: 'Analytiikka', controls: 'Ohjaukset',
+    cellsC1C8: 'Kennot C1\u2013C8', cellsC9C16: 'Kennot C9\u2013C16',
+    voltage: 'J\u00E4nnite', current: 'Virta', power: 'Teho', remaining: 'J\u00E4ljell\u00E4',
+    energy: 'Energia', todayIn: 'T\u00E4n\u00E4\u00E4n sis\u00E4\u00E4n', todayOut: 'T\u00E4n\u00E4\u00E4n ulos',
+    tte: 'Aika tyhj\u00E4\u00E4n', ttf: 'Aika t\u00E4yteen',
+    cycles: 'Jaksot', capacity: 'Kapasiteetti', nominal: 'Nimellinen', config: 'Konfig',
+    minCell: 'Kenno min', maxCell: 'Kenno maks', runtime: 'K\u00E4ytt\u00F6aika', throughput: 'L\u00E4pivirtaus',
+    mosfet: 'MOSFET', bmsModel: 'BMS Malli', firmware: 'Firmware', chemistry: 'Kemia',
+    batteryNode: 'Akku', home: 'Koti', solarNode: 'Aurinko',
+    actual: 'todellinen', estimated: 'arvioitu', generatedToday: 'tuotettu t\u00E4n\u00E4\u00E4n', expected: 'odotettu',
+    rated: 'Nimellinen', installed: 'Asennettu', age: 'Ik\u00E4', model: 'Malli',
+    type: 'Tyyppi', year1Loss: 'H\u00E4vi\u00F6 vuosi 1', annualLoss: 'Vuotuinen h\u00E4vi\u00F6', nextYear: 'Ensi vuosi',
+    weather: 'S\u00C4\u00C4', condition: 'S\u00E4\u00E4', temp: 'L\u00E4mp\u00F6', cloud: 'Pilvet', humidity: 'Kosteus',
+    tabLive: 'Live', tabYesterday: 'Eilen', tab7Days: '7 p\u00E4iv\u00E4\u00E4', tab30Days: '30 p\u00E4iv\u00E4\u00E4',
+    chartPower: 'Teho', chartBatterySOC: 'Akku SOC', chartSolar: 'Aurinko',
+    legendActual: 'Todellinen', legendEstimated: 'Arvioitu',
+    temperature: 'L\u00E4mp\u00F6tila',
+    charging: 'Lataus', discharging: 'Purku', idle: 'Lepotila', balancing: 'Tasaus',
+    ctrlCharging: 'Lataus', ctrlDischarging: 'Purku', ctrlBalancer: 'Tasaaja',
+    descCharging: 'Ota akun lataus k\u00E4ytt\u00F6\u00F6n tai poista se k\u00E4yt\u00F6st\u00E4',
+    descDischarging: 'Ota akun purku k\u00E4ytt\u00F6\u00F6n tai poista se k\u00E4yt\u00F6st\u00E4',
+    balDisabled: 'Poistettu k\u00E4yt\u00F6st\u00E4', balOff: 'Tasaaja pois p\u00E4\u00E4lt\u00E4',
+    balActive: 'Aktiivinen siirto superkondensaattorin kautta',
+    balEnabledIdle: 'K\u00E4yt\u00F6ss\u00E4 \u00B7 ei tasausta t\u00E4ll\u00E4 hetkell\u00E4',
+    sevenDAvg: '7pv keski', west: 'L est',
+    mVBalancing: 'mV \u2014 Tasaus', mV: 'mV',
+  },
+  pl: {
+    solar: 'Solar', live: 'Na \u017Cywo', battery: 'Bateria', powerFlow: 'Przep\u0142yw energii',
+    solarPanels: 'Panele s\u0142oneczne', analytics: 'Analityka', controls: 'Sterowanie',
+    cellsC1C8: 'Cele C1\u2013C8', cellsC9C16: 'Cele C9\u2013C16',
+    voltage: 'Napi\u0119cie', current: 'Pr\u0105d', power: 'Moc', remaining: 'Pozosta\u0142o',
+    energy: 'Energia', todayIn: 'Dzi\u015B wej\u015Bcie', todayOut: 'Dzi\u015B wyj\u015Bcie',
+    tte: 'Czas do roz\u0142adowania', ttf: 'Czas do na\u0142adowania',
+    cycles: 'Cykle', capacity: 'Pojemno\u015B\u0107', nominal: 'Nominalne', config: 'Konfig',
+    minCell: 'Cel min', maxCell: 'Cel maks', runtime: 'Czas pracy', throughput: 'Przepustowo\u015B\u0107',
+    mosfet: 'MOSFET', bmsModel: 'Model BMS', firmware: 'Firmware', chemistry: 'Chemia',
+    batteryNode: 'Bateria', home: 'Dom', solarNode: 'Solar',
+    actual: 'rzeczywisty', estimated: 'szacowany', generatedToday: 'wytworzono dzi\u015B', expected: 'oczekiwany',
+    rated: 'Nominalna', installed: 'Zainstalowano', age: 'Wiek', model: 'Model',
+    type: 'Typ', year1Loss: 'Ubytek rok 1', annualLoss: 'Ubytek roczny', nextYear: 'Nast\u0119pny rok',
+    weather: 'POGODA', condition: 'Warunki', temp: 'Temp', cloud: 'Chmury', humidity: 'Wilgotno\u015B\u0107',
+    tabLive: 'Na \u017Cywo', tabYesterday: 'Wczoraj', tab7Days: '7 dni', tab30Days: '30 dni',
+    chartPower: 'Moc', chartBatterySOC: 'Bateria SOC', chartSolar: 'Solar',
+    legendActual: 'Rzeczywisty', legendEstimated: 'Szacowany',
+    temperature: 'Temperatura',
+    charging: '\u0141adowanie', discharging: 'Roz\u0142adowanie', idle: 'Bezczynny', balancing: 'Balansowanie',
+    ctrlCharging: '\u0141adowanie', ctrlDischarging: 'Roz\u0142adowanie', ctrlBalancer: 'Balanser',
+    descCharging: 'W\u0142\u0105cz lub wy\u0142\u0105cz \u0142adowanie baterii',
+    descDischarging: 'W\u0142\u0105cz lub wy\u0142\u0105cz roz\u0142adowanie baterii',
+    balDisabled: 'Wy\u0142\u0105czony', balOff: 'Balanser wy\u0142\u0105czony',
+    balActive: 'Aktywny transfer przez superkondensator',
+    balEnabledIdle: 'W\u0142\u0105czony \u00B7 brak balansowania',
+    sevenDAvg: '7d \u015Br', west: 'Z est',
+    mVBalancing: 'mV \u2014 Balansowanie', mV: 'mV',
+  },
+  ru: {
+    solar: '\u0421\u043E\u043B\u043D\u0435\u0447\u043D\u0430\u044F', live: '\u041B\u0430\u0439\u0432', battery: '\u0410\u043A\u043A\u0443\u043C\u0443\u043B\u044F\u0442\u043E\u0440', powerFlow: '\u041F\u043E\u0442\u043E\u043A \u044D\u043D\u0435\u0440\u0433\u0438\u0438',
+    solarPanels: '\u0421\u043E\u043B\u043D\u0435\u0447\u043D\u044B\u0435 \u043F\u0430\u043D\u0435\u043B\u0438', analytics: '\u0410\u043D\u0430\u043B\u0438\u0442\u0438\u043A\u0430', controls: '\u0423\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u0435',
+    cellsC1C8: '\u042F\u0447\u0435\u0439\u043A\u0438 C1\u2013C8', cellsC9C16: '\u042F\u0447\u0435\u0439\u043A\u0438 C9\u2013C16',
+    voltage: '\u041D\u0430\u043F\u0440\u044F\u0436\u0435\u043D\u0438\u0435', current: '\u0422\u043E\u043A', power: '\u041C\u043E\u0449\u043D\u043E\u0441\u0442\u044C', remaining: '\u041E\u0441\u0442\u0430\u043B\u043E\u0441\u044C',
+    energy: '\u042D\u043D\u0435\u0440\u0433\u0438\u044F', todayIn: '\u0421\u0435\u0433\u043E\u0434\u043D\u044F \u0432\u0445\u043E\u0434', todayOut: '\u0421\u0435\u0433\u043E\u0434\u043D\u044F \u0432\u044B\u0445\u043E\u0434',
+    tte: '\u0412\u0440\u0435\u043C\u044F \u0434\u043E \u0440\u0430\u0437\u0440\u044F\u0434\u0430', ttf: '\u0412\u0440\u0435\u043C\u044F \u0434\u043E \u0437\u0430\u0440\u044F\u0434\u0430',
+    cycles: '\u0426\u0438\u043A\u043B\u044B', capacity: '\u0401\u043C\u043A\u043E\u0441\u0442\u044C', nominal: '\u041D\u043E\u043C\u0438\u043D\u0430\u043B', config: '\u041A\u043E\u043D\u0444\u0438\u0433',
+    minCell: '\u042F\u0447\u0435\u0439\u043A\u0430 \u043C\u0438\u043D', maxCell: '\u042F\u0447\u0435\u0439\u043A\u0430 \u043C\u0430\u043A\u0441', runtime: '\u0412\u0440\u0435\u043C\u044F \u0440\u0430\u0431\u043E\u0442\u044B', throughput: '\u041F\u0440\u043E\u043F\u0443\u0441\u043A\u043D\u0430\u044F \u0441\u043F\u043E\u0441\u043E\u0431\u043D\u043E\u0441\u0442\u044C',
+    mosfet: 'MOSFET', bmsModel: '\u041C\u043E\u0434\u0435\u043B\u044C BMS', firmware: '\u041F\u0440\u043E\u0448\u0438\u0432\u043A\u0430', chemistry: '\u0425\u0438\u043C\u0438\u044F',
+    batteryNode: '\u0410\u043A\u043A\u0443\u043C\u0443\u043B\u044F\u0442\u043E\u0440', home: '\u0414\u043E\u043C', solarNode: '\u0421\u043E\u043B\u043D\u0435\u0447\u043D\u0430\u044F',
+    actual: '\u0444\u0430\u043A\u0442\u0438\u0447\u0435\u0441\u043A\u0438\u0439', estimated: '\u043E\u0446\u0435\u043D\u043E\u0447\u043D\u044B\u0439', generatedToday: '\u0432\u044B\u0440\u0430\u0431\u043E\u0442\u0430\u043D\u043E \u0441\u0435\u0433\u043E\u0434\u043D\u044F', expected: '\u043E\u0436\u0438\u0434\u0430\u0435\u0442\u0441\u044F',
+    rated: '\u041D\u043E\u043C\u0438\u043D\u0430\u043B\u044C\u043D\u0430\u044F', installed: '\u0423\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D\u043E', age: '\u0412\u043E\u0437\u0440\u0430\u0441\u0442', model: '\u041C\u043E\u0434\u0435\u043B\u044C',
+    type: '\u0422\u0438\u043F', year1Loss: '\u041F\u043E\u0442\u0435\u0440\u044F \u0433\u043E\u0434 1', annualLoss: '\u0413\u043E\u0434\u043E\u0432\u0430\u044F \u043F\u043E\u0442\u0435\u0440\u044F', nextYear: '\u0421\u043B\u0435\u0434. \u0433\u043E\u0434',
+    weather: '\u041F\u041E\u0413\u041E\u0414\u0410', condition: '\u0423\u0441\u043B\u043E\u0432\u0438\u044F', temp: '\u0422\u0435\u043C\u043F', cloud: '\u041E\u0431\u043B\u0430\u043A\u0430', humidity: '\u0412\u043B\u0430\u0436\u043D\u043E\u0441\u0442\u044C',
+    tabLive: '\u041B\u0430\u0439\u0432', tabYesterday: '\u0412\u0447\u0435\u0440\u0430', tab7Days: '7 \u0434\u043D\u0435\u0439', tab30Days: '30 \u0434\u043D\u0435\u0439',
+    chartPower: '\u041C\u043E\u0449\u043D\u043E\u0441\u0442\u044C', chartBatterySOC: '\u0410\u043A\u043A\u0443\u043C\u0443\u043B\u044F\u0442\u043E\u0440 SOC', chartSolar: '\u0421\u043E\u043B\u043D\u0435\u0447\u043D\u0430\u044F',
+    legendActual: '\u0424\u0430\u043A\u0442\u0438\u0447\u0435\u0441\u043A\u0438\u0439', legendEstimated: '\u041E\u0446\u0435\u043D\u043E\u0447\u043D\u044B\u0439',
+    temperature: '\u0422\u0435\u043C\u043F\u0435\u0440\u0430\u0442\u0443\u0440\u0430',
+    charging: '\u0417\u0430\u0440\u044F\u0434\u043A\u0430', discharging: '\u0420\u0430\u0437\u0440\u044F\u0434\u043A\u0430', idle: '\u041F\u0440\u043E\u0441\u0442\u043E\u0439', balancing: '\u0411\u0430\u043B\u0430\u043D\u0441\u0438\u0440\u043E\u0432\u043A\u0430',
+    ctrlCharging: '\u0417\u0430\u0440\u044F\u0434\u043A\u0430', ctrlDischarging: '\u0420\u0430\u0437\u0440\u044F\u0434\u043A\u0430', ctrlBalancer: '\u0411\u0430\u043B\u0430\u043D\u0441\u0438\u0440',
+    descCharging: '\u0412\u043A\u043B\u044E\u0447\u0438\u0442\u044C \u0438\u043B\u0438 \u043E\u0442\u043A\u043B\u044E\u0447\u0438\u0442\u044C \u0437\u0430\u0440\u044F\u0434\u043A\u0443 \u0430\u043A\u043A\u0443\u043C\u0443\u043B\u044F\u0442\u043E\u0440\u0430',
+    descDischarging: '\u0412\u043A\u043B\u044E\u0447\u0438\u0442\u044C \u0438\u043B\u0438 \u043E\u0442\u043A\u043B\u044E\u0447\u0438\u0442\u044C \u0440\u0430\u0437\u0440\u044F\u0434\u043A\u0443 \u0430\u043A\u043A\u0443\u043C\u0443\u043B\u044F\u0442\u043E\u0440\u0430',
+    balDisabled: '\u041E\u0442\u043A\u043B\u044E\u0447\u0435\u043D\u043E', balOff: '\u0411\u0430\u043B\u0430\u043D\u0441\u0438\u0440 \u0432\u044B\u043A\u043B',
+    balActive: '\u0410\u043A\u0442\u0438\u0432\u043D\u0430\u044F \u043F\u0435\u0440\u0435\u0434\u0430\u0447\u0430 \u0447\u0435\u0440\u0435\u0437 \u0441\u0443\u043F\u0435\u0440\u043A\u043E\u043D\u0434\u0435\u043D\u0441\u0430\u0442\u043E\u0440',
+    balEnabledIdle: '\u0412\u043A\u043B\u044E\u0447\u0435\u043D \u00B7 \u0431\u0430\u043B\u0430\u043D\u0441\u0438\u0440\u043E\u0432\u043A\u0430 \u043D\u0435 \u0430\u043A\u0442\u0438\u0432\u043D\u0430',
+    sevenDAvg: '7\u0434 \u0441\u0440', west: '\u0417 est',
+    mVBalancing: '\u043C\u0412 \u2014 \u0411\u0430\u043B\u0430\u043D\u0441\u0438\u0440\u043E\u0432\u043A\u0430', mV: '\u043C\u0412',
+  },
+  'zh-Hans': {
+    solar: '\u592A\u9633\u80FD', live: '\u5B9E\u65F6', battery: '\u7535\u6C60', powerFlow: '\u80FD\u91CF\u6D41\u5411',
+    solarPanels: '\u592A\u9633\u80FD\u7535\u6C60\u677F', analytics: '\u5206\u6790', controls: '\u63A7\u5236',
+    cellsC1C8: '\u7535\u6C60 C1\u2013C8', cellsC9C16: '\u7535\u6C60 C9\u2013C16',
+    voltage: '\u7535\u538B', current: '\u7535\u6D41', power: '\u529F\u7387', remaining: '\u5269\u4F59',
+    energy: '\u80FD\u91CF', todayIn: '\u4ECA\u65E5\u5145\u5165', todayOut: '\u4ECA\u65E5\u653E\u51FA',
+    tte: '\u7A7A\u7535\u65F6\u95F4', ttf: '\u6EE1\u7535\u65F6\u95F4',
+    cycles: '\u5FAA\u73AF', capacity: '\u5BB9\u91CF', nominal: '\u6807\u79F0', config: '\u914D\u7F6E',
+    minCell: '\u6700\u4F4E\u7535\u6C60', maxCell: '\u6700\u9AD8\u7535\u6C60', runtime: '\u8FD0\u884C\u65F6\u95F4', throughput: '\u541E\u5410\u91CF',
+    mosfet: 'MOSFET', bmsModel: 'BMS \u578B\u53F7', firmware: '\u56FA\u4EF6', chemistry: '\u5316\u5B66',
+    batteryNode: '\u7535\u6C60', home: '\u5BB6\u5EAD', solarNode: '\u592A\u9633\u80FD',
+    actual: '\u5B9E\u9645', estimated: '\u4F30\u8BA1', generatedToday: '\u4ECA\u65E5\u53D1\u7535', expected: '\u9884\u8BA1',
+    rated: '\u989D\u5B9A', installed: '\u5DF2\u5B89\u88C5', age: '\u4F7F\u7528\u65F6\u95F4', model: '\u578B\u53F7',
+    type: '\u7C7B\u578B', year1Loss: '\u7B2C1\u5E74\u635F\u8017', annualLoss: '\u5E74\u635F\u8017', nextYear: '\u660E\u5E74',
+    weather: '\u5929\u6C14', condition: '\u5929\u6C14\u72B6\u51B5', temp: '\u6E29\u5EA6', cloud: '\u4E91\u91CF', humidity: '\u6E7F\u5EA6',
+    tabLive: '\u5B9E\u65F6', tabYesterday: '\u6628\u5929', tab7Days: '7\u5929', tab30Days: '30\u5929',
+    chartPower: '\u529F\u7387', chartBatterySOC: '\u7535\u6C60 SOC', chartSolar: '\u592A\u9633\u80FD',
+    legendActual: '\u5B9E\u9645', legendEstimated: '\u4F30\u8BA1',
+    temperature: '\u6E29\u5EA6',
+    charging: '\u5145\u7535\u4E2D', discharging: '\u653E\u7535\u4E2D', idle: '\u5F85\u673A', balancing: '\u5747\u8861\u4E2D',
+    ctrlCharging: '\u5145\u7535', ctrlDischarging: '\u653E\u7535', ctrlBalancer: '\u5747\u8861\u5668',
+    descCharging: '\u542F\u7528\u6216\u7981\u7528\u7535\u6C60\u5145\u7535',
+    descDischarging: '\u542F\u7528\u6216\u7981\u7528\u7535\u6C60\u653E\u7535',
+    balDisabled: '\u5DF2\u7981\u7528', balOff: '\u5747\u8861\u5668\u5173\u95ED',
+    balActive: '\u901A\u8FC7\u8D85\u7EA7\u7535\u5BB9\u5668\u6D3B\u8DC3\u4F20\u8F93',
+    balEnabledIdle: '\u5DF2\u542F\u7528 \u00B7 \u5F53\u524D\u672A\u5747\u8861',
+    sevenDAvg: '7\u5929\u5747', west: '\u897F est',
+    mVBalancing: 'mV \u2014 \u5747\u8861\u4E2D', mV: 'mV',
+  },
+  ja: {
+    solar: '\u30BD\u30FC\u30E9\u30FC', live: '\u30EA\u30A2\u30EB\u30BF\u30A4\u30E0', battery: '\u30D0\u30C3\u30C6\u30EA\u30FC', powerFlow: '\u96FB\u529B\u6D41\u308C',
+    solarPanels: '\u30BD\u30FC\u30E9\u30FC\u30D1\u30CD\u30EB', analytics: '\u5206\u6790', controls: '\u30B3\u30F3\u30C8\u30ED\u30FC\u30EB',
+    cellsC1C8: '\u30BB\u30EB C1\u2013C8', cellsC9C16: '\u30BB\u30EB C9\u2013C16',
+    voltage: '\u96FB\u5727', current: '\u96FB\u6D41', power: '\u96FB\u529B', remaining: '\u6B8B\u91CF',
+    energy: '\u30A8\u30CD\u30EB\u30AE\u30FC', todayIn: '\u4ECA\u65E5\u5145\u96FB', todayOut: '\u4ECA\u65E5\u653E\u96FB',
+    tte: '\u7A7A\u307E\u3067', ttf: '\u6E80\u305F\u3067',
+    cycles: '\u30B5\u30A4\u30AF\u30EB', capacity: '\u5BB9\u91CF', nominal: '\u79F0\u540D', config: '\u8A2D\u5B9A',
+    minCell: '\u6700\u4F4E\u30BB\u30EB', maxCell: '\u6700\u9AD8\u30BB\u30EB', runtime: '\u7A3C\u50CD\u6642\u9593', throughput: '\u30B9\u30EB\u30FC\u30D7\u30C3\u30C8',
+    mosfet: 'MOSFET', bmsModel: 'BMS \u30E2\u30C7\u30EB', firmware: '\u30D5\u30A1\u30FC\u30E0\u30A6\u30A7\u30A2', chemistry: '\u5316\u5B66',
+    batteryNode: '\u30D0\u30C3\u30C6\u30EA\u30FC', home: '\u30DB\u30FC\u30E0', solarNode: '\u30BD\u30FC\u30E9\u30FC',
+    actual: '\u5B9F\u969B', estimated: '\u63A8\u5B9A', generatedToday: '\u4ECA\u65E5\u767A\u96FB', expected: '\u4E88\u60F3',
+    rated: '\u5B9A\u683C', installed: '\u8A2D\u7F6E\u6E08', age: '\u7D4C\u904E', model: '\u30E2\u30C7\u30EB',
+    type: '\u30BF\u30A4\u30D7', year1Loss: '1\u5E74\u76EE\u640D\u8017', annualLoss: '\u5E74\u9593\u640D\u8017', nextYear: '\u7FCC\u5E74',
+    weather: '\u5929\u6C17', condition: '\u72B6\u614B', temp: '\u6C17\u6E29', cloud: '\u66C7', humidity: '\u6E7F\u5EA6',
+    tabLive: '\u30EA\u30A2\u30EB\u30BF\u30A4\u30E0', tabYesterday: '\u6628\u65E5', tab7Days: '7\u65E5\u9593', tab30Days: '30\u65E5\u9593',
+    chartPower: '\u96FB\u529B', chartBatterySOC: '\u30D0\u30C3\u30C6\u30EA\u30FC SOC', chartSolar: '\u30BD\u30FC\u30E9\u30FC',
+    legendActual: '\u5B9F\u969B', legendEstimated: '\u63A8\u5B9A',
+    temperature: '\u6E29\u5EA6',
+    charging: '\u5145\u96FB\u4E2D', discharging: '\u653E\u96FB\u4E2D', idle: '\u30A2\u30A4\u30C9\u30EB', balancing: '\u30D0\u30E9\u30F3\u30B9\u4E2D',
+    ctrlCharging: '\u5145\u96FB', ctrlDischarging: '\u653E\u96FB', ctrlBalancer: '\u30D0\u30E9\u30F3\u30B5',
+    descCharging: '\u30D0\u30C3\u30C6\u30EA\u30FC\u5145\u96FB\u3092\u6709\u52B9\u307E\u305F\u306F\u7121\u52B9\u306B\u3057\u307E\u3059',
+    descDischarging: '\u30D0\u30C3\u30C6\u30EA\u30FC\u653E\u96FB\u3092\u6709\u52B9\u307E\u305F\u306F\u7121\u52B9\u306B\u3057\u307E\u3059',
+    balDisabled: '\u7121\u52B9', balOff: '\u30D0\u30E9\u30F3\u30B5\u30AA\u30D5',
+    balActive: '\u30B9\u30FC\u30D1\u30FC\u30AD\u30E3\u30D1\u30B7\u30BF\u3092\u901A\u3058\u3066\u6D3B\u767A\u306B\u8EE2\u9001',
+    balEnabledIdle: '\u6709\u52B9 \u00B7 \u73FE\u5728\u30D0\u30E9\u30F3\u30B9\u3055\u308C\u3066\u3044\u307E\u305B\u3093',
+    sevenDAvg: '7\u65E5\u5E73\u5747', west: '\u897F est',
+    mVBalancing: 'mV \u2014 \u30D0\u30E9\u30F3\u30B9\u4E2D', mV: 'mV',
+  },
+  ko: {
+    solar: '\uC194\uB77C', live: '\uC2E4\uC2DC\uAC04', battery: '\uBC30\uD130\uB9AC', powerFlow: '\uC804\uB825 \uD750\uB984',
+    solarPanels: '\uC194\uB77C \uD328\uB110', analytics: '\uBD84\uC11D', controls: '\uC81C\uC5B4',
+    cellsC1C8: '\uC140 C1\u2013C8', cellsC9C16: '\uC140 C9\u2013C16',
+    voltage: '\uC804\uC555', current: '\uC804\uB958', power: '\uC804\uB825', remaining: '\uB0A8\uC74C',
+    energy: '\uC5D0\uB108\uC9C0', todayIn: '\uC624\uB298 \uCC44\uC804', todayOut: '\uC624\uB298 \uBC29\uC804',
+    tte: '\uBC29\uC804 \uAE4C\uC9C0', ttf: '\uB9CC\uC804 \uAE4C\uC9C0',
+    cycles: '\uC0AC\uC774\uD074', capacity: '\uC6A9\uB7C9', nominal: '\uBA85\uBAA9', config: '\uAD6C\uC131',
+    minCell: '\uCD5C\uC18C \uC140', maxCell: '\uCD5C\uB300 \uC140', runtime: '\uC791\uB3D9 \uC2DC\uAC04', throughput: '\uC2A4\uB8E8\uD48B',
+    mosfet: 'MOSFET', bmsModel: 'BMS \uBAA8\uB378', firmware: '\uD38C\uC6E8\uC5B4', chemistry: '\uD654\uD559',
+    batteryNode: '\uBC30\uD130\uB9AC', home: '\uC9D1', solarNode: '\uC194\uB77C',
+    actual: '\uC2E4\uC81C', estimated: '\uCD94\uC815', generatedToday: '\uC624\uB298 \uBC1C\uC804', expected: '\uC608\uC0C1',
+    rated: '\uC815\uACA9', installed: '\uC124\uCE58 \uC644\uB8CC', age: '\uC0AC\uC6A9 \uAE30\uAC04', model: '\uBAA8\uB378',
+    type: '\uC720\uD615', year1Loss: '1\uB144\uCC28 \uC190\uC2E4', annualLoss: '\uC5F0\uAC04 \uC190\uC2E4', nextYear: '\uB0B4\uB144',
+    weather: '\uB0A0\uC528', condition: '\uC0C1\uD0DC', temp: '\uAE30\uC628', cloud: '\uAD6C\uB984', humidity: '\uC2B5\uB3C4',
+    tabLive: '\uC2E4\uC2DC\uAC04', tabYesterday: '\uC5B4\uC81C', tab7Days: '7\uC77C', tab30Days: '30\uC77C',
+    chartPower: '\uC804\uB825', chartBatterySOC: '\uBC30\uD130\uB9AC SOC', chartSolar: '\uC194\uB77C',
+    legendActual: '\uC2E4\uC81C', legendEstimated: '\uCD94\uC815',
+    temperature: '\uC628\uB3C4',
+    charging: '\uCC44\uC804 \uC911', discharging: '\uBC29\uC804 \uC911', idle: '\uB300\uAE30', balancing: '\uADE0\uD615 \uC911',
+    ctrlCharging: '\uCC44\uC804', ctrlDischarging: '\uBC29\uC804', ctrlBalancer: '\uADE0\uD615\uAE30',
+    descCharging: '\uBC30\uD130\uB9AC \uCC44\uC804 \uD65C\uC131\uD654 \uB610\uB294 \uBE44\uD65C\uC131\uD654',
+    descDischarging: '\uBC30\uD130\uB9AC \uBC29\uC804 \uD65C\uC131\uD654 \uB610\uB294 \uBE44\uD65C\uC131\uD654',
+    balDisabled: '\uBE44\uD65C\uC131\uD654', balOff: '\uADE0\uD615\uAE30 \uB044\uAE30',
+    balActive: '\uC288\uD37C\uCEF4\uC2DC\uD130\uB97C \uD1B5\uD574 \uD65C\uBC1C\uD55C \uC804\uC1A1',
+    balEnabledIdle: '\uD65C\uC131\uD654 \u00B7 \uD604\uC7AC \uADE0\uD615 \uC548 \uD568',
+    sevenDAvg: '7\uC77C \uD3C9\uADE0', west: '\uC11C est',
+    mVBalancing: 'mV \u2014 \uADE0\uD615 \uC911', mV: 'mV',
+  },
+  tr: {
+    solar: 'G\u00FCne\u015F', live: 'Canl\u0131', battery: 'Batarya', powerFlow: 'G\u00FC\u00E7 ak\u0131\u015F\u0131',
+    solarPanels: 'G\u00FCne\u015F panelleri', analytics: 'Analiz', controls: 'Kontroller',
+    cellsC1C8: 'H\u00FCcreler C1\u2013C8', cellsC9C16: 'H\u00FCcreler C9\u2013C16',
+    voltage: 'Gerilim', current: 'Ak\u0131m', power: 'G\u00FC\u00E7', remaining: 'Kalan',
+    energy: 'Enerji', todayIn: 'Bug\u00FCn giri\u015F', todayOut: 'Bug\u00FCn \u00E7\u0131k\u0131\u015F',
+    tte: 'Bo\u015Falma s\u00FCresi', ttf: 'Dolma s\u00FCresi',
+    cycles: 'D\u00F6ng\u00FCler', capacity: 'Kapasite', nominal: 'Nominal', config: 'Yap\u0131land\u0131rma',
+    minCell: 'H\u00FCcre min', maxCell: 'H\u00FCcre maks', runtime: '\u00C7al\u0131\u015Fma s\u00FCresi', throughput: 'Verim',
+    mosfet: 'MOSFET', bmsModel: 'BMS Modeli', firmware: 'Firmware', chemistry: 'Kimya',
+    batteryNode: 'Batarya', home: 'Ev', solarNode: 'G\u00FCne\u015F',
+    actual: 'ger\u00E7ek', estimated: 'tahmini', generatedToday: 'bug\u00FCn \u00FCretilen', expected: 'beklenen',
+    rated: 'Nominal', installed: 'Kurulu', age: 'Ya\u015F', model: 'Model',
+    type: 'Tip', year1Loss: '1. y\u0131l kayb\u0131', annualLoss: 'Y\u0131ll\u0131k kay\u0131p', nextYear: 'Gelecek y\u0131l',
+    weather: 'HAVA', condition: 'Durum', temp: 'S\u0131cakl\u0131k', cloud: 'Bulut', humidity: 'Nem',
+    tabLive: 'Canl\u0131', tabYesterday: 'D\u00FCn', tab7Days: '7 g\u00FCn', tab30Days: '30 g\u00FCn',
+    chartPower: 'G\u00FC\u00E7', chartBatterySOC: 'Batarya SOC', chartSolar: 'G\u00FCne\u015F',
+    legendActual: 'Ger\u00E7ek', legendEstimated: 'Tahmini',
+    temperature: 'S\u0131cakl\u0131k',
+    charging: '\u015Earj', discharging: 'De\u015Farj', idle: 'Bo\u015Fta', balancing: 'Dengeleme',
+    ctrlCharging: '\u015Earj', ctrlDischarging: 'De\u015Farj', ctrlBalancer: 'Dengeleyici',
+    descCharging: 'Batarya \u015Farj\u0131n\u0131 etkinle\u015Ftir veya devre d\u0131\u015F\u0131 b\u0131rak',
+    descDischarging: 'Batarya de\u015Farj\u0131n\u0131 etkinle\u015Ftir veya devre d\u0131\u015F\u0131 b\u0131rak',
+    balDisabled: 'Devre d\u0131\u015F\u0131', balOff: 'Dengeleyici kapal\u0131',
+    balActive: 'S\u00FCper kapasit\u00F6r \u00FCzerinden aktif aktar\u0131m',
+    balEnabledIdle: 'Etkin \u00B7 \u015Fu anda dengeleme yok',
+    sevenDAvg: '7g ort', west: 'B est',
+    mVBalancing: 'mV \u2014 Dengeleme', mV: 'mV',
+  },
+  cs: {
+    solar: 'Sol\u00E1rn\u00ED', live: '\u017Div\u011B', battery: 'Baterie', powerFlow: 'Tok energie',
+    solarPanels: 'Sol\u00E1rn\u00ED panely', analytics: 'Anal\u00FDza', controls: 'Ovl\u00E1d\u00E1n\u00ED',
+    cellsC1C8: 'Bu\u0148ky C1\u2013C8', cellsC9C16: 'Bu\u0148ky C9\u2013C16',
+    voltage: 'Nap\u011Bt\u00ED', current: 'Proud', power: 'V\u00FDkon', remaining: 'Zb\u00FDv\u00E1',
+    energy: 'Energie', todayIn: 'Dnes vstup', todayOut: 'Dnes v\u00FDstup',
+    tte: '\u010Cas do vybit\u00ED', ttf: '\u010Cas do nabit\u00ED',
+    cycles: 'Cykly', capacity: 'Kapacita', nominal: 'Nomin\u00E1ln\u00ED', config: 'Konfig',
+    minCell: 'Bu\u0148ka min', maxCell: 'Bu\u0148ka max', runtime: 'Doba b\u011Bhu', throughput: 'Propustnost',
+    mosfet: 'MOSFET', bmsModel: 'Model BMS', firmware: 'Firmware', chemistry: 'Chemie',
+    batteryNode: 'Baterie', home: 'D\u016Fm', solarNode: 'Sol\u00E1rn\u00ED',
+    actual: 'skute\u010Dn\u00FD', estimated: 'odhadovan\u00FD', generatedToday: 'vyrobeno dnes', expected: 'o\u010dek\u00E1van\u00FD',
+    rated: 'Nomin\u00E1ln\u00ED', installed: 'Instalov\u00E1no', age: 'St\u00E1\u0159\u00ED', model: 'Model',
+    type: 'Typ', year1Loss: 'Ztr\u00E1ta rok 1', annualLoss: 'Ro\u010Dn\u00ED ztr\u00E1ta', nextYear: 'P\u0159\u00ED\u0161t\u00ED rok',
+    weather: 'PO\u010CAS\u00CD', condition: 'Podm\u00EDnky', temp: 'Teplota', cloud: 'Obla\u010Dnost', humidity: 'Vlhkost',
+    tabLive: '\u017Div\u011B', tabYesterday: 'V\u010Dera', tab7Days: '7 dn\u00ED', tab30Days: '30 dn\u00ED',
+    chartPower: 'V\u00FDkon', chartBatterySOC: 'Baterie SOC', chartSolar: 'Sol\u00E1rn\u00ED',
+    legendActual: 'Skute\u010Dn\u00FD', legendEstimated: 'Odhadovan\u00FD',
+    temperature: 'Teplota',
+    charging: 'Nab\u00EDjen\u00ED', discharging: 'Vyb\u00EDjen\u00ED', idle: 'Ne\u010Dinn\u00FD', balancing: 'Vyva\u017Eov\u00E1n\u00ED',
+    ctrlCharging: 'Nab\u00EDjen\u00ED', ctrlDischarging: 'Vyb\u00EDjen\u00ED', ctrlBalancer: 'Balan\u010Der',
+    descCharging: 'Povolit nebo zak\u00E1zat nab\u00EDjen\u00ED baterie',
+    descDischarging: 'Povolit nebo zak\u00E1zat vyb\u00EDjen\u00ED baterie',
+    balDisabled: 'Zak\u00E1z\u00E1no', balOff: 'Balan\u010Der vypnut',
+    balActive: 'Aktivn\u00ED p\u0159enos p\u0159es superkondenz\u00E1tor',
+    balEnabledIdle: 'Povoleno \u00B7 aktu\u00E1ln\u011B nevyva\u017Euje',
+    sevenDAvg: '7d pr\u016Fm', west: 'Z est',
+    mVBalancing: 'mV \u2014 Vyva\u017Eov\u00E1n\u00ED', mV: 'mV',
+  },
+  uk: {
+    solar: '\u0421\u043E\u043D\u044F\u0447\u043D\u0430', live: '\u041D\u0430\u0436\u0438\u0432\u043E', battery: '\u0410\u043A\u0443\u043C\u0443\u043B\u044F\u0442\u043E\u0440', powerFlow: '\u041F\u043E\u0442\u0456\u043A \u0435\u043D\u0435\u0440\u0433\u0456\u0457',
+    solarPanels: '\u0421\u043E\u043D\u044F\u0447\u043D\u0456 \u043F\u0430\u043D\u0435\u043B\u0456', analytics: '\u0410\u043D\u0430\u043B\u0456\u0442\u0438\u043A\u0430', controls: '\u041A\u0435\u0440\u0443\u0432\u0430\u043D\u043D\u044F',
+    cellsC1C8: '\u041A\u043E\u043C\u0456\u0440\u043A\u0438 C1\u2013C8', cellsC9C16: '\u041A\u043E\u043C\u0456\u0440\u043A\u0438 C9\u2013C16',
+    voltage: '\u041D\u0430\u043F\u0440\u0443\u0433\u0430', current: '\u0421\u0442\u0440\u0443\u043C', power: '\u041F\u043E\u0442\u0443\u0436\u043D\u0456\u0441\u0442\u044C', remaining: '\u0417\u0430\u043B\u0438\u0448\u043E\u043A',
+    energy: '\u0415\u043D\u0435\u0440\u0433\u0456\u044F', todayIn: '\u0421\u044C\u043E\u0433\u043E\u0434\u043D\u0456 \u0432\u0445\u0456\u0434', todayOut: '\u0421\u044C\u043E\u0433\u043E\u0434\u043D\u0456 \u0432\u0438\u0445\u0456\u0434',
+    tte: '\u0427\u0430\u0441 \u0434\u043E \u0440\u043E\u0437\u0440\u044F\u0434\u0443', ttf: '\u0427\u0430\u0441 \u0434\u043E \u0437\u0430\u0440\u044F\u0434\u0443',
+    cycles: '\u0426\u0438\u043A\u043B\u0438', capacity: '\u0404\u043C\u043D\u0456\u0441\u0442\u044C', nominal: '\u041D\u043E\u043C\u0456\u043D\u0430\u043B', config: '\u041A\u043E\u043D\u0444\u0456\u0433',
+    minCell: '\u041A\u043E\u043C\u0456\u0440\u043A\u0430 \u043C\u0456\u043D', maxCell: '\u041A\u043E\u043C\u0456\u0440\u043A\u0430 \u043C\u0430\u043A\u0441', runtime: '\u0427\u0430\u0441 \u0440\u043E\u0431\u043E\u0442\u0438', throughput: '\u041F\u0440\u043E\u043F\u0443\u0441\u043A\u043D\u0430 \u0437\u0434\u0430\u0442\u043D\u0456\u0441\u0442\u044C',
+    mosfet: 'MOSFET', bmsModel: '\u041C\u043E\u0434\u0435\u043B\u044C BMS', firmware: '\u041F\u0440\u043E\u0448\u0438\u0432\u043A\u0430', chemistry: '\u0425\u0456\u043C\u0456\u044F',
+    batteryNode: '\u0410\u043A\u0443\u043C\u0443\u043B\u044F\u0442\u043E\u0440', home: '\u0414\u0456\u043C', solarNode: '\u0421\u043E\u043D\u044F\u0447\u043D\u0430',
+    actual: '\u0444\u0430\u043A\u0442\u0438\u0447\u043D\u0438\u0439', estimated: '\u043E\u0446\u0456\u043D\u043E\u0447\u043D\u0438\u0439', generatedToday: '\u0432\u0438\u0440\u043E\u0431\u043B\u0435\u043D\u043E \u0441\u044C\u043E\u0433\u043E\u0434\u043D\u0456', expected: '\u043E\u0447\u0456\u043A\u0443\u0454\u0442\u044C\u0441\u044F',
+    rated: '\u041D\u043E\u043C\u0456\u043D\u0430\u043B\u044C\u043D\u0430', installed: '\u0412\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D\u043E', age: '\u0412\u0456\u043A', model: '\u041C\u043E\u0434\u0435\u043B\u044C',
+    type: '\u0422\u0438\u043F', year1Loss: '\u0412\u0442\u0440\u0430\u0442\u0430 \u0440\u0456\u043A 1', annualLoss: '\u0420\u0456\u0447\u043D\u0430 \u0432\u0442\u0440\u0430\u0442\u0430', nextYear: '\u041D\u0430\u0441\u0442. \u0440\u0456\u043A',
+    weather: '\u041F\u041E\u0413\u041E\u0414\u0410', condition: '\u0423\u043C\u043E\u0432\u0438', temp: '\u0422\u0435\u043C\u043F', cloud: '\u0425\u043C\u0430\u0440\u043D\u0456\u0441\u0442\u044C', humidity: '\u0412\u043E\u043B\u043E\u0433\u0456\u0441\u0442\u044C',
+    tabLive: '\u041D\u0430\u0436\u0438\u0432\u043E', tabYesterday: '\u0412\u0447\u043E\u0440\u0430', tab7Days: '7 \u0434\u043D\u0456\u0432', tab30Days: '30 \u0434\u043D\u0456\u0432',
+    chartPower: '\u041F\u043E\u0442\u0443\u0436\u043D\u0456\u0441\u0442\u044C', chartBatterySOC: '\u0410\u043A\u0443\u043C\u0443\u043B\u044F\u0442\u043E\u0440 SOC', chartSolar: '\u0421\u043E\u043D\u044F\u0447\u043D\u0430',
+    legendActual: '\u0424\u0430\u043A\u0442\u0438\u0447\u043D\u0438\u0439', legendEstimated: '\u041E\u0446\u0456\u043D\u043E\u0447\u043D\u0438\u0439',
+    temperature: '\u0422\u0435\u043C\u043F\u0435\u0440\u0430\u0442\u0443\u0440\u0430',
+    charging: '\u0417\u0430\u0440\u044F\u0434\u043A\u0430', discharging: '\u0420\u043E\u0437\u0440\u044F\u0434\u043A\u0430', idle: '\u041F\u0440\u043E\u0441\u0442\u0456\u0439', balancing: '\u0411\u0430\u043B\u0430\u043D\u0441\u0443\u0432\u0430\u043D\u043D\u044F',
+    ctrlCharging: '\u0417\u0430\u0440\u044F\u0434\u043A\u0430', ctrlDischarging: '\u0420\u043E\u0437\u0440\u044F\u0434\u043A\u0430', ctrlBalancer: '\u0411\u0430\u043B\u0430\u043D\u0441\u0443\u0432\u0430\u043B\u044C\u043D\u0438\u043A',
+    descCharging: '\u0423\u0432\u0456\u043C\u043A\u043D\u0443\u0442\u0438 \u0430\u0431\u043E \u0432\u0438\u043C\u043A\u043D\u0443\u0442\u0438 \u0437\u0430\u0440\u044F\u0434\u043A\u0443 \u0430\u043A\u0443\u043C\u0443\u043B\u044F\u0442\u043E\u0440\u0430',
+    descDischarging: '\u0423\u0432\u0456\u043C\u043A\u043D\u0443\u0442\u0438 \u0430\u0431\u043E \u0432\u0438\u043C\u043A\u043D\u0443\u0442\u0438 \u0440\u043E\u0437\u0440\u044F\u0434\u043A\u0443 \u0430\u043A\u0443\u043C\u0443\u043B\u044F\u0442\u043E\u0440\u0430',
+    balDisabled: '\u0412\u0438\u043C\u043A\u043D\u0435\u043D\u043E', balOff: '\u0411\u0430\u043B\u0430\u043D\u0441\u0443\u0432\u0430\u043B\u044C\u043D\u0438\u043A \u0432\u0438\u043C\u043A.',
+    balActive: '\u0410\u043A\u0442\u0438\u0432\u043D\u0430 \u043F\u0435\u0440\u0435\u0434\u0430\u0447\u0430 \u0447\u0435\u0440\u0435\u0437 \u0441\u0443\u043F\u0435\u0440\u043A\u043E\u043D\u0434\u0435\u043D\u0441\u0430\u0442\u043E\u0440',
+    balEnabledIdle: '\u0423\u0432\u0456\u043C\u043A\u043D\u0435\u043D\u043E \u00B7 \u043D\u0435 \u0431\u0430\u043B\u0430\u043D\u0441\u0443\u0454\u0442\u044C\u0441\u044F',
+    sevenDAvg: '7\u0434 \u0441\u0435\u0440', west: '\u0417 est',
+    mVBalancing: '\u043C\u0412 \u2014 \u0411\u0430\u043B\u0430\u043D\u0441\u0443\u0432\u0430\u043D\u043D\u044F', mV: '\u043C\u0412',
+  },
 };
-function t(lang, key) { return (L[lang] || L.en)[key] || L.en[key] || key; }
+function t(lang, key) {
+  if (L[lang]) return L[lang][key] || L.en[key] || key;
+  const base = lang.split('-')[0];
+  if (L[base]) return L[base][key] || L.en[key] || key;
+  return L.en[key] || key;
+}
 
 // ============ CONSTANTS ============
 
@@ -310,8 +887,14 @@ class SolarDashboard extends HTMLElement {
   }
 
   set hass(hass) {
+    const langChanged = this._bridge._hass?.language !== hass.language;
     this._bridge.update(hass);
     this._applyTheme();
+    if (langChanged) {
+      this._render();
+      this._refreshAllUI();
+      return;
+    }
     if (!this._initialized) {
       this._init();
       this._initialized = true;
@@ -349,12 +932,17 @@ class SolarDashboard extends HTMLElement {
   set panel(panel) { this._panel = panel; }
   set narrow(narrow) { this._narrow = narrow; }
 
-  // ============ INIT ============
-  _init() {
+  // ============ RE-RENDER (language change) ============
+  _render() {
     const root = this.shadowRoot;
-    root.innerHTML = `<style>${STYLES}</style>${this._getHTML()}`;
+    if (!root) return;
+    const lang = this._bridge._hass?.language || 'en';
+    root.innerHTML = `<style>${STYLES}</style>${this._getHTML(lang)}`;
+    this._cacheElements();
+  }
 
-    // Cache frequently-queried element refs
+  _cacheElements() {
+    const root = this.shadowRoot;
     this._els = {
       battRing:      root.getElementById('battRing'),
       battSOC:       root.getElementById('battSOC'),
@@ -373,7 +961,6 @@ class SolarDashboard extends HTMLElement {
       sysThroughput: root.getElementById('sysThroughput'),
       sysMinCell:    root.getElementById('sysMinCell'),
       sysMaxCell:    root.getElementById('sysMaxCell'),
-      // P4: Additional cached refs to eliminate per-update getElementById calls
       sysFirmware:   root.getElementById('sysFirmware'),
       sysBmsModel:   root.getElementById('sysBmsModel'),
       battMosfetTemp:root.getElementById('battMosfetTemp'),
@@ -382,9 +969,18 @@ class SolarDashboard extends HTMLElement {
       sysCapacity:   root.getElementById('sysCapacity'),
       sysChemistry:  root.getElementById('sysChemistry'),
       wxSource:      root.getElementById('wxSource'),
-      // NI2: Cache dashboard root to eliminate repeated queries
       dashRoot:      root.querySelector('.dashboard-root'),
     };
+  }
+
+  // ============ INIT ============
+  _init() {
+    const root = this.shadowRoot;
+    const lang = this._bridge._hass?.language || 'en';
+    root.innerHTML = `<style>${STYLES}</style>${this._getHTML(lang)}`;
+
+    // Cache frequently-queried element refs
+    this._cacheElements();
 
     // Apply theme and enable JS-dependent animations
     this._applyTheme();
@@ -549,22 +1145,22 @@ class SolarDashboard extends HTMLElement {
   }
 
   // ============ HTML TEMPLATE ============
-  _getHTML() {
+  _getHTML(lang) {
     return `
 <div class="dashboard-root" data-theme="dark">
 <canvas id="weatherParticles"></canvas>
 <div class="container">
   <header class="header">
     <div style="display:flex;align-items:center;gap:12px">
-      <h1 style="font-size:24px;font-weight:700">Solar</h1>
+      <h1 style="font-size:24px;font-weight:700">${t(lang, 'solar')}</h1>
       <div class="live-dot"></div>
-      <span style="font-size:12px;font-weight:600;color:var(--green)">Live</span>
+      <span style="font-size:12px;font-weight:600;color:var(--green)">${t(lang, 'live')}</span>
     </div>
     <div id="clock" style="font-size:14px;font-weight:500;color:var(--text2)"></div>
   </header>
   <div class="top-row">
     <div class="card" id="batteryHero">
-      <h2 class="section-title">Battery</h2>
+      <h2 class="section-title">${t(lang, 'battery')}</h2>
       <div style="display:flex;flex-direction:column;align-items:center;">
         <svg viewBox="0 0 200 200" width="200" height="200">
           <circle cx="100" cy="100" r="80" fill="none" stroke="var(--glass-border)" stroke-width="10"/>
@@ -573,44 +1169,44 @@ class SolarDashboard extends HTMLElement {
         </svg>
         <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
           <div id="battStatusDot" style="width:8px;height:8px;border-radius:50%;background:var(--text2);animation:pulse 2s ease-in-out infinite;"></div>
-          <span id="battStatus" style="font-size:13px;font-weight:600;">Idle</span>
+          <span id="battStatus" style="font-size:13px;font-weight:600;">${t(lang, 'idle')}</span>
         </div>
       </div>
       <div class="stat-grid">
-        <div class="stat-item"><div class="stat-val" id="battVolt">--</div><div class="stat-label">Voltage</div></div>
-        <div class="stat-item"><div class="stat-val" id="battCurr">--</div><div class="stat-label">Current</div></div>
-        <div class="stat-item"><div class="stat-val" id="battPow">--</div><div class="stat-label">Power</div></div>
-        <div class="stat-item"><div class="stat-val" id="battAh">--</div><div class="stat-label">Remaining</div></div>
+        <div class="stat-item"><div class="stat-val" id="battVolt">--</div><div class="stat-label">${t(lang, 'voltage')}</div></div>
+        <div class="stat-item"><div class="stat-val" id="battCurr">--</div><div class="stat-label">${t(lang, 'current')}</div></div>
+        <div class="stat-item"><div class="stat-val" id="battPow">--</div><div class="stat-label">${t(lang, 'power')}</div></div>
+        <div class="stat-item"><div class="stat-val" id="battAh">--</div><div class="stat-label">${t(lang, 'remaining')}</div></div>
       </div>
       <div class="stat-grid">
-        <div class="stat-item"><div class="stat-val" id="battEnergy">--</div><div class="stat-label">Energy</div></div>
-        <div class="stat-item"><div class="stat-val" id="battTodayIn">--</div><div class="stat-label">Today In</div></div>
-        <div class="stat-item"><div class="stat-val" id="battTodayOut">--</div><div class="stat-label">Today Out</div></div>
-        <div class="stat-item"><div class="stat-val" id="battTTE">--</div><div class="stat-label" id="battTTELabel">Time to Empty</div></div>
+        <div class="stat-item"><div class="stat-val" id="battEnergy">--</div><div class="stat-label">${t(lang, 'energy')}</div></div>
+        <div class="stat-item"><div class="stat-val" id="battTodayIn">--</div><div class="stat-label">${t(lang, 'todayIn')}</div></div>
+        <div class="stat-item"><div class="stat-val" id="battTodayOut">--</div><div class="stat-label">${t(lang, 'todayOut')}</div></div>
+        <div class="stat-item"><div class="stat-val" id="battTTE">--</div><div class="stat-label" id="battTTELabel">${t(lang, 'tte')}</div></div>
       </div>
       <div class="stat-divider"></div>
       <div class="info-row">
-        <div class="inf"><div class="inf-v" id="sysCycles">--</div><div class="inf-k">Cycles</div></div>
-        <div class="inf"><div class="inf-v" id="sysCapacity">215 Ah</div><div class="inf-k">Capacity</div></div>
-        <div class="inf"><div class="inf-v" id="sysNominal">51.2 V</div><div class="inf-k">Nominal</div></div>
-        <div class="inf"><div class="inf-v" id="sysConfig">16S</div><div class="inf-k">Config</div></div>
+        <div class="inf"><div class="inf-v" id="sysCycles">--</div><div class="inf-k">${t(lang, 'cycles')}</div></div>
+        <div class="inf"><div class="inf-v" id="sysCapacity">215 Ah</div><div class="inf-k">${t(lang, 'capacity')}</div></div>
+        <div class="inf"><div class="inf-v" id="sysNominal">51.2 V</div><div class="inf-k">${t(lang, 'nominal')}</div></div>
+        <div class="inf"><div class="inf-v" id="sysConfig">16S</div><div class="inf-k">${t(lang, 'config')}</div></div>
       </div>
       <div class="info-row">
-        <div class="inf"><div class="inf-v" id="sysMinCell">-- V</div><div class="inf-k">Min Cell</div></div>
-        <div class="inf"><div class="inf-v" id="sysMaxCell">-- V</div><div class="inf-k">Max Cell</div></div>
-        <div class="inf"><div class="inf-v" id="sysRuntime">--</div><div class="inf-k">Runtime</div></div>
-        <div class="inf"><div class="inf-v" id="sysThroughput">--</div><div class="inf-k">Throughput</div></div>
+        <div class="inf"><div class="inf-v" id="sysMinCell">-- V</div><div class="inf-k">${t(lang, 'minCell')}</div></div>
+        <div class="inf"><div class="inf-v" id="sysMaxCell">-- V</div><div class="inf-k">${t(lang, 'maxCell')}</div></div>
+        <div class="inf"><div class="inf-v" id="sysRuntime">--</div><div class="inf-k">${t(lang, 'runtime')}</div></div>
+        <div class="inf"><div class="inf-v" id="sysThroughput">--</div><div class="inf-k">${t(lang, 'throughput')}</div></div>
       </div>
       <div class="info-row">
-        <div class="inf"><div class="inf-v" id="battMosfetTemp">--</div><div class="inf-k">MOSFET</div></div>
-        <div class="inf"><div class="inf-v" id="sysBmsModel">--</div><div class="inf-k">BMS Model</div></div>
-        <div class="inf"><div class="inf-v" id="sysFirmware">--</div><div class="inf-k">Firmware</div></div>
-        <div class="inf"><div class="inf-v" id="sysChemistry">LiFePO\u2084</div><div class="inf-k">Chemistry</div></div>
+        <div class="inf"><div class="inf-v" id="battMosfetTemp">--</div><div class="inf-k">${t(lang, 'mosfet')}</div></div>
+        <div class="inf"><div class="inf-v" id="sysBmsModel">--</div><div class="inf-k">${t(lang, 'bmsModel')}</div></div>
+        <div class="inf"><div class="inf-v" id="sysFirmware">--</div><div class="inf-k">${t(lang, 'firmware')}</div></div>
+        <div class="inf"><div class="inf-v" id="sysChemistry">LiFePO\u2084</div><div class="inf-k">${t(lang, 'chemistry')}</div></div>
       </div>
     </div>
     <div class="right-col">
       <div class="card" id="powerFlow">
-        <h2 class="section-title">Power Flow</h2>
+        <h2 class="section-title">${t(lang, 'powerFlow')}</h2>
         <div class="flow">
           <div class="flow-node">
             <div class="flow-icon" id="iconSolar">
@@ -626,7 +1222,7 @@ class SolarDashboard extends HTMLElement {
                 <line x1="13.6" y1="34.4" x2="9.37" y2="38.63"/>
               </svg>
             </div>
-            <span class="flow-label">Solar</span>
+            <span class="flow-label">${t(lang, 'solarNode')}</span>
           </div>
           <div class="flow-line-wrap" id="flowWrap1">
             <div class="flow-line" id="flowLine1"></div>
@@ -642,7 +1238,7 @@ class SolarDashboard extends HTMLElement {
               </svg>
               <svg id="battArcs" viewBox="0 0 48 48" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;"></svg>
             </div>
-            <span class="flow-label">Battery</span>
+            <span class="flow-label">${t(lang, 'batteryNode')}</span>
           </div>
           <div class="flow-line-wrap" id="flowWrap2">
             <div class="flow-line" id="flowLine2"></div>
@@ -659,26 +1255,26 @@ class SolarDashboard extends HTMLElement {
                 <rect class="home-window" x="26" y="28" width="5" height="5" rx="0.5"/>
               </svg>
             </div>
-            <span class="flow-label">Home</span>
+            <span class="flow-label">${t(lang, 'home')}</span>
           </div>
         </div>
       </div>
       <div class="card" id="solarCard">
-        <h2 class="section-title">Solar Panels</h2>
+        <h2 class="section-title">${t(lang, 'solarPanels')}</h2>
         <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
           <span id="solActual" class="sol-output" style="color:var(--green)">-- W</span>
-          <span style="font-size:13px;color:var(--text2)">actual</span>
+          <span style="font-size:13px;color:var(--text2)">${t(lang, 'actual')}</span>
         </div>
         <div style="display:flex;align-items:baseline;gap:12px;margin-top:4px;flex-wrap:wrap">
           <span id="solOutput" style="font-size:20px;font-weight:700;color:var(--orange)">--- W</span>
-          <span style="font-size:13px;color:var(--text2)">estimated</span>
+          <span style="font-size:13px;color:var(--text2)">${t(lang, 'estimated')}</span>
         </div>
         <div style="display:flex;align-items:baseline;gap:8px;margin-top:4px;flex-wrap:wrap">
           <span id="solTodayGen" style="font-size:15px;font-weight:600;color:var(--green)">--</span>
-          <span style="font-size:12px;color:var(--text3)">generated today</span>
+          <span style="font-size:12px;color:var(--text3)">${t(lang, 'generatedToday')}</span>
           <span style="font-size:12px;color:var(--text3)">&middot;</span>
           <span id="solForecast" style="font-size:15px;font-weight:600;color:var(--text2)">--</span>
-          <span style="font-size:12px;color:var(--text3)">expected</span>
+          <span style="font-size:12px;color:var(--text3)">${t(lang, 'expected')}</span>
         </div>
         <div class="health-bar"><div class="health-fill" id="solDegFill"></div></div>
         <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:600;">
@@ -686,55 +1282,55 @@ class SolarDashboard extends HTMLElement {
           <span id="solDegPct" style="color:var(--red)">--%</span>
         </div>
         <div class="stat-grid">
-          <div class="stat-item"><div class="stat-val" id="solRated">--</div><div class="stat-label">Rated</div></div>
-          <div class="stat-item"><div class="stat-val" id="solInstalled">--</div><div class="stat-label">Installed</div></div>
-          <div class="stat-item"><div class="stat-val" id="solAge">--</div><div class="stat-label">Age</div></div>
-          <div class="stat-item"><div class="stat-val" id="solModel">--</div><div class="stat-label">Model</div></div>
+          <div class="stat-item"><div class="stat-val" id="solRated">--</div><div class="stat-label">${t(lang, 'rated')}</div></div>
+          <div class="stat-item"><div class="stat-val" id="solInstalled">--</div><div class="stat-label">${t(lang, 'installed')}</div></div>
+          <div class="stat-item"><div class="stat-val" id="solAge">--</div><div class="stat-label">${t(lang, 'age')}</div></div>
+          <div class="stat-item"><div class="stat-val" id="solModel">--</div><div class="stat-label">${t(lang, 'model')}</div></div>
         </div>
         <div class="stat-grid">
-          <div class="stat-item"><div class="stat-val" id="solType">--</div><div class="stat-label">Type</div></div>
-          <div class="stat-item"><div class="stat-val" id="solYr1">--</div><div class="stat-label">Year 1 Loss</div></div>
-          <div class="stat-item"><div class="stat-val" id="solYrN">--</div><div class="stat-label">Annual Loss</div></div>
-          <div class="stat-item"><div class="stat-val" id="solNextYr">--</div><div class="stat-label">Next Year</div></div>
+          <div class="stat-item"><div class="stat-val" id="solType">--</div><div class="stat-label">${t(lang, 'type')}</div></div>
+          <div class="stat-item"><div class="stat-val" id="solYr1">--</div><div class="stat-label">${t(lang, 'year1Loss')}</div></div>
+          <div class="stat-item"><div class="stat-val" id="solYrN">--</div><div class="stat-label">${t(lang, 'annualLoss')}</div></div>
+          <div class="stat-item"><div class="stat-val" id="solNextYr">--</div><div class="stat-label">${t(lang, 'nextYear')}</div></div>
         </div>
         <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--glass-border)">
-          <div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:1px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center"><span>WEATHER</span><span id="wxSource" style="font-size:9px;font-weight:500;letter-spacing:0.4px;opacity:0.45;text-transform:none"></span></div>
+          <div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:1px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center"><span>${t(lang, 'weather')}</span><span id="wxSource" style="font-size:9px;font-weight:500;letter-spacing:0.4px;opacity:0.45;text-transform:none"></span></div>
           <div class="stat-grid">
-            <div class="stat-item"><div class="stat-val" id="wxCondition">--</div><div class="stat-label">Condition</div></div>
-            <div class="stat-item"><div class="stat-val" id="wxTemp">--</div><div class="stat-label">Temp</div></div>
-            <div class="stat-item"><div class="stat-val" id="wxCloud">--</div><div class="stat-label">Cloud</div></div>
-            <div class="stat-item"><div class="stat-val" id="wxHumid">--</div><div class="stat-label">Humidity</div></div>
+            <div class="stat-item"><div class="stat-val" id="wxCondition">--</div><div class="stat-label">${t(lang, 'condition')}</div></div>
+            <div class="stat-item"><div class="stat-val" id="wxTemp">--</div><div class="stat-label">${t(lang, 'temp')}</div></div>
+            <div class="stat-item"><div class="stat-val" id="wxCloud">--</div><div class="stat-label">${t(lang, 'cloud')}</div></div>
+            <div class="stat-item"><div class="stat-val" id="wxHumid">--</div><div class="stat-label">${t(lang, 'humidity')}</div></div>
           </div>
         </div>
       </div>
     </div>
   </div>
   <div class="card" id="chartsCard" style="margin-bottom:16px">
-    <h2 class="section-title">Analytics</h2>
+    <h2 class="section-title">${t(lang, 'analytics')}</h2>
     <div class="chart-tabs" id="chartTabs">
-      <button class="chart-tab active" data-range="Live">Live</button>
-      <button class="chart-tab" data-range="1D">Yesterday</button>
-      <button class="chart-tab" data-range="7D">7 Days</button>
-      <button class="chart-tab" data-range="30D">30 Days</button>
+      <button class="chart-tab active" data-range="Live">${t(lang, 'tabLive')}</button>
+      <button class="chart-tab" data-range="1D">${t(lang, 'tabYesterday')}</button>
+      <button class="chart-tab" data-range="7D">${t(lang, 'tab7Days')}</button>
+      <button class="chart-tab" data-range="30D">${t(lang, 'tab30Days')}</button>
     </div>
     <div class="chart-grid">
       <div class="chart-wrap">
-        <div class="chart-title">Power</div>
+        <div class="chart-title">${t(lang, 'chartPower')}</div>
         <div class="chart-value"><span id="pwrVal">--</span></div>
         <canvas id="chartPower"></canvas>
       </div>
       <div class="chart-wrap">
-        <div class="chart-title">Battery SOC</div>
+        <div class="chart-title">${t(lang, 'chartBatterySOC')}</div>
         <div class="chart-value"><span id="socVal">--</span></div>
         <canvas id="chartSOC"></canvas>
       </div>
       <div class="chart-wrap">
-        <div class="chart-title">Solar</div>
+        <div class="chart-title">${t(lang, 'chartSolar')}</div>
         <div class="chart-value"><span id="solVal">--</span></div>
         <canvas id="chartSolar"></canvas>
         <div style="display:flex;gap:12px;margin-top:6px;font-size:11px;">
-          <span style="color:var(--green);font-weight:600;">&#9632; Actual</span>
-          <span id="solarOverlayLabel" style="color:var(--orange);font-weight:600;">&#9632; Estimated</span>
+          <span style="color:var(--green);font-weight:600;">&#9632; ${t(lang, 'legendActual')}</span>
+          <span id="solarOverlayLabel" style="color:var(--orange);font-weight:600;">&#9632; ${t(lang, 'legendEstimated')}</span>
         </div>
       </div>
     </div>
@@ -742,17 +1338,17 @@ class SolarDashboard extends HTMLElement {
   <div class="card" style="margin-bottom:16px">
     <div class="cells-grid">
       <div id="pack1Card">
-        <h2 class="section-title">Cells C1\u2013C8</h2>
+        <h2 class="section-title">${t(lang, 'cellsC1C8')}</h2>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <span style="font-size:12px;color:var(--text2)">Temperature</span>
+          <span style="font-size:12px;color:var(--text2)">${t(lang, 'temperature')}</span>
           <span id="pack1Temp" style="font-size:14px;font-weight:600">-- \u00B0C</span>
         </div>
         <div id="pack1"></div>
       </div>
       <div id="pack2Card" style="border-left:1px solid var(--glass-border);padding-left:24px">
-        <h2 class="section-title">Cells C9\u2013C16</h2>
+        <h2 class="section-title">${t(lang, 'cellsC9C16')}</h2>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <span style="font-size:12px;color:var(--text2)">Temperature</span>
+          <span style="font-size:12px;color:var(--text2)">${t(lang, 'temperature')}</span>
           <span id="pack2Temp" style="font-size:14px;font-weight:600">-- \u00B0C</span>
         </div>
         <div id="pack2"></div>
@@ -767,17 +1363,17 @@ class SolarDashboard extends HTMLElement {
   </div>
   <div class="bottom-row">
     <div class="card" id="controlsCard">
-      <h2 class="section-title">Controls</h2>
+      <h2 class="section-title">${t(lang, 'controls')}</h2>
       <div class="ctrl">
-        <div><div class="ctrl-name">Charging</div><div class="ctrl-desc">Enable or disable battery charging</div></div>
+        <div><div class="ctrl-name">${t(lang, 'ctrlCharging')}</div><div class="ctrl-desc">${t(lang, 'descCharging')}</div></div>
         <label class="toggle"><input type="checkbox" id="chgToggle" checked><span class="slider"></span></label>
       </div>
       <div class="ctrl">
-        <div><div class="ctrl-name">Discharging</div><div class="ctrl-desc">Enable or disable battery discharging</div></div>
+        <div><div class="ctrl-name">${t(lang, 'ctrlDischarging')}</div><div class="ctrl-desc">${t(lang, 'descDischarging')}</div></div>
         <label class="toggle"><input type="checkbox" id="dischgToggle" checked><span class="slider"></span></label>
       </div>
       <div class="ctrl">
-        <div><div class="ctrl-name">Balancer</div><div class="ctrl-desc" id="balDesc">--</div></div>
+        <div><div class="ctrl-name">${t(lang, 'ctrlBalancer')}</div><div class="ctrl-desc" id="balDesc">--</div></div>
         <div id="balSwitch" style="display:flex;align-items:center;gap:6px">
           <span id="balSwitchLabel" style="font-size:12px;font-weight:600;color:var(--text2)">--</span>
           <div id="balDot" style="width:8px;height:8px;border-radius:50%;background:var(--text3)"></div>
@@ -907,23 +1503,23 @@ class SolarDashboard extends HTMLElement {
         const dot = root.getElementById('balDot');
         const desc = root.getElementById('balDesc');
         if (!switchOn) {
-          label.textContent = 'Disabled';
+          label.textContent = t(lang, 'balDisabled');
           label.style.color = 'var(--red)';
           dot.style.background = 'var(--red)';
           dot.style.boxShadow = '0 0 6px var(--red-glow)';
-          desc.textContent = 'Balancer off';
+          desc.textContent = t(lang, 'balOff');
         } else if (active) {
           label.textContent = t(lang, 'balancing');
           label.style.color = 'var(--orange)';
           dot.style.background = 'var(--orange)';
           dot.style.boxShadow = '0 0 6px var(--orange-glow)';
-          desc.textContent = 'Actively transferring via supercap';
+          desc.textContent = t(lang, 'balActive');
         } else {
           label.textContent = t(lang, 'idle');
           label.style.color = 'var(--green)';
           dot.style.background = 'var(--green)';
           dot.style.boxShadow = '0 0 6px var(--green-glow)';
-          desc.textContent = 'Enabled \u00B7 not currently balancing';
+          desc.textContent = t(lang, 'balEnabledIdle');
         }
       }
       if (eid === E.CHG_SWITCH) root.getElementById('chgToggle').checked = val === 'on';
