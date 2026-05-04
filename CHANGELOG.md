@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.37.10 (2026-05-04)
+
+### Bug Fixes
+- Periodic entity health check — auto-recover from renamed/deleted BMS sensors
+
+
 ## v0.37.9 (2026-05-04)
 
 ### Bug Fixes
