@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.31.20 (2026-05-04)
+
+### Bug Fixes
+- Cancel _updateRafId on disconnect to prevent callback on detached shadowRoot (NI12)
+
+
 ## v0.31.19 (2026-05-04)
 
 ### Bug Fixes
