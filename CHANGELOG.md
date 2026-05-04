@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.31.19 (2026-05-04)
+
+### Bug Fixes
+- Reset _cardsRevealed on disconnect to re-animate entrance sequence (NI11)
+
+
 ## v0.31.18 (2026-05-04)
 
 ### Bug Fixes
