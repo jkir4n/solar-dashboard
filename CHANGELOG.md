@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.37.1 (2026-05-04)
+
+### Bug Fixes
+- Resolve WeatherFX state reference error and uncaught promise rejections
+
+
 ## v0.37.0 (2026-05-04)
 
 ### Features
