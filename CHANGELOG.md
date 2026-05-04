@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.37.12 (2026-05-04)
+
+### Bug Fixes
+- _init() auto-retry with exponential backoff + manual retry button
+
+
 ## v0.37.11 (2026-05-04)
 
 ### Bug Fixes
