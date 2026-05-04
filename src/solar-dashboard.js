@@ -976,145 +976,161 @@ class SolarDashboard extends HTMLElement {
   // ============ INIT ============
   _init() {
     const root = this.shadowRoot;
-    const lang = this._bridge._hass?.language || 'en';
-    root.innerHTML = `<style>${STYLES}</style>${this._getHTML(lang)}`;
+    try {
+      const lang = this._bridge._hass?.language || 'en';
+      root.innerHTML = `<style>${STYLES}</style>${this._getHTML(lang)}`;
 
-    // Cache frequently-queried element refs
-    this._cacheElements();
+      // Cache frequently-queried element refs
+      this._cacheElements();
 
-    // Apply theme and enable JS-dependent animations
-    this._applyTheme();
-    const dashRoot = root.querySelector('.dashboard-root');
-    if (dashRoot) dashRoot.classList.add('js-ready');
-    this._mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    this._themeHandler = () => this._applyTheme();
-    this._mediaQuery.addEventListener('change', this._themeHandler);
+      // Apply theme and enable JS-dependent animations
+      this._applyTheme();
+      const dashRoot = root.querySelector('.dashboard-root');
+      if (dashRoot) dashRoot.classList.add('js-ready');
+      this._mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      this._themeHandler = () => this._applyTheme();
+      this._mediaQuery.addEventListener('change', this._themeHandler);
 
-    // Init solar engine
-    const lat = this._bridge.latitude;
-    const lon = this._bridge.longitude;
-    const alt = this._bridge.elevation;
-    if (lat != null && lon != null) {
-      this._engine = new SolarEngine(lat, lon, alt, this._bridge.installDate);
-      this._solarEngineReady = true;
-    }
-
-    // Init weather FX
-    const weatherCanvas = root.getElementById('weatherParticles');
-    if (weatherCanvas) {
-      this._weatherFx = new WeatherFX(weatherCanvas);
-      this._weatherFx.resize(window.innerWidth, window.innerHeight);
-    }
-
-    // Init charts
-    this._charts = new ChartManager(this._bridge);
-    this._charts.setThemeRoot(root.querySelector('.dashboard-root'));
-    ['chartPower', 'chartSOC', 'chartSolar'].forEach(id => {
-      this._charts.attachCrosshair(root.getElementById(id));
-    });
-
-    // Init flow particles
-    this._flowPS1 = new FlowParticles(root, 'flowWrap1', 'flowParticles1', 'flowLine1', 'flowArc1', '#00F0FF');
-    this._flowPS2 = new FlowParticles(root, 'flowWrap2', 'flowParticles2', 'flowLine2', 'flowArc2', '#FF453A');
-
-    // Wire chart tab handlers
-    const tabs = root.querySelectorAll('.chart-tab');
-    tabs.forEach(tab => {
-      tab.addEventListener('click', () => {
-        const range = tab.dataset.range;
-        tabs.forEach(t => t.classList.toggle('active', t.dataset.range === range));
-        this._loadChartRange(range);
-      });
-    });
-
-    // Wire toggle handlers
-    const chgToggle = root.getElementById('chgToggle');
-    if (chgToggle) {
-      chgToggle.addEventListener('change', () => {
-        this._bridge._hass?.callService('switch', chgToggle.checked ? 'turn_on' : 'turn_off',
-          { entity_id: this._bridge.E.CHG_SWITCH });
-      });
-    }
-    const dischgToggle = root.getElementById('dischgToggle');
-    if (dischgToggle) {
-      dischgToggle.addEventListener('change', () => {
-        this._bridge._hass?.callService('switch', dischgToggle.checked ? 'turn_on' : 'turn_off',
-          { entity_id: this._bridge.E.DISCHG_SWITCH });
-      });
-    }
-
-    // Start clock
-    this._startClock();
-    this._intervals.push(setInterval(() => this._startClock(), 1000));
-
-    // Start calcTodayInOut
-    this._calcTodayInOut();
-    this._intervals.push(setInterval(() => this._calcTodayInOut(), 300000));
-
-    // Start solar estimate update
-    this._updateSolarEstimate();
-    this._intervals.push(setInterval(() => this._updateSolarEstimate(), 300000));
-    this._intervals.push(setInterval(() => this._updateWeather(), 300000));
-    this._intervals.push(setInterval(() => this._updateSunMoonPosition(), 10000));
-    this._intervals.push(setInterval(() => this._fetchISSPosition(), 10000));
-    this._fetchISSPosition();
-
-    // Start solar degradation UI (hourly)
-    this._updateSolarUI();
-    this._intervals.push(setInterval(() => this._updateSolarUI(), 3600000));
-
-    // Cycle rate (7-day rolling) — fetch once on load, refresh hourly
-    this._updateCycleRate();
-    this._intervals.push(setInterval(() => this._updateCycleRate(), 3600000));
-
-
-    // Resize handler
-    this._resizeHandler = () => {
-      if (this._resizeTimeout) clearTimeout(this._resizeTimeout);
-      this._resizeTimeout = setTimeout(() => {
-        if (this._weatherFx) this._weatherFx.resize(window.innerWidth, window.innerHeight);
-      }, 300);
-    };
-    window.addEventListener('resize', this._resizeHandler);
-
-    // Visibility handler — pause all animations when panel is hidden
-    this._visibilityHandler = () => {
-      if (document.hidden) {
-        this._intervals.forEach(id => clearInterval(id));
-        this._intervals = [];
-        if (this._flowPS1) this._flowPS1.stop();
-        if (this._flowPS2) this._flowPS2.stop();
-        this._stopBattArcs();
-        this._cancelAllAnimations();
-        if (this._weatherFx) this._weatherFx.stop();
-        if (this._meshRafId) { cancelAnimationFrame(this._meshRafId); this._meshRafId = null; }
-      } else {
-        // Restart all intervals
-        this._intervals.push(setInterval(() => this._startClock(), 1000));
-        this._intervals.push(setInterval(() => this._calcTodayInOut(), 300000));
-        this._intervals.push(setInterval(() => this._updateSolarEstimate(), 300000));
-        this._intervals.push(setInterval(() => this._updateWeather(), 300000));
-        this._intervals.push(setInterval(() => this._updateSunMoonPosition(), 10000));
-        this._intervals.push(setInterval(() => this._fetchISSPosition(), 10000));
-        this._fetchISSPosition();
-        this._intervals.push(setInterval(() => this._updateSolarUI(), 3600000));
-        this._intervals.push(setInterval(() => this._updateCycleRate(), 3600000));
-        this._startMeshLerp();
-        this._startBattArcs();
-        this._refreshAllUI();
+      // Init solar engine
+      const lat = this._bridge.latitude;
+      const lon = this._bridge.longitude;
+      const alt = this._bridge.elevation;
+      if (lat != null && lon != null) {
+        this._engine = new SolarEngine(lat, lon, alt, this._bridge.installDate);
+        this._solarEngineReady = true;
       }
-    };
-    document.addEventListener('visibilitychange', this._visibilityHandler);
 
-    // Start mesh gradient lerp loop
-    this._startMeshLerp();
+      // Init weather FX
+      const weatherCanvas = root.getElementById('weatherParticles');
+      if (weatherCanvas) {
+        this._weatherFx = new WeatherFX(weatherCanvas);
+        this._weatherFx.resize(window.innerWidth, window.innerHeight);
+      }
 
-    // Initial full refresh + reveal
-    this._refreshAllUI();
+      // Init charts
+      this._charts = new ChartManager(this._bridge);
+      this._charts.setThemeRoot(root.querySelector('.dashboard-root'));
+      ['chartPower', 'chartSOC', 'chartSolar'].forEach(id => {
+        this._charts.attachCrosshair(root.getElementById(id));
+      });
 
-    // Staggered card reveal with fallback
-    setTimeout(() => this._revealCards(), 200);
-    this._revealFallbackTimeout = setTimeout(() => this._revealCards(), 2000); // fallback
+      // Init flow particles
+      this._flowPS1 = new FlowParticles(root, 'flowWrap1', 'flowParticles1', 'flowLine1', 'flowArc1', '#00F0FF');
+      this._flowPS2 = new FlowParticles(root, 'flowWrap2', 'flowParticles2', 'flowLine2', 'flowArc2', '#FF453A');
+
+      // Wire chart tab handlers
+      const tabs = root.querySelectorAll('.chart-tab');
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          const range = tab.dataset.range;
+          tabs.forEach(t => t.classList.toggle('active', t.dataset.range === range));
+          this._loadChartRange(range);
+        });
+      });
+
+      // Wire toggle handlers
+      const chgToggle = root.getElementById('chgToggle');
+      if (chgToggle) {
+        chgToggle.addEventListener('change', () => {
+          this._bridge._hass?.callService('switch', chgToggle.checked ? 'turn_on' : 'turn_off',
+            { entity_id: this._bridge.E.CHG_SWITCH });
+        });
+      }
+      const dischgToggle = root.getElementById('dischgToggle');
+      if (dischgToggle) {
+        dischgToggle.addEventListener('change', () => {
+          this._bridge._hass?.callService('switch', dischgToggle.checked ? 'turn_on' : 'turn_off',
+            { entity_id: this._bridge.E.DISCHG_SWITCH });
+        });
+      }
+
+      // Start clock
+      this._startClock();
+      this._intervals.push(setInterval(() => this._startClock(), 1000));
+
+      // Start calcTodayInOut
+      this._calcTodayInOut();
+      this._intervals.push(setInterval(() => this._calcTodayInOut(), 300000));
+
+      // Start solar estimate update
+      this._updateSolarEstimate();
+      this._intervals.push(setInterval(() => this._updateSolarEstimate(), 300000));
+      this._intervals.push(setInterval(() => this._updateWeather(), 300000));
+      this._intervals.push(setInterval(() => this._updateSunMoonPosition(), 10000));
+      this._intervals.push(setInterval(() => this._fetchISSPosition(), 10000));
+      this._fetchISSPosition();
+
+      // Start solar degradation UI (hourly)
+      this._updateSolarUI();
+      this._intervals.push(setInterval(() => this._updateSolarUI(), 3600000));
+
+      // Cycle rate (7-day rolling) — fetch once on load, refresh hourly
+      this._updateCycleRate();
+      this._intervals.push(setInterval(() => this._updateCycleRate(), 3600000));
+
+
+      // Resize handler
+      this._resizeHandler = () => {
+        if (this._resizeTimeout) clearTimeout(this._resizeTimeout);
+        this._resizeTimeout = setTimeout(() => {
+          if (this._weatherFx) this._weatherFx.resize(window.innerWidth, window.innerHeight);
+        }, 300);
+      };
+      window.addEventListener('resize', this._resizeHandler);
+
+      // Visibility handler — pause all animations when panel is hidden
+      this._visibilityHandler = () => {
+        if (document.hidden) {
+          this._intervals.forEach(id => clearInterval(id));
+          this._intervals = [];
+          if (this._flowPS1) this._flowPS1.stop();
+          if (this._flowPS2) this._flowPS2.stop();
+          this._stopBattArcs();
+          this._cancelAllAnimations();
+          if (this._weatherFx) this._weatherFx.stop();
+          if (this._meshRafId) { cancelAnimationFrame(this._meshRafId); this._meshRafId = null; }
+        } else {
+          // Restart all intervals
+          this._intervals.push(setInterval(() => this._startClock(), 1000));
+          this._intervals.push(setInterval(() => this._calcTodayInOut(), 300000));
+          this._intervals.push(setInterval(() => this._updateSolarEstimate(), 300000));
+          this._intervals.push(setInterval(() => this._updateWeather(), 300000));
+          this._intervals.push(setInterval(() => this._updateSunMoonPosition(), 10000));
+          this._intervals.push(setInterval(() => this._fetchISSPosition(), 10000));
+          this._fetchISSPosition();
+          this._intervals.push(setInterval(() => this._updateSolarUI(), 3600000));
+          this._intervals.push(setInterval(() => this._updateCycleRate(), 3600000));
+          this._startMeshLerp();
+          this._startBattArcs();
+          this._refreshAllUI();
+        }
+      };
+      document.addEventListener('visibilitychange', this._visibilityHandler);
+
+      // Start mesh gradient lerp loop
+      this._startMeshLerp();
+
+      // Initial full refresh + reveal
+      this._refreshAllUI();
+
+      // Staggered card reveal with fallback
+      setTimeout(() => this._revealCards(), 200);
+      this._revealFallbackTimeout = setTimeout(() => this._revealCards(), 2000); // fallback
+    } catch (error) {
+      console.error('[Solar] Init failed:', error);
+      root.innerHTML = `<style>${STYLES}</style>
+<div class="dashboard-root" data-theme="dark">
+  <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px;">
+    <div style="background:var(--glass-bg,rgba(30,30,30,0.8));border:1px solid var(--red,rgba(255,59,48,0.3));border-radius:16px;padding:32px;max-width:500px;text-align:center;backdrop-filter:blur(12px);">
+      <div style="font-size:48px;margin-bottom:16px;">⚠️</div>
+      <h2 style="color:var(--red,#ff3b30);margin:0 0 8px;">Solar Dashboard</h2>
+      <p style="color:var(--text2,#9ca3af);margin:0 0 16px;font-size:14px;">Failed to initialize</p>
+      <pre style="color:var(--text3,#6b7280);font-size:12px;text-align:left;background:rgba(0,0,0,0.3);padding:12px;border-radius:8px;overflow:auto;max-height:200px;white-space:pre-wrap;word-break:break-word;">${error.message}\n${error.stack || ''}</pre>
+      <p style="color:var(--text3,#6b7280);font-size:11px;margin:16px 0 0;">Check browser console for details</p>
+    </div>
+  </div>
+</div>`;
+    }
   }
 
   disconnectedCallback() {

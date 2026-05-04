@@ -178,50 +178,129 @@ export class HABridge {
   _discoverEntities(hass) {
     const discovered = {};
     const states = hass.states;
+    const devices = hass.devices || {};
+    const entities = hass.entities || {};
 
-    for (const [entityId, state] of Object.entries(states)) {
-      const domain = entityId.split('.')[0];
-      const searchable = `${entityId} ${(state.attributes?.friendly_name || '').toLowerCase()}`;
+    // Phase 1: Device-based lookup
+    const BMS_MANUFACTURERS = [
+      'jk bms', 'jk-bms', 'jkbms',
+      'jbd', 'jbd bms',
+      'daly', 'daly bms',
+      'batmon', 'bat-mon',
+      'seplos', 'seplos bms',
+      'victron', 'victron energy',
+    ];
 
-      if (domain === 'sensor') {
-        for (const [role, keywords] of Object.entries(SENSOR_KEYWORDS)) {
-          if (!discovered[role] && keywords.some(kw => searchable.includes(kw))) {
-            // Exclude overly generic POWER matches
-            if (role === 'POWER' && POWER_EXCLUDE.some(ex => searchable.includes(ex))) continue;
-            // Exclude overly generic CURRENT matches
-            if (role === 'CURRENT' && CURRENT_EXCLUDE.some(ex => searchable.includes(ex))) continue;
-            discovered[role] = entityId;
-          }
-        }
-      }
-      if (domain === 'binary_sensor') {
-        for (const [role, keywords] of Object.entries(BINARY_SENSOR_KEYWORDS)) {
-          if (!discovered[role] && keywords.some(kw => searchable.includes(kw))) {
-            discovered[role] = entityId;
-          }
-        }
-      }
-      if (domain === 'switch') {
-        for (const [role, keywords] of Object.entries(SWITCH_KEYWORDS)) {
-          if (!discovered[role] && keywords.some(kw => searchable.includes(kw))) {
-            discovered[role] = entityId;
-          }
-        }
+    // Find BMS device(s)
+    const bmsDeviceIds = [];
+    for (const [deviceId, device] of Object.entries(devices)) {
+      const mfr = (device.manufacturer || '').toLowerCase();
+      const name = (device.name || '').toLowerCase();
+      const model = (device.model || '').toLowerCase();
+      const searchable = `${mfr} ${name} ${model}`;
+      if (BMS_MANUFACTURERS.some(m => searchable.includes(m))) {
+        bmsDeviceIds.push(deviceId);
       }
     }
 
-    // Discover cell voltages via regex (only valid states)
-    for (const entityId of Object.keys(states)) {
-      const m = entityId.match(/cell_voltage_(\d+)/i);
-      if (m) {
+    if (bmsDeviceIds.length > 0) {
+      // Collect entity IDs belonging to BMS device(s)
+      const bmsEntityIds = new Set();
+      for (const entityId of Object.keys(entities)) {
+        const reg = entities[entityId];
+        if (reg && reg.device_id && bmsDeviceIds.includes(reg.device_id)) {
+          bmsEntityIds.add(entityId);
+        }
+      }
+
+      // Apply keyword matching ONLY to BMS device entities
+      for (const entityId of bmsEntityIds) {
         const state = states[entityId];
-        if (state && state.state !== 'unknown' && state.state !== 'unavailable') {
-          discovered['CELL' + m[1]] = entityId;
+        if (!state) continue;
+        const domain = entityId.split('.')[0];
+        const searchable = `${entityId} ${(state.attributes?.friendly_name || '').toLowerCase()}`;
+
+        if (domain === 'sensor') {
+          for (const [role, keywords] of Object.entries(SENSOR_KEYWORDS)) {
+            if (!discovered[role] && keywords.some(kw => searchable.includes(kw))) {
+              if (role === 'POWER' && POWER_EXCLUDE.some(ex => searchable.includes(ex))) continue;
+              if (role === 'CURRENT' && CURRENT_EXCLUDE.some(ex => searchable.includes(ex))) continue;
+              discovered[role] = entityId;
+            }
+          }
+        }
+        if (domain === 'binary_sensor') {
+          for (const [role, keywords] of Object.entries(BINARY_SENSOR_KEYWORDS)) {
+            if (!discovered[role] && keywords.some(kw => searchable.includes(kw))) {
+              discovered[role] = entityId;
+            }
+          }
+        }
+        if (domain === 'switch') {
+          for (const [role, keywords] of Object.entries(SWITCH_KEYWORDS)) {
+            if (!discovered[role] && keywords.some(kw => searchable.includes(kw))) {
+              discovered[role] = entityId;
+            }
+          }
+        }
+      }
+
+      // Discover cell voltages from BMS device entities
+      for (const entityId of bmsEntityIds) {
+        const m = entityId.match(/cell_voltage_(\d+)/i);
+        if (m) {
+          const state = states[entityId];
+          if (state && state.state !== 'unknown' && state.state !== 'unavailable') {
+            discovered['CELL' + m[1]] = entityId;
+          }
         }
       }
     }
 
-    // Fill gaps with prefix-based fallback
+    // Phase 2: Keyword fallback (if no BMS device found or critical entities missing)
+    if (bmsDeviceIds.length === 0 || !discovered.POWER || !discovered.SOC) {
+      for (const [entityId, state] of Object.entries(states)) {
+        const domain = entityId.split('.')[0];
+        const searchable = `${entityId} ${(state.attributes?.friendly_name || '').toLowerCase()}`;
+
+        if (domain === 'sensor') {
+          for (const [role, keywords] of Object.entries(SENSOR_KEYWORDS)) {
+            if (!discovered[role] && keywords.some(kw => searchable.includes(kw))) {
+              if (role === 'POWER' && POWER_EXCLUDE.some(ex => searchable.includes(ex))) continue;
+              if (role === 'CURRENT' && CURRENT_EXCLUDE.some(ex => searchable.includes(ex))) continue;
+              discovered[role] = entityId;
+            }
+          }
+        }
+        if (domain === 'binary_sensor') {
+          for (const [role, keywords] of Object.entries(BINARY_SENSOR_KEYWORDS)) {
+            if (!discovered[role] && keywords.some(kw => searchable.includes(kw))) {
+              discovered[role] = entityId;
+            }
+          }
+        }
+        if (domain === 'switch') {
+          for (const [role, keywords] of Object.entries(SWITCH_KEYWORDS)) {
+            if (!discovered[role] && keywords.some(kw => searchable.includes(kw))) {
+              discovered[role] = entityId;
+            }
+          }
+        }
+      }
+
+      // Cell voltage fallback
+      for (const entityId of Object.keys(states)) {
+        const m = entityId.match(/cell_voltage_(\d+)/i);
+        if (m) {
+          const state = states[entityId];
+          if (state && state.state !== 'unknown' && state.state !== 'unavailable') {
+            discovered['CELL' + m[1]] = entityId;
+          }
+        }
+      }
+    }
+
+    // Phase 3: Prefix fallback (unchanged)
     const prefix = this.getStrVal('input_text.bms_entity_prefix') || 'jk_bms_jk_bms';
     const fallbacks = this._buildFallbacks(prefix);
     for (const [role, fallbackId] of Object.entries(fallbacks)) {
