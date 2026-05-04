@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.37.11 (2026-05-04)
+
+### Bug Fixes
+- Weather particle rAF dirty-flag — stop rendering when nothing animates
+
+
 ## v0.37.10 (2026-05-04)
 
 ### Bug Fixes
