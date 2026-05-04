@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.31.17 (2026-05-04)
+
+### Bug Fixes
+- Replace ctx.save/restore with manual globalAlpha save for cloud blit (P28)
+
+
 ## v0.31.16 (2026-05-04)
 
 ### Bug Fixes
