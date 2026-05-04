@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.31.5 (2026-05-04)
+
+### Bug Fixes
+- Cloud archetype threshold now triggers on coverage changes (C7)
+
+
 ## v0.31.4 (2026-05-04)
 
 ### Bug Fixes
