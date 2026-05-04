@@ -884,9 +884,15 @@ class SolarDashboard extends HTMLElement {
     this._meshCur    = [null, null, null];
     this._meshTarget = null;
     this._meshRafId  = null;
+    // 24/7 reliability: WebSocket disconnection detection
+    this._connCheckInterval = null;
+    this._lastHassUpdate = 0;
+    this._connLost = false;
   }
 
   set hass(hass) {
+    this._lastHassUpdate = Date.now();
+    if (this._connLost) this._hideConnLostBanner();
     const langChanged = this._bridge._hass?.language !== hass.language;
     this._bridge.update(hass);
     this._applyTheme();
@@ -1089,6 +1095,7 @@ class SolarDashboard extends HTMLElement {
           this._cancelAllAnimations();
           if (this._weatherFx) this._weatherFx.stop();
           if (this._meshRafId) { cancelAnimationFrame(this._meshRafId); this._meshRafId = null; }
+          if (this._connCheckInterval) { clearInterval(this._connCheckInterval); this._connCheckInterval = null; }
         } else {
           // Restart all intervals
           this._intervals.push(setInterval(() => this._startClock(), 1000));
@@ -1100,6 +1107,8 @@ class SolarDashboard extends HTMLElement {
           this._fetchISSPosition().catch(() => {});
           this._intervals.push(setInterval(() => this._updateSolarUI(), 3600000));
           this._intervals.push(setInterval(() => this._updateCycleRate().catch(() => {}), 3600000));
+          // 24/7: restart connection health check
+          this._connCheckInterval = setInterval(() => this._checkConnection(), 30000);
           this._startMeshLerp();
           this._startBattArcs();
           this._refreshAllUI();
@@ -1109,6 +1118,9 @@ class SolarDashboard extends HTMLElement {
 
       // Start mesh gradient lerp loop
       this._startMeshLerp();
+
+      // 24/7: WebSocket connection health check — every 30s
+      this._connCheckInterval = setInterval(() => this._checkConnection(), 30000);
 
       // Initial full refresh + reveal
       this._refreshAllUI();
@@ -1147,6 +1159,7 @@ class SolarDashboard extends HTMLElement {
     this._cancelAllAnimations();
     if (this._meshRafId) { cancelAnimationFrame(this._meshRafId); this._meshRafId = null; }
     if (this._updateRafId) { cancelAnimationFrame(this._updateRafId); this._updateRafId = null; }
+    if (this._connCheckInterval) { clearInterval(this._connCheckInterval); this._connCheckInterval = null; }
     this._cardsRevealed = false;
   }
 
@@ -1158,6 +1171,41 @@ class SolarDashboard extends HTMLElement {
     const darkMode = hass?.themes?.darkMode ?? window.matchMedia('(prefers-color-scheme: dark)').matches;
     root.dataset.theme = darkMode ? 'dark' : 'light';
     if (this._charts) this._charts.updateTheme();
+  }
+
+  // ============ 24/7: CONNECTION HEALTH CHECK ============
+  _checkConnection() {
+    if (document.hidden) return; // skip when tab hidden — visibility handler manages this
+    if (!this._lastHassUpdate) return; // no hass received yet
+    const stale = Date.now() - this._lastHassUpdate;
+    if (stale > 60000 && !this._connLost) {
+      this._connLost = true;
+      this._showConnLostBanner();
+    } else if (stale <= 60000 && this._connLost) {
+      this._connLost = false;
+      this._hideConnLostBanner();
+    }
+  }
+
+  _showConnLostBanner() {
+    const root = this.shadowRoot;
+    if (!root) return;
+    let banner = root.getElementById('connLostBanner');
+    if (!banner) {
+      banner = document.createElement('div');
+      banner.id = 'connLostBanner';
+      banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:rgba(255,59,48,0.9);color:#fff;text-align:center;padding:8px 16px;font-size:13px;font-weight:600;backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;gap:8px;';
+      banner.innerHTML = '<span style="width:8px;height:8px;border-radius:50%;background:#fff;animation:pulse 1.5s ease-in-out infinite;"></span> Connection to Home Assistant lost — showing last known data';
+      root.appendChild(banner);
+    }
+    banner.style.display = 'flex';
+  }
+
+  _hideConnLostBanner() {
+    const root = this.shadowRoot;
+    if (!root) return;
+    const banner = root.getElementById('connLostBanner');
+    if (banner) banner.style.display = 'none';
   }
 
   // ============ HTML TEMPLATE ============
