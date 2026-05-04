@@ -893,6 +893,10 @@ class SolarDashboard extends HTMLElement {
     this._issBackoffMax = 300000; // 5 min cap
     this._issFailCount = 0;
     this._issScheduleId = null;
+    // 24/7 reliability: _init() retry with backoff
+    this._initRetryDelay = 5000;
+    this._initRetryMax = 300000; // 5 min cap
+    this._initRetryId = null;
   }
 
   set hass(hass) {
@@ -1141,18 +1145,27 @@ class SolarDashboard extends HTMLElement {
       this._revealFallbackTimeout = setTimeout(() => this._revealCards(), 2000); // fallback
     } catch (error) {
       console.error('[Solar] Init failed:', error);
+      this._initialized = false; // allow retry
       root.innerHTML = `<style>${STYLES}</style>
 <div class="dashboard-root" data-theme="dark">
   <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px;">
     <div style="background:var(--glass-bg,rgba(30,30,30,0.8));border:1px solid var(--red,rgba(255,59,48,0.3));border-radius:16px;padding:32px;max-width:500px;text-align:center;backdrop-filter:blur(12px);">
       <div style="font-size:48px;margin-bottom:16px;">⚠️</div>
       <h2 style="color:var(--red,#ff3b30);margin:0 0 8px;">Solar Dashboard</h2>
-      <p style="color:var(--text2,#9ca3af);margin:0 0 16px;font-size:14px;">Failed to initialize</p>
+      <p style="color:var(--text2,#9ca3af);margin:0 0 16px;font-size:14px;">Failed to initialize — retrying automatically…</p>
       <pre style="color:var(--text3,#6b7280);font-size:12px;text-align:left;background:rgba(0,0,0,0.3);padding:12px;border-radius:8px;overflow:auto;max-height:200px;white-space:pre-wrap;word-break:break-word;">${error.message}\n${error.stack || ''}</pre>
+      <button id="initRetryBtn" style="margin-top:16px;padding:8px 24px;background:var(--green,#34c759);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">Retry Now</button>
       <p style="color:var(--text3,#6b7280);font-size:11px;margin:16px 0 0;">Check browser console for details</p>
     </div>
   </div>
 </div>`;
+      // 24/7: auto-retry with exponential backoff
+      this._scheduleInitRetry();
+      // Wire up manual retry button
+      setTimeout(() => {
+        const btn = this.shadowRoot?.getElementById('initRetryBtn');
+        if (btn) btn.addEventListener('click', () => this._retryInitNow());
+      }, 100);
     }
   }
 
@@ -1172,6 +1185,7 @@ class SolarDashboard extends HTMLElement {
     if (this._updateRafId) { cancelAnimationFrame(this._updateRafId); this._updateRafId = null; }
     if (this._connCheckInterval) { clearInterval(this._connCheckInterval); this._connCheckInterval = null; }
     if (this._issScheduleId) { clearTimeout(this._issScheduleId); this._issScheduleId = null; }
+    if (this._initRetryId) { clearTimeout(this._initRetryId); this._initRetryId = null; }
     this._cardsRevealed = false;
   }
 
@@ -1218,6 +1232,37 @@ class SolarDashboard extends HTMLElement {
     if (!root) return;
     const banner = root.getElementById('connLostBanner');
     if (banner) banner.style.display = 'none';
+  }
+
+  // 24/7: _init() retry with exponential backoff
+  _scheduleInitRetry() {
+    if (this._initRetryId) clearTimeout(this._initRetryId);
+    this._initRetryId = setTimeout(() => this._retryInit(), this._initRetryDelay);
+  }
+
+  _retryInitNow() {
+    if (this._initRetryId) { clearTimeout(this._initRetryId); this._initRetryId = null; }
+    this._initRetryDelay = 5000; // reset backoff
+    this._retryInit();
+  }
+
+  _retryInit() {
+    this._initRetryId = null;
+    if (this._initialized) return; // already succeeded
+    console.log(`[Solar] Retrying init (delay was ${this._initRetryDelay}ms)…`);
+    try {
+      this._init();
+      // If _init succeeded, _initialized is true and we're done
+      if (this._initialized) {
+        this._initRetryDelay = 5000;
+        return;
+      }
+    } catch (e) {
+      console.error('[Solar] Init retry failed:', e);
+    }
+    // Still failed — increase backoff and reschedule
+    this._initRetryDelay = Math.min(this._initRetryDelay * 2, this._initRetryMax);
+    this._scheduleInitRetry();
   }
 
   // ============ HTML TEMPLATE ============
