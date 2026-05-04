@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.36.0 (2026-05-04)
+
+### Features
+- Expand I12 localization to 20 languages with full template i18n and dynamic language change detection
+
+
 ## v0.35.2 (2026-05-04)
 
 ### Bug Fixes
