@@ -79,7 +79,7 @@ export class HABridge {
   update(hass) {
     this._hass = hass;
     if (!this._helpersChecked) {
-      this._ensureHelpers();
+      this._ensureHelpers().catch(() => {});
       this._helpersChecked = true;
     }
     // Dynamic re-discovery: re-run until key entities are found
@@ -107,7 +107,7 @@ export class HABridge {
         return v && this.getState(v);
       }).length;
       if (found < 5 && !this._helperCreated) {
-        this._createBmsPrefixHelper();
+        this._createBmsPrefixHelper().catch(() => {});
         this._helperCreated = true;
       }
     }
