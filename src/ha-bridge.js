@@ -116,6 +116,23 @@ export class HABridge {
     if (_ci !== this._lastChemInput) { this._lastChemInput = _ci; this._resolveChemistry(); }
   }
 
+  // 24/7: Verify discovered entities still exist; re-discover if any key entity vanished
+  verifyEntities() {
+    if (!this._hass || !this._entities || this._discoveryRun === 0) return;
+    const keyKeys = ['POWER', 'SOC', 'VOLTAGE'];
+    const missing = keyKeys.filter(k => {
+      const id = this._entities[k];
+      return !id || !this._hass.states[id];
+    });
+    if (missing.length > 0) {
+      console.warn(`[Solar] Entity health check: ${missing.join(', ')} no longer exist — re-discovering`);
+      this._entities = this._discoverEntities(this._hass);
+      this._cellVoltageIds = null;
+      this._discoveryRun++;
+      this._prefixBeforeChange = this.getStrVal('input_text.bms_entity_prefix');
+    }
+  }
+
   _resolveChemistry() {
     // Primary: battery_type entity
     const batteryType = this.getStrVal(this.E.BATTERY_TYPE);

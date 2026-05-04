@@ -1116,6 +1116,8 @@ class SolarDashboard extends HTMLElement {
           this._scheduleISSFetch();
           this._intervals.push(setInterval(() => this._updateSolarUI(), 3600000));
           this._intervals.push(setInterval(() => this._updateCycleRate().catch(() => {}), 3600000));
+          // 24/7: restart entity health check
+          this._intervals.push(setInterval(() => this._bridge.verifyEntities(), 300000));
           // 24/7: restart connection health check
           this._connCheckInterval = setInterval(() => this._checkConnection(), 30000);
           this._startMeshLerp();
