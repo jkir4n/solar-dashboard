@@ -381,7 +381,8 @@ export class SolarEngine {
   // NOTE: v9 iterates from actual sunrise to sunset (minute-by-minute scan), then 15-min intervals
   calcDailyForecast(date, panelConfig, cloudCoverPct = 0, ambientC = null) {
     const dayKey = date.toISOString().slice(0, 10);
-    if (this._forecastCache && this._forecastCache.key === dayKey) return this._forecastCache.val;
+    const cacheKey = `${dayKey}_${cloudCoverPct ?? 0}_${ambientC ?? 'null'}`;
+    if (this._forecastCache && this._forecastCache.key === cacheKey) return this._forecastCache.val;
     const dayStart = new Date(date);
     dayStart.setHours(0, 0, 0, 0);
     let totalWh = 0;
