@@ -942,7 +942,9 @@ class SolarDashboard extends HTMLElement {
     }
 
     const cur = current || 0;
-    const status = cur > 0.5 ? 'Charging' : cur < -0.5 ? 'Discharging' : 'Idle';
+    // I15: Derive idle threshold from battery capacity (0.5% of fullAh)
+    const idleThreshold = 0.005 * (this._bridge.battSpec?.fullAh || 100);
+    const status = cur > idleThreshold ? 'Charging' : cur < -idleThreshold ? 'Discharging' : 'Idle';
     const statusColor = status === 'Charging' ? 'var(--green)' : status === 'Discharging' ? 'var(--red)' : 'var(--text2)';
     this._els.battStatus.textContent = status;
     this._els.battStatus.style.color = statusColor;
@@ -988,10 +990,10 @@ class SolarDashboard extends HTMLElement {
       const m = totalMin % 60;
       return (d > 0 ? d + ':' : '') + String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
     };
-    if (cur < -0.5 && remaining > 0) {
+    if (cur < -idleThreshold && remaining > 0) {
       tte = fmtDHM(remaining / Math.abs(cur));
       if (tteLabel) tteLabel.textContent = 'Time to Empty';
-    } else if (cur > 0.5) {
+    } else if (cur > idleThreshold) {
       if (soc != null && soc < 100 && remaining > 0) {
         const toFill = battSpec.fullAh - remaining;
         if (toFill > 0) tte = fmtDHM(toFill / cur);
@@ -1114,8 +1116,10 @@ class SolarDashboard extends HTMLElement {
     const power = dischgPower > 0 ? dischgPower : chgPower > 0 ? chgPower : netPower;
     const solarW = chgPower > 0 ? chgPower : (current > 0 ? power : 0);
     const batteryW = dischgPower > 0 ? dischgPower : power;
-    const charging = current > 0.5;
-    const discharging = current < -0.5;
+    // I15: Derive idle threshold from battery capacity (0.5% of fullAh)
+    const idleThreshold = 0.005 * (this._bridge.battSpec?.fullAh || 100);
+    const charging = current > idleThreshold;
+    const discharging = current < -idleThreshold;
 
     this._setIconGlow('iconSolar', solarW > 10 ? 'icon-sun-active' : 'glow-dim', solarW);
 
