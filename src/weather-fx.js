@@ -55,10 +55,6 @@ const MOON_CLOUD_DIM = {
   'lightning-rainy': 0.0,
 };
 
-// B23: Pool of offscreen canvases keyed by "WxH" — one canvas reused per size.
-// Cloud particles always redraw fully before blitting, so shared canvas state is safe.
-const _cloudCanvasPool = new Map();
-
 export class WeatherFX {
   constructor(canvas) {
     this.canvas = canvas;
