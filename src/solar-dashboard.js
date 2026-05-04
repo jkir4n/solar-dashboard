@@ -256,7 +256,8 @@ class SolarDashboard extends HTMLElement {
     this._charts = null;
     this._initialized = false;
     this._intervals = [];
-    this._activeAnimations = new Map();
+    this._animations = [];         // P7: centralized animation list
+    this._animRafId = null;        // P7: single rAF ID for all animations
     this._clockFormatter = null;
     this._flowPS1 = null;
     this._flowPS2 = null;
@@ -474,8 +475,7 @@ class SolarDashboard extends HTMLElement {
         if (this._flowPS1) this._flowPS1.stop();
         if (this._flowPS2) this._flowPS2.stop();
         this._stopBattArcs();
-        this._activeAnimations.forEach(id => cancelAnimationFrame(id));
-        this._activeAnimations.clear();
+        this._cancelAllAnimations();
         if (this._weatherFx) this._weatherFx.stop();
         if (this._meshRafId) { cancelAnimationFrame(this._meshRafId); this._meshRafId = null; }
       } else {
@@ -519,11 +519,7 @@ class SolarDashboard extends HTMLElement {
     if (this._visibilityHandler) document.removeEventListener('visibilitychange', this._visibilityHandler);
     if (this._mediaQuery && this._themeHandler) this._mediaQuery.removeEventListener('change', this._themeHandler);
     this._stopBattArcs();
-    this._activeAnimations.forEach((_rafId, el) => {
-      cancelAnimationFrame(_rafId);
-      if (el._flashTimer) { clearTimeout(el._flashTimer); el._flashTimer = null; }
-    });
-    this._activeAnimations.clear();
+    this._cancelAllAnimations();
     if (this._meshRafId) { cancelAnimationFrame(this._meshRafId); this._meshRafId = null; }
   }
 
@@ -779,37 +775,59 @@ class SolarDashboard extends HTMLElement {
   }
 
   // ============ ANIMATION ENGINE ============
+  // ============ P7: Centralized Animation Loop ============
   _animateValue(el, from, to, duration, formatter) {
     if (!el) return;
     if (from === to) {
-      // Still update text if element shows placeholder
       if (el.textContent === '--' || el.textContent === '') el.textContent = formatter(to);
       return;
     }
     if (Math.abs(to - from) < 0.01) { el.textContent = formatter(to); return; }
-    const existing = this._activeAnimations.get(el);
-    if (existing) cancelAnimationFrame(existing);
 
-    const start = performance.now();
-    const tick = (now) => {
-      const t = Math.min((now - start) / duration, 1);
-      const eased = 1 - Math.pow(1 - t, 3); // ease-out cubic
-      const val = from + (to - from) * eased;
-      el.textContent = formatter(val);
-      if (t < 1) {
-        this._activeAnimations.set(el, requestAnimationFrame(tick));
-      } else {
-        this._activeAnimations.delete(el);
-        el.classList.remove('val-flash');
-        void el.offsetWidth;
-        el.classList.add('val-flash');
-        const _cleanFlash = () => el.classList.remove('val-flash');
-        const _flashTimer = setTimeout(_cleanFlash, 1000);
-        el._flashTimer = _flashTimer;
-        el.addEventListener('animationend', () => { clearTimeout(el._flashTimer); _cleanFlash(); el._flashTimer = null; }, { once: true, passive: true });
+    // Cancel any existing animation for this element
+    for (let i = this._animations.length - 1; i >= 0; i--) {
+      if (this._animations[i].el === el) {
+        this._animations[i].done = true;
+        this._animations.splice(i, 1);
       }
-    };
-    this._activeAnimations.set(el, requestAnimationFrame(tick));
+    }
+
+    this._animations.push({ el, from, to, duration, formatter, start: performance.now(), done: false });
+    if (!this._animRafId) this._animRafId = requestAnimationFrame((t) => this._animationLoop(t));
+  }
+
+  _animationLoop(now) {
+    this._animRafId = null;
+    const len = this._animations.length;
+    for (let i = len - 1; i >= 0; i--) {
+      const a = this._animations[i];
+      if (a.done) { this._animations.splice(i, 1); continue; }
+      const t = Math.min((now - a.start) / a.duration, 1);
+      const eased = 1 - Math.pow(1 - t, 3);
+      a.el.textContent = a.formatter(a.from + (a.to - a.from) * eased);
+      if (t < 1) continue;
+      // Animation complete — flash effect
+      this._animations.splice(i, 1);
+      a.el.classList.remove('val-flash');
+      void a.el.offsetWidth;
+      a.el.classList.add('val-flash');
+      const _cleanFlash = () => a.el.classList.remove('val-flash');
+      const _flashTimer = setTimeout(_cleanFlash, 1000);
+      a.el._flashTimer = _flashTimer;
+      a.el.addEventListener('animationend', () => { clearTimeout(a.el._flashTimer); _cleanFlash(); a.el._flashTimer = null; }, { once: true, passive: true });
+    }
+    if (this._animations.length > 0) {
+      this._animRafId = requestAnimationFrame((t) => this._animationLoop(t));
+    }
+  }
+
+  _cancelAllAnimations() {
+    if (this._animRafId) { cancelAnimationFrame(this._animRafId); this._animRafId = null; }
+    for (const a of this._animations) {
+      a.done = true;
+      if (a.el._flashTimer) { clearTimeout(a.el._flashTimer); a.el._flashTimer = null; }
+    }
+    this._animations = [];
   }
 
   // ============ UI UPDATE DISPATCHER ============
