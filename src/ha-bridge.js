@@ -242,7 +242,7 @@ export class HABridge {
           initial: def.initial,
           mode: def.mode,
         });
-        console.log('[Solar] Created BMS prefix helper');
+        console.debug('[Solar] Created BMS prefix helper');
       } catch (e) {
         console.warn('[Solar] Failed to create BMS prefix helper:', e);
       }
@@ -428,7 +428,7 @@ export class HABridge {
             params.initial = def.initial;
           }
           await this._hass.callWS(params);
-          console.log(`[Solar] Created helper: ${def.id}`);
+          console.debug(`[Solar] Created helper: ${def.id}`);
         } catch (e) {
           const haYear = parseInt((this._hass.config.version || '0').split('.')[0]);
           if (haYear >= 2025) {
