@@ -1025,13 +1025,16 @@ class SolarDashboard extends HTMLElement {
         this._solarEngineReady = true;
       }
 
-      // Init weather FX — start immediately with real HA weather data
+      // Init weather FX — start with default condition, then animate to real weather
       const weatherCanvas = root.getElementById('weatherParticles');
       if (weatherCanvas) {
         this._weatherFx = new WeatherFX(weatherCanvas);
         this._weatherFx.resize(window.innerWidth, window.innerHeight);
-        // Fetch real weather immediately — data is already in hass.states
-        this._updateWeather();
+        // Start with a default condition so particles are visible immediately
+        const isNight = this._engine ? this._engine.getPosition(new Date()).elevation < 0 : false;
+        this._weatherFx.start(isNight ? 'clear-night' : 'sunny', isNight, 'dark', 0, 0.5, -90, 180, isNight ? -10 : 30, 180, isNight ? 0 : 20, 180);
+        // Defer real weather to next rAF — default renders first, then fades to real
+        requestAnimationFrame(() => this._updateWeather());
       }
 
       // Init charts
