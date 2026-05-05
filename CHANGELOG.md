@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.38.8 (2026-05-05)
+
+### Bug Fixes
+- Weather animates from default to real condition on load
+
+
 ## v0.38.7 (2026-05-05)
 
 ### Bug Fixes
