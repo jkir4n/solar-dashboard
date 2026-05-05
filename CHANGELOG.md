@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.38.4 (2026-05-05)
+
+### Bug Fixes
+- Restart weather FX on tab visibility restore
+
+
 ## v0.38.3 (2026-05-05)
 
 ### Bug Fixes
