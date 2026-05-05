@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.38.0 (2026-05-05)
+
+### Features
+- Progressive skeleton loading with smooth card reveal
+
+
 ## v0.37.14 (2026-05-04)
 
 ### Bug Fixes
