@@ -2309,12 +2309,16 @@ class SolarDashboard extends HTMLElement {
 
     // Update weather FX particles — pass original HA condition, not the palette key,
     // because WeatherFX.start() does its own condition-to-particle mapping
-    // B23: Skip if parameters haven't changed (prevents redundant fade loops)
+    // B23: Skip full rebuild if core parameters haven't changed (prevents redundant fade loops)
     if (this._weatherFx) {
       const fxKey = `${condition}|${isNight}|${windSpeed.toFixed(0)}|${moonBrightness.toFixed(2)}`;
       if (fxKey !== this._fxKey) {
+        // Core params changed — full rebuild with fade transition
         this._weatherFx.start(condition, isNight, theme, windSpeed, moonBrightness, moonElevation, moonAzimuth, sunElevation, sunAzimuth, cloudCoverage, windBearing);
         this._fxKey = fxKey;
+      } else {
+        // Core params same but cloud/wind/sun/moon may have changed — update without rebuild
+        this._weatherFx.updateDynamic(cloudCoverage, windBearing, sunElevation, sunAzimuth, moonElevation, moonAzimuth, moonBrightness);
       }
     }
   }

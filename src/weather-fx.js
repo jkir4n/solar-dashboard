@@ -240,6 +240,23 @@ export class WeatherFX {
     }
   }
 
+  /** Update dynamic values (cloud, wind, positions) without rebuilding particles.
+   *  Called when fxKey hasn't changed but subordinate values have shifted. */
+  updateDynamic(cloudCoverage, windBearing, sunElevation, sunAzimuth, moonElevation, moonAzimuth, moonBrightness) {
+    this._cloudCoverage  = cloudCoverage;
+    this._windBearing    = Number.isFinite(windBearing) ? windBearing : 180;
+    this._updateWindCache();
+    this._sunElevation   = sunElevation;
+    this._sunAzimuth     = sunAzimuth;
+    this._moonElevation  = moonElevation;
+    this._moonAzimuth    = moonAzimuth;
+    this._moonBrightness = Number.isFinite(moonBrightness) ? moonBrightness : this._moonBrightness;
+    // 24/7: restart rAF loop if it stopped
+    if (!this._animFrameId && this._shouldKeepRendering()) {
+      this._startRenderLoop();
+    }
+  }
+
   updateNightSky(planets, galCenterAz, galCenterEl, issPos) {
     this._planets    = planets   || [];
     this._galCenterAz = galCenterAz;
