@@ -94,6 +94,10 @@ export class WeatherFX {
     // Ambient overlay — stars/aurora at night, sun rays/glow by day
     this._overlayParticles = [];
     this._overlayType = null;
+    this._overlayTypeCur = null;  // what's currently rendering (for cross-fade)
+    this._overlayTypePrev = null; // previous overlay type during cross-fade
+    this._overlayParticlesPrev = [];
+    this._overlayAlphaPrevCur = 0;
     this._overlayAlpha = 0;
     this._fadeGen = 0;
     this._windSpeed = 0;         // km/h
@@ -312,17 +316,26 @@ export class WeatherFX {
 
     if (newOverlayType) {
       if (this._overlayType !== newOverlayType) {
+        // Cross-fade: keep old overlay particles, fade them out while new ones fade in
+        this._overlayTypePrev = this._overlayType;
+        this._overlayParticlesPrev = this._overlayParticlesByType[this._overlayType] || [];
+        this._overlayAlphaPrevCur = 1;
         this._overlayParticles = this._createParticles(newOverlayType, this.canvas);
         this._overlayParticlesByType = this._bucketize(this._overlayParticles);
       }
       this._overlayType = newOverlayType;
       this._overlayAlpha = newOverlayAlpha;
     } else {
+      if (this._overlayType) {
+        this._overlayTypePrev = this._overlayType;
+        this._overlayParticlesPrev = this._overlayParticlesByType[this._overlayType] || [];
+      }
       this._overlayParticles = [];
       this._overlayParticlesByType = {};
       this._overlayType = null;
       this._overlayAlpha = 0;
     }
+    this._overlayTypeCur = this._overlayType;
 
     this._startParticles(particleType);
   }
@@ -1187,7 +1200,29 @@ export class WeatherFX {
     ctx.clearRect(0, 0, w, h);
 
     // Draw ambient overlay (stars/aurora at night; sun rays/glow by day) behind weather particles
-    const cloudDim = state._calcCloudDim(state._cloudCoverage, state._weatherCondition);
+    const cloudDim = state._calcCloudDim(state._cloudCovCur, state._weatherCondition);
+    // Cross-fade overlay types: render old overlay fading out, then new overlay fading in
+    if (state._overlayTypePrev) {
+      const prevAlpha = state._overlayAlphaPrevCur ?? 1;
+      const newPrevAlpha = prevAlpha - 0.015;
+      state._overlayAlphaPrevCur = Math.max(0, newPrevAlpha);
+      if (state._overlayAlphaPrevCur <= 0) {
+        state._overlayTypePrev = null;
+        state._overlayParticlesPrev = [];
+        state._overlayAlphaPrevCur = 0;
+      } else {
+        const savedAlpha = state._overlayAlphaCur;
+        state._overlayAlphaCur = state._overlayAlphaPrevCur;
+        const savedType = state._overlayType;
+        const savedParticles = state._overlayParticlesByType;
+        state._overlayType = state._overlayTypePrev;
+        state._overlayParticlesByType = { [state._overlayTypePrev]: state._overlayParticlesPrev };
+        state._renderOverlay(now, cloudDim);
+        state._overlayType = savedType;
+        state._overlayParticlesByType = savedParticles;
+        state._overlayAlphaCur = savedAlpha;
+      }
+    }
     if (state._overlayType) state._renderOverlay(now, cloudDim);
 
     ctx.globalAlpha = state._alpha;
