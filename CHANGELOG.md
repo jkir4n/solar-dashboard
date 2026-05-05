@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.38.3 (2026-05-05)
+
+### Bug Fixes
+- Start weather FX immediately, delay card reveal by 1s
+
+
 ## v0.38.2 (2026-05-05)
 
 ### Bug Fixes
