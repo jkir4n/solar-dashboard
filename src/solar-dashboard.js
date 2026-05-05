@@ -1025,11 +1025,15 @@ class SolarDashboard extends HTMLElement {
         this._solarEngineReady = true;
       }
 
-      // Init weather FX — starts immediately so background/particles are visible
+      // Init weather FX — start immediately with defaults so background is alive
       const weatherCanvas = root.getElementById('weatherParticles');
       if (weatherCanvas) {
         this._weatherFx = new WeatherFX(weatherCanvas);
         this._weatherFx.resize(window.innerWidth, window.innerHeight);
+        // Start with a default condition based on sun elevation — _updateWeather()
+        // will replace this with real weather data shortly
+        const isNight = this._engine ? this._engine.getPosition(new Date()).elevation < 0 : false;
+        this._weatherFx.start(isNight ? 'clear-night' : 'sunny', isNight, 'dark', 0, 0.5, -90, 180, isNight ? -10 : 30, 180, isNight ? 0 : 20, 180);
       }
 
       // Init charts
@@ -1187,10 +1191,13 @@ class SolarDashboard extends HTMLElement {
 
       // Now reveal cards with stagger — background is already alive,
       // data is populated, cards fade in smoothly over the living backdrop.
-      requestAnimationFrame(() => {
-        this._revealCards();
-        this._revealFallbackTimeout = setTimeout(() => this._revealCards(), 3000);
-      });
+      // Delay gives the weather particles time to establish visually.
+      setTimeout(() => {
+        requestAnimationFrame(() => {
+          this._revealCards();
+          this._revealFallbackTimeout = setTimeout(() => this._revealCards(), 3000);
+        });
+      }, 1000);
     } catch (error) {
       console.error('[Solar] Init failed:', error);
       this._initialized = false; // allow retry
