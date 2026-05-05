@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.38.1 (2026-05-05)
+
+### Bug Fixes
+- Smooth skeleton loading — no DOM swap, CSS overlay fades to real data
+
+
 ## v0.38.0 (2026-05-05)
 
 ### Features
