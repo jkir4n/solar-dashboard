@@ -1025,15 +1025,13 @@ class SolarDashboard extends HTMLElement {
         this._solarEngineReady = true;
       }
 
-      // Init weather FX — start immediately with defaults so background is alive
+      // Init weather FX — start immediately with real HA weather data
       const weatherCanvas = root.getElementById('weatherParticles');
       if (weatherCanvas) {
         this._weatherFx = new WeatherFX(weatherCanvas);
         this._weatherFx.resize(window.innerWidth, window.innerHeight);
-        // Start with a default condition based on sun elevation — _updateWeather()
-        // will replace this with real weather data shortly
-        const isNight = this._engine ? this._engine.getPosition(new Date()).elevation < 0 : false;
-        this._weatherFx.start(isNight ? 'clear-night' : 'sunny', isNight, 'dark', 0, 0.5, -90, 180, isNight ? -10 : 30, 180, isNight ? 0 : 20, 180);
+        // Fetch real weather immediately — data is already in hass.states
+        this._updateWeather();
       }
 
       // Init charts
@@ -1183,10 +1181,6 @@ class SolarDashboard extends HTMLElement {
 
       // 24/7: WebSocket connection health check — every 30s
       this._connCheckInterval = setInterval(() => this._checkConnection(), 30000);
-
-      // Start weather backdrop immediately — particles + mesh gradient visible
-      // while cards are still hidden. User sees the sky come alive first.
-      this._updateWeather();
 
       // Initial full refresh — populates all card data behind the scenes
       this._refreshAllUI();
