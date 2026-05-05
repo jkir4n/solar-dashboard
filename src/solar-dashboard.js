@@ -911,10 +911,10 @@ class SolarDashboard extends HTMLElement {
       return;
     }
     if (!this._initialized) {
-      // Render full HTML immediately with skeleton overlay — no DOM swap later
-      this._render(true);
+      // Render full HTML immediately — cards hidden, background/weather visible
+      this._render();
       this._initialized = true;
-      // Defer heavy subsystem init to next frame — skeleton paints first
+      // Defer heavy init to next frame so background paints first
       requestAnimationFrame(() => this._init());
     }
     // Retry chart loading once entity discovery is complete
@@ -996,26 +996,22 @@ class SolarDashboard extends HTMLElement {
   }
 
   // ============ RENDER ============
-  _render(skeleton = false) {
+  _render() {
     const root = this.shadowRoot;
     if (!root) return;
     const lang = this._bridge._hass?.language || 'en';
     root.innerHTML = `<style>${STYLES}</style>${this._getHTML(lang)}`;
     this._cacheElements();
-    if (skeleton) {
-      this._els.dashRoot?.classList.add('skeleton');
-    }
+    // Hide cards immediately — they'll be revealed after data + weather are ready
+    const dashRoot = root.querySelector('.dashboard-root');
+    if (dashRoot) dashRoot.classList.add('js-ready');
   }
 
   // ============ INIT ============
   _init() {
     const root = this.shadowRoot;
     try {
-      // HTML already rendered by _render(true) — just apply theme and set up subsystems
       this._applyTheme();
-      const dashRoot = root.querySelector('.dashboard-root');
-      // Don't add .js-ready yet — skeleton CSS keeps cards visible.
-      // Add it after skeleton is removed so card reveal animation works normally.
       this._mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
       this._themeHandler = () => this._applyTheme();
       this._mediaQuery.addEventListener('change', this._themeHandler);
@@ -1029,7 +1025,7 @@ class SolarDashboard extends HTMLElement {
         this._solarEngineReady = true;
       }
 
-      // Init weather FX
+      // Init weather FX — starts immediately so background/particles are visible
       const weatherCanvas = root.getElementById('weatherParticles');
       if (weatherCanvas) {
         this._weatherFx = new WeatherFX(weatherCanvas);
@@ -1176,21 +1172,21 @@ class SolarDashboard extends HTMLElement {
       document.addEventListener('freeze', this._freezeHandler);
       document.addEventListener('resume', this._resumeHandler);
 
-      // Start mesh gradient lerp loop
+      // Start mesh gradient lerp loop — runs immediately so background animates
       this._startMeshLerp();
 
       // 24/7: WebSocket connection health check — every 30s
       this._connCheckInterval = setInterval(() => this._checkConnection(), 30000);
 
-      // Initial full refresh — populates all card data
+      // Start weather backdrop immediately — particles + mesh gradient visible
+      // while cards are still hidden. User sees the sky come alive first.
+      this._updateWeather();
+
+      // Initial full refresh — populates all card data behind the scenes
       this._refreshAllUI();
 
-      // Remove skeleton overlay — CSS transition fades shimmer bars away,
-      // revealing the real data underneath. Cards stay visible the whole time.
-      this._els.dashRoot?.classList.remove('skeleton');
-
-      // Progressive card reveal — adds .js-ready + .revealed together so cards
-      // never flash invisible. Staggered fade-in with shimmer effects.
+      // Now reveal cards with stagger — background is already alive,
+      // data is populated, cards fade in smoothly over the living backdrop.
       requestAnimationFrame(() => {
         this._revealCards();
         this._revealFallbackTimeout = setTimeout(() => this._revealCards(), 3000);
@@ -2906,9 +2902,6 @@ class SolarDashboard extends HTMLElement {
     if (this._revealFallbackTimeout) { clearTimeout(this._revealFallbackTimeout); this._revealFallbackTimeout = null; }
     if (this._cardsRevealed) return;
     this._cardsRevealed = true;
-    // Add .js-ready together with .revealed so cards never flash invisible
-    const dashRoot = this.shadowRoot.querySelector('.dashboard-root');
-    if (dashRoot) dashRoot.classList.add('js-ready');
     const cards = this.shadowRoot.querySelectorAll('.card');
     cards.forEach((card, i) => {
       setTimeout(() => card.classList.add('revealed'), i * 60);
