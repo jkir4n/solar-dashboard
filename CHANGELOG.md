@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.38.2 (2026-05-05)
+
+### Bug Fixes
+- Background-first loading — weather + mesh gradient visible before cards
+
+
 ## v0.38.1 (2026-05-05)
 
 ### Bug Fixes
