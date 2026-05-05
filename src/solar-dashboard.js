@@ -911,10 +911,10 @@ class SolarDashboard extends HTMLElement {
       return;
     }
     if (!this._initialized) {
-      // Render skeleton immediately so browser can paint it
-      this._renderSkeleton();
-      // Defer heavy init work to next frame — skeleton paints first
+      // Render full HTML immediately with skeleton overlay — no DOM swap later
+      this._render(true);
       this._initialized = true;
+      // Defer heavy subsystem init to next frame — skeleton paints first
       requestAnimationFrame(() => this._init());
     }
     // Retry chart loading once entity discovery is complete
@@ -995,80 +995,27 @@ class SolarDashboard extends HTMLElement {
     };
   }
 
-  // ============ SKELETON LOADING ============
-  _renderSkeleton() {
+  // ============ RENDER ============
+  _render(skeleton = false) {
     const root = this.shadowRoot;
+    if (!root) return;
     const lang = this._bridge._hass?.language || 'en';
-    root.innerHTML = `<style>${STYLES}</style>
-<div class="dashboard-root skeleton" data-theme="${root?.querySelector('.dashboard-root')?.dataset.theme || 'dark'}">
-<canvas id="weatherParticles"></canvas>
-<div class="container">
-  <header class="header">
-    <div style="display:flex;align-items:center;gap:12px">
-      <h1 style="font-size:24px;font-weight:700">${t(lang, 'solar')}</h1>
-      <div class="live-dot"></div>
-      <span style="font-size:12px;font-weight:600;color:var(--green)">${t(lang, 'live')}</span>
-    </div>
-    <div class="skeleton-bar w25 h8"></div>
-  </header>
-  <div class="top-row">
-    <div class="card" id="batteryHero">
-      <h2 class="section-title">${t(lang, 'battery')}</h2>
-      <div style="display:flex;flex-direction:column;align-items:center;">
-        <div class="skeleton-circle"></div>
-        <div class="skeleton-bar w50 h8 mt12"></div>
-      </div>
-      <div class="stat-grid">
-        <div class="stat-item"><div class="skeleton-bar w100 h20 mb16"></div><div class="skeleton-bar w75 h8"></div></div>
-        <div class="stat-item"><div class="skeleton-bar w100 h20 mb16"></div><div class="skeleton-bar w75 h8"></div></div>
-        <div class="stat-item"><div class="skeleton-bar w100 h20 mb16"></div><div class="skeleton-bar w75 h8"></div></div>
-        <div class="stat-item"><div class="skeleton-bar w100 h20 mb16"></div><div class="skeleton-bar w75 h8"></div></div>
-      </div>
-    </div>
-    <div class="right-col">
-      <div class="card" id="powerFlow">
-        <h2 class="section-title">${t(lang, 'powerFlow')}</h2>
-        <div style="display:flex;flex-direction:column;gap:16px;align-items:center;">
-          <div class="skeleton-bar w75 h28"></div>
-          <div class="skeleton-bar w50 h20"></div>
-          <div class="skeleton-bar w100 h8 mt8"></div>
-        </div>
-      </div>
-      <div class="card" id="solarCard">
-        <h2 class="section-title">${t(lang, 'solarEst')}</h2>
-        <div style="display:flex;flex-direction:column;gap:12px;">
-          <div class="skeleton-bar w100 h20"></div>
-          <div class="skeleton-bar w75 h8"></div>
-          <div class="skeleton-bar w50 h8 mt8"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="card" id="cellBalance">
-    <h2 class="section-title">${t(lang, 'cellBalance')}</h2>
-    <div style="display:flex;flex-direction:column;gap:6px;">
-      ${Array.from({length: 8}, () => '<div class="skeleton-bar w100 h8"></div>').join('')}
-    </div>
-  </div>
-</div>
-</div>`;
-    this._applyTheme();
+    root.innerHTML = `<style>${STYLES}</style>${this._getHTML(lang)}`;
+    this._cacheElements();
+    if (skeleton) {
+      this._els.dashRoot?.classList.add('skeleton');
+    }
   }
 
   // ============ INIT ============
   _init() {
     const root = this.shadowRoot;
     try {
-      const lang = this._bridge._hass?.language || 'en';
-      root.innerHTML = `<style>${STYLES}</style>${this._getHTML(lang)}`;
-
-      // Cache frequently-queried element refs
-      this._cacheElements();
-
-      // Apply theme and enable JS-dependent animations
+      // HTML already rendered by _render(true) — just apply theme and set up subsystems
       this._applyTheme();
       const dashRoot = root.querySelector('.dashboard-root');
-      if (dashRoot) dashRoot.classList.add('js-ready');
+      // Don't add .js-ready yet — skeleton CSS keeps cards visible.
+      // Add it after skeleton is removed so card reveal animation works normally.
       this._mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
       this._themeHandler = () => this._applyTheme();
       this._mediaQuery.addEventListener('change', this._themeHandler);
@@ -1238,11 +1185,14 @@ class SolarDashboard extends HTMLElement {
       // Initial full refresh — populates all card data
       this._refreshAllUI();
 
-      // Progressive card reveal — cards fade in with stagger after data is ready
-      // Yield to browser so the populated (but hidden) cards paint first
+      // Remove skeleton overlay — CSS transition fades shimmer bars away,
+      // revealing the real data underneath. Cards stay visible the whole time.
+      this._els.dashRoot?.classList.remove('skeleton');
+
+      // Progressive card reveal — adds .js-ready + .revealed together so cards
+      // never flash invisible. Staggered fade-in with shimmer effects.
       requestAnimationFrame(() => {
         this._revealCards();
-        // Safety fallback: if reveal somehow didn't fire, force it
         this._revealFallbackTimeout = setTimeout(() => this._revealCards(), 3000);
       });
     } catch (error) {
@@ -2956,6 +2906,9 @@ class SolarDashboard extends HTMLElement {
     if (this._revealFallbackTimeout) { clearTimeout(this._revealFallbackTimeout); this._revealFallbackTimeout = null; }
     if (this._cardsRevealed) return;
     this._cardsRevealed = true;
+    // Add .js-ready together with .revealed so cards never flash invisible
+    const dashRoot = this.shadowRoot.querySelector('.dashboard-root');
+    if (dashRoot) dashRoot.classList.add('js-ready');
     const cards = this.shadowRoot.querySelectorAll('.card');
     cards.forEach((card, i) => {
       setTimeout(() => card.classList.add('revealed'), i * 60);

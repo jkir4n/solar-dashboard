@@ -427,30 +427,87 @@ export const STYLES = `
   .card.revealed:nth-child(3)::after { --shimmer-angle: 130deg; --shimmer-o: 0.022; --shimmer-peak: 0.038; --shimmer-duration: 12s; --shimmer-delay: -8s; }
   .card.revealed:nth-child(4)::after { --shimmer-angle: 150deg; --shimmer-o: 0.015; --shimmer-peak: 0.028; --shimmer-duration: 15s; --shimmer-delay: -2s; }
 
-  /* Skeleton loading — pulsing placeholders inside glass cards */
-  .skeleton .card { opacity: 1 !important; transform: none !important; }
-  .skeleton-bar {
-    height: 14px; border-radius: 7px;
+  /* Skeleton loading — shimmer overlay on value elements */
+  .skeleton .stat-val,
+  .skeleton .stat-label,
+  .skeleton .inf-v,
+  .skeleton .inf-k,
+  .skeleton .section-title,
+  .skeleton .flow-icon,
+  .skeleton .batt-soc,
+  .skeleton .batt-ring,
+  .skeleton .cell-row-item,
+  .skeleton .chart-container,
+  .skeleton .health-fill,
+  .skeleton .toggle-switch,
+  .skeleton .live-dot {
+    color: transparent !important;
+    background: transparent !important;
+    border-color: transparent !important;
+    stroke: transparent !important;
+    fill: transparent !important;
+    box-shadow: none !important;
+    filter: none !important;
+    position: relative;
+  }
+  .skeleton .stat-val::after,
+  .skeleton .inf-v::after,
+  .skeleton .section-title::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    height: 100%; width: 100%;
+    border-radius: 6px;
     background: linear-gradient(90deg, var(--glass-border) 25%, rgba(255,255,255,0.08) 50%, var(--glass-border) 75%);
     background-size: 200% 100%;
     animation: skeletonPulse 1.5s ease-in-out infinite;
   }
-  .skeleton-circle {
-    width: 120px; height: 120px; border-radius: 50%;
-    background: linear-gradient(135deg, var(--glass-border) 25%, rgba(255,255,255,0.06) 50%, var(--glass-border) 75%);
+  .skeleton .stat-label::after,
+  .skeleton .inf-k::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    height: 8px; width: 70%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--glass-border) 25%, rgba(255,255,255,0.06) 50%, var(--glass-border) 75%);
     background-size: 200% 100%;
     animation: skeletonPulse 1.5s ease-in-out infinite;
   }
-  .skeleton-bar.w25 { width: 25%; }
-  .skeleton-bar.w50 { width: 50%; }
-  .skeleton-bar.w75 { width: 75%; }
-  .skeleton-bar.w100 { width: 100%; }
-  .skeleton-bar.h8 { height: 8px; }
-  .skeleton-bar.h20 { height: 20px; }
-  .skeleton-bar.h28 { height: 28px; }
-  .skeleton-bar.mt8 { margin-top: 8px; }
-  .skeleton-bar.mt12 { margin-top: 12px; }
-  .skeleton-bar.mb16 { margin-bottom: 16px; }
+  .skeleton .batt-soc::after {
+    width: 60px; height: 24px;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 12px;
+  }
+  .skeleton .batt-ring { opacity: 0.15 !important; }
+  .skeleton .flow-icon { opacity: 0.15 !important; }
+  .skeleton .live-dot { opacity: 0.3 !important; }
+  .skeleton .card { opacity: 1 !important; transform: none !important; }
+  .skeleton .card.revealed { opacity: 1 !important; transform: none !important; }
+
+  /* Skeleton fade-out transition — when .skeleton class is removed */
+  .dashboard-root {
+    transition: none;
+  }
+  .dashboard-root.skeleton .stat-val::after,
+  .dashboard-root.skeleton .inf-v::after,
+  .dashboard-root.skeleton .section-title::after,
+  .dashboard-root.skeleton .stat-label::after,
+  .dashboard-root.skeleton .inf-k::after,
+  .dashboard-root.skeleton .batt-soc::after {
+    transition: opacity 0.6s ease-out;
+    opacity: 1;
+  }
+  .dashboard-root:not(.skeleton) .stat-val::after,
+  .dashboard-root:not(.skeleton) .inf-v::after,
+  .dashboard-root:not(.skeleton) .section-title::after,
+  .dashboard-root:not(.skeleton) .stat-label::after,
+  .dashboard-root:not(.skeleton) .inf-k::after,
+  .dashboard-root:not(.skeleton) .batt-soc::after {
+    opacity: 0;
+    pointer-events: none;
+  }
+
   @keyframes skeletonPulse {
     0% { background-position: 200% 0; }
     100% { background-position: -200% 0; }
