@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.38.6 (2026-05-05)
+
+### Bug Fixes
+- Seamless weather transitions — cross-fade overlays + smooth cloud dimming
+
+
 ## v0.38.5 (2026-05-05)
 
 ### Bug Fixes
