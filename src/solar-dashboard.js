@@ -1116,7 +1116,9 @@ class SolarDashboard extends HTMLElement {
           if (this._flowPS2) this._flowPS2.stop();
           this._stopBattArcs();
           this._cancelAllAnimations();
-          if (this._weatherFx) this._weatherFx.stop();
+        if (this._weatherFx) this._weatherFx.stop();
+        this._fxKey = null; // force weather restart on resume
+          this._fxKey = null; // force weather restart on visibility restore
           if (this._meshRafId) { cancelAnimationFrame(this._meshRafId); this._meshRafId = null; }
           if (this._connCheckInterval) { clearInterval(this._connCheckInterval); this._connCheckInterval = null; }
         } else {
