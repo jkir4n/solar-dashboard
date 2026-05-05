@@ -426,4 +426,33 @@ export const STYLES = `
   .card.revealed:nth-child(2)::after { --shimmer-angle: 140deg; --shimmer-o: 0.018; --shimmer-peak: 0.03;  --shimmer-duration: 14s; --shimmer-delay: -4s; }
   .card.revealed:nth-child(3)::after { --shimmer-angle: 130deg; --shimmer-o: 0.022; --shimmer-peak: 0.038; --shimmer-duration: 12s; --shimmer-delay: -8s; }
   .card.revealed:nth-child(4)::after { --shimmer-angle: 150deg; --shimmer-o: 0.015; --shimmer-peak: 0.028; --shimmer-duration: 15s; --shimmer-delay: -2s; }
+
+  /* Skeleton loading — pulsing placeholders inside glass cards */
+  .skeleton .card { opacity: 1 !important; transform: none !important; }
+  .skeleton-bar {
+    height: 14px; border-radius: 7px;
+    background: linear-gradient(90deg, var(--glass-border) 25%, rgba(255,255,255,0.08) 50%, var(--glass-border) 75%);
+    background-size: 200% 100%;
+    animation: skeletonPulse 1.5s ease-in-out infinite;
+  }
+  .skeleton-circle {
+    width: 120px; height: 120px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--glass-border) 25%, rgba(255,255,255,0.06) 50%, var(--glass-border) 75%);
+    background-size: 200% 100%;
+    animation: skeletonPulse 1.5s ease-in-out infinite;
+  }
+  .skeleton-bar.w25 { width: 25%; }
+  .skeleton-bar.w50 { width: 50%; }
+  .skeleton-bar.w75 { width: 75%; }
+  .skeleton-bar.w100 { width: 100%; }
+  .skeleton-bar.h8 { height: 8px; }
+  .skeleton-bar.h20 { height: 20px; }
+  .skeleton-bar.h28 { height: 28px; }
+  .skeleton-bar.mt8 { margin-top: 8px; }
+  .skeleton-bar.mt12 { margin-top: 12px; }
+  .skeleton-bar.mb16 { margin-bottom: 16px; }
+  @keyframes skeletonPulse {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
 `;

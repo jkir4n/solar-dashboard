@@ -911,8 +911,11 @@ class SolarDashboard extends HTMLElement {
       return;
     }
     if (!this._initialized) {
-      this._init();
+      // Render skeleton immediately so browser can paint it
+      this._renderSkeleton();
+      // Defer heavy init work to next frame — skeleton paints first
       this._initialized = true;
+      requestAnimationFrame(() => this._init());
     }
     // Retry chart loading once entity discovery is complete
     const E = this._bridge.E;
@@ -990,6 +993,66 @@ class SolarDashboard extends HTMLElement {
       wxSource:      root.getElementById('wxSource'),
       dashRoot:      root.querySelector('.dashboard-root'),
     };
+  }
+
+  // ============ SKELETON LOADING ============
+  _renderSkeleton() {
+    const root = this.shadowRoot;
+    const lang = this._bridge._hass?.language || 'en';
+    root.innerHTML = `<style>${STYLES}</style>
+<div class="dashboard-root skeleton" data-theme="${root?.querySelector('.dashboard-root')?.dataset.theme || 'dark'}">
+<canvas id="weatherParticles"></canvas>
+<div class="container">
+  <header class="header">
+    <div style="display:flex;align-items:center;gap:12px">
+      <h1 style="font-size:24px;font-weight:700">${t(lang, 'solar')}</h1>
+      <div class="live-dot"></div>
+      <span style="font-size:12px;font-weight:600;color:var(--green)">${t(lang, 'live')}</span>
+    </div>
+    <div class="skeleton-bar w25 h8"></div>
+  </header>
+  <div class="top-row">
+    <div class="card" id="batteryHero">
+      <h2 class="section-title">${t(lang, 'battery')}</h2>
+      <div style="display:flex;flex-direction:column;align-items:center;">
+        <div class="skeleton-circle"></div>
+        <div class="skeleton-bar w50 h8 mt12"></div>
+      </div>
+      <div class="stat-grid">
+        <div class="stat-item"><div class="skeleton-bar w100 h20 mb16"></div><div class="skeleton-bar w75 h8"></div></div>
+        <div class="stat-item"><div class="skeleton-bar w100 h20 mb16"></div><div class="skeleton-bar w75 h8"></div></div>
+        <div class="stat-item"><div class="skeleton-bar w100 h20 mb16"></div><div class="skeleton-bar w75 h8"></div></div>
+        <div class="stat-item"><div class="skeleton-bar w100 h20 mb16"></div><div class="skeleton-bar w75 h8"></div></div>
+      </div>
+    </div>
+    <div class="right-col">
+      <div class="card" id="powerFlow">
+        <h2 class="section-title">${t(lang, 'powerFlow')}</h2>
+        <div style="display:flex;flex-direction:column;gap:16px;align-items:center;">
+          <div class="skeleton-bar w75 h28"></div>
+          <div class="skeleton-bar w50 h20"></div>
+          <div class="skeleton-bar w100 h8 mt8"></div>
+        </div>
+      </div>
+      <div class="card" id="solarCard">
+        <h2 class="section-title">${t(lang, 'solarEst')}</h2>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div class="skeleton-bar w100 h20"></div>
+          <div class="skeleton-bar w75 h8"></div>
+          <div class="skeleton-bar w50 h8 mt8"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card" id="cellBalance">
+    <h2 class="section-title">${t(lang, 'cellBalance')}</h2>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      ${Array.from({length: 8}, () => '<div class="skeleton-bar w100 h8"></div>').join('')}
+    </div>
+  </div>
+</div>
+</div>`;
+    this._applyTheme();
   }
 
   // ============ INIT ============
@@ -1172,12 +1235,16 @@ class SolarDashboard extends HTMLElement {
       // 24/7: WebSocket connection health check — every 30s
       this._connCheckInterval = setInterval(() => this._checkConnection(), 30000);
 
-      // Initial full refresh + reveal
+      // Initial full refresh — populates all card data
       this._refreshAllUI();
 
-      // Staggered card reveal with fallback
-      setTimeout(() => this._revealCards(), 200);
-      this._revealFallbackTimeout = setTimeout(() => this._revealCards(), 2000); // fallback
+      // Progressive card reveal — cards fade in with stagger after data is ready
+      // Yield to browser so the populated (but hidden) cards paint first
+      requestAnimationFrame(() => {
+        this._revealCards();
+        // Safety fallback: if reveal somehow didn't fire, force it
+        this._revealFallbackTimeout = setTimeout(() => this._revealCards(), 3000);
+      });
     } catch (error) {
       console.error('[Solar] Init failed:', error);
       this._initialized = false; // allow retry
