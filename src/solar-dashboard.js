@@ -765,9 +765,15 @@ class FlowParticles {
       if (maxOpacity < 0.01) {
         const cur = parseFloat(d.el.style.opacity) || 0;
         if (cur > 0.01) {
-          d.p += this.speed;
+          d.p += this.speed * this.direction;
           if (d.p >= 1) d.p -= 1;
-          d.el.style.left = (d.p * 100) + '%';
+          if (d.p < 0)  d.p += 1;
+          if (this.vertical) {
+            d.el.style.top  = (d.p * 100) + '%';
+            d.el.style.left = '50%';
+          } else {
+            d.el.style.left = (d.p * 100) + '%';
+          }
           d.el.style.opacity = (cur * 0.92).toFixed(3);
         } else {
           d.el.style.opacity = '0';
