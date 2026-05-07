@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.39.1 (2026-05-07)
+
+### Bug Fixes
+- Flow-hub cross layout grid-area placement
+- Styles.js
+- README.md
+- README.md
+- README.md
+- README.md
+
+
 ## v0.39.0 (2026-05-07)
 
 ### Features
