@@ -94,8 +94,8 @@ export const STYLES = `
   }
 
   /* Grid layout */
-  .top-row { display: grid; grid-template-columns: 7fr 5fr; gap: 16px; margin-bottom: 16px; }
-  .right-col { display: flex; flex-direction: column; gap: 16px; }
+  .top-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: stretch; margin-bottom: 16px; }
+  .mid-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: stretch; margin-bottom: 16px; }
   .chart-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px; }
   .cells-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
   .bottom-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
