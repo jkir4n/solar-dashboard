@@ -133,7 +133,7 @@ const L = {
     cycles: 'Cicli', capacity: 'Capacit\u00E0', nominal: 'Nominale', config: 'Config',
     minCell: 'Cella min', maxCell: 'Cella max', runtime: 'Durata', throughput: 'Throughput',
     mosfet: 'MOSFET', bmsModel: 'Modello BMS', firmware: 'Firmware', chemistry: 'Chimica',
-    batteryNode: 'Batteria', home: 'Casa', solarNode: 'Solare',
+    batteryNode: 'Batteria', home: 'Casa', solarNode: 'Solare', grid: 'Rete',
     actual: 'attuale', estimated: 'stimato', generatedToday: 'generato oggi', expected: 'previsto',
     rated: 'Nominale', installed: 'Installato', age: 'Et\u00E0', model: 'Modello',
     type: 'Tipo', year1Loss: 'Perdita anno 1', annualLoss: 'Perdita annuale', nextYear: 'Pross. anno',
