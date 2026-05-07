@@ -1064,8 +1064,9 @@ class SolarDashboard extends HTMLElement {
       });
 
       // Init flow particles
-      this._flowPS1 = new FlowParticles(root, 'flowWrap1', 'flowParticles1', 'flowLine1', 'flowArc1', '#00F0FF');
-      this._flowPS2 = new FlowParticles(root, 'flowWrap2', 'flowParticles2', 'flowLine2', 'flowArc2', '#FF453A');
+      this._flowPS1 = new FlowParticles(root, 'flowWrap1', 'flowParticles1', 'flowLine1', null,       '#00F0FF', true);
+      this._flowPS2 = new FlowParticles(root, 'flowWrap2', 'flowParticles2', 'flowLine2', 'flowArc2', '#00F0FF');
+      this._flowPS3 = new FlowParticles(root, 'flowWrap3', 'flowParticles3', 'flowLine3', null,       '#FF9F0A');
 
       // Wire chart tab handlers
       const tabs = root.querySelectorAll('.chart-tab');
