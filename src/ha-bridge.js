@@ -23,6 +23,22 @@ const SENSOR_KEYWORDS = {
   BATTERY_TYPE: ['battery_type'],
 };
 
+const GRID_KEYWORDS = {
+  GRID_POWER:  ['grid_power', 'pgrid', 'total_grid_power', 'active_grid_power',
+                'export_power', 'meter_power', 'net_consumption', 'balanced_net',
+                'grid_purchase', 'grid_input', 'ac_in_power', 'vebus_ac_in',
+                'metering_power'],
+  GRID_VOLTAGE:['grid_voltage', 'vgrid', 'voltage_ac', 'grid_a_phase_voltage',
+                'phase_a_voltage', 'ac_in_voltage', 'grid_l1_voltage'],
+  GRID_FREQ:   ['grid_frequency', 'fgrid', 'frequency_ac', 'fac',
+                'ac_in_frequency', 'frequency_phase_average'],
+  GRID_ENERGY: ['grid_energy_consumed', 'energy_real_consumed', 'daily_energy_bought',
+                'grid_consumption'],
+  PV_POWER:    ['pv_power', 'ppv', 'solar_power', 'input_power', 'pv1_power',
+                'total_dc_power', 'current_power_production', 'power_ac',
+                'total_active_power'],
+};
+
 // Keywords to exclude from POWER matching (too specific entities that contain "power")
 const POWER_EXCLUDE = ['charging_power', 'discharging_power', 'power_tube', 'power_protection', 'power_recovery', 'power_balance'];
 // Keywords to exclude from CURRENT matching (too specific entities that contain "current")
