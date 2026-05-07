@@ -46,7 +46,7 @@ const L = {
     cycles: 'Zyklen', capacity: 'Kapazit\u00E4t', nominal: 'Nennspannung', config: 'Konfig',
     minCell: 'Min Zelle', maxCell: 'Max Zelle', runtime: 'Laufzeit', throughput: 'Durchsatz',
     mosfet: 'MOSFET', bmsModel: 'BMS Modell', firmware: 'Firmware', chemistry: 'Chemie',
-    batteryNode: 'Batterie', home: 'Haus', solarNode: 'Solar',
+    batteryNode: 'Batterie', home: 'Haus', solarNode: 'Solar', grid: 'Netz',
     actual: 'aktuell', estimated: 'gesch\u00E4tzt', generatedToday: 'heute erzeugt', expected: 'erwartet',
     rated: 'Nennleistung', installed: 'Installiert', age: 'Alter', model: 'Modell',
     type: 'Typ', year1Loss: 'Jahr 1 Verlust', annualLoss: 'J\u00E4hrl. Verlust', nextYear: 'N\u00E4chstes Jahr',
