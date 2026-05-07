@@ -870,6 +870,7 @@ class SolarDashboard extends HTMLElement {
     this._clockFormatter = null;
     this._flowPS1 = null;
     this._flowPS2 = null;
+    this._flowPS3 = null;
     this._battArcInterval = null;
     this._boltTimeouts = [];
     this._resizeTimeout = null;
