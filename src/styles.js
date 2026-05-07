@@ -426,4 +426,92 @@ export const STYLES = `
   .card.revealed:nth-child(2)::after { --shimmer-angle: 140deg; --shimmer-o: 0.018; --shimmer-peak: 0.03;  --shimmer-duration: 14s; --shimmer-delay: -4s; }
   .card.revealed:nth-child(3)::after { --shimmer-angle: 130deg; --shimmer-o: 0.022; --shimmer-peak: 0.038; --shimmer-duration: 12s; --shimmer-delay: -8s; }
   .card.revealed:nth-child(4)::after { --shimmer-angle: 150deg; --shimmer-o: 0.015; --shimmer-peak: 0.028; --shimmer-duration: 15s; --shimmer-delay: -2s; }
+
+  /* ── Powerflow full-width section ── */
+  .powerflow-section {
+    width: 100%;
+    padding: 0 16px 16px;
+    box-sizing: border-box;
+  }
+
+  /* ── Flow hub cross layout ── */
+  .flow-hub {
+    display: grid;
+    grid-template-columns: auto 1fr auto 1fr auto;
+    grid-template-rows: auto auto auto;
+    grid-template-areas:
+      ".           .            fh-solar-node  .             ."
+      ".           .            fh-solar-line  .             ."
+      "fh-bat-node fh-bat-line  fh-home-node   fh-grid-line  fh-grid-node";
+    align-items: center;
+    justify-items: center;
+    padding: 24px 32px;
+    gap: 0 8px;
+    min-height: 220px;
+  }
+
+  .flow-hub-cell { display: contents; }
+  .fh-solar-node { grid-area: fh-solar-node; }
+  .fh-solar-line { grid-area: fh-solar-line; }
+  .fh-bat-node   { grid-area: fh-bat-node; }
+  .fh-bat-line   { grid-area: fh-bat-line;  width: 100%; }
+  .fh-home-node  { grid-area: fh-home-node; }
+  .fh-grid-line  { grid-area: fh-grid-line; width: 100%; }
+  .fh-grid-node  { grid-area: fh-grid-node; }
+
+  /* ── Vertical flow line (Solar → Home) ── */
+  .flow-vertical {
+    flex-direction: column;
+    width: 56px;
+    height: 80px;
+    min-width: unset;
+  }
+
+  .flow-vertical .flow-line {
+    width: 2px;
+    height: 100%;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+  }
+
+  .flow-vertical .flow-dot {
+    left: 50% !important;
+    transform: translateX(-50%);
+  }
+
+  .flow-vertical:not(.flow-idle) .flow-line::after {
+    top: 0; left: -2px; right: -2px; bottom: 0;
+    background: linear-gradient(180deg, transparent 0%, var(--flow-color, #fff) 50%, transparent 100%);
+    background-size: 100% 40%;
+    background-repeat: no-repeat;
+    animation: lineSweepV var(--sweep-speed, 2s) linear infinite;
+  }
+
+  @keyframes lineSweepV {
+    0%   { background-position: 0 -40%; }
+    100% { background-position: 0 140%; }
+  }
+
+  /* ── Vertical watt label (beside the vertical line) ── */
+  .fh-watt-vertical {
+    position: absolute;
+    left: calc(100% + 8px);
+    top: 50%;
+    transform: translateY(-50%);
+    bottom: auto !important;
+  }
+
+  /* ── Grid icon glow state ── */
+  .icon-grid-active {
+    filter: drop-shadow(0 0 8px #FF9F0A) drop-shadow(0 0 16px #FF9F0A88);
+    color: #FF9F0A;
+  }
+
+  /* ── Mobile adjustments ── */
+  @media (max-width: 700px) {
+    .flow-hub { padding: 16px; min-height: 160px; }
+    .flow-vertical { height: 56px; width: 40px; }
+    .fh-watt-vertical { font-size: 10px; }
+  }
 `;
