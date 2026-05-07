@@ -17,7 +17,7 @@ const L = {
     cycles: 'Cycles', capacity: 'Capacity', nominal: 'Nominal', config: 'Config',
     minCell: 'Min Cell', maxCell: 'Max Cell', runtime: 'Runtime', throughput: 'Throughput',
     mosfet: 'MOSFET', bmsModel: 'BMS Model', firmware: 'Firmware', chemistry: 'Chemistry',
-    batteryNode: 'Battery', home: 'Home', solarNode: 'Solar',
+    batteryNode: 'Battery', home: 'Home', solarNode: 'Solar', grid: 'Grid',
     actual: 'actual', estimated: 'estimated', generatedToday: 'generated today', expected: 'expected',
     rated: 'Rated', installed: 'Installed', age: 'Age', model: 'Model',
     type: 'Type', year1Loss: 'Year 1 Loss', annualLoss: 'Annual Loss', nextYear: 'Next Year',
