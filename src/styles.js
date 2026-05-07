@@ -447,7 +447,8 @@ export const STYLES = `
     align-items: center;
     justify-items: center;
     padding: 24px 32px;
-    gap: 0 8px;
+    gap: 12px 8px;
+    align-content: center;
     flex: 1;
     min-height: 180px;
   }
