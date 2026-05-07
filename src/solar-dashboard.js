@@ -1962,64 +1962,93 @@ class SolarDashboard extends HTMLElement {
 
   _updatePowerFlow(snap) {
     const root = this.shadowRoot;
-    const current = snap.current || 0;
-    const dischgPower = snap.dischgPower;
-    const chgPower = snap.chgPower;
-    const netPower = Math.abs(snap.power || 0);
-    const power = dischgPower > 0 ? dischgPower : chgPower > 0 ? chgPower : netPower;
-    const solarW = chgPower > 0 ? chgPower : (current > 0 ? power : 0);
-    const batteryW = dischgPower > 0 ? dischgPower : power;
-    // I15: Derive idle threshold from battery capacity (0.5% of fullAh)
-    const idleThreshold = 0.005 * (this._bridge.battSpec?.fullAh || 100);
-    const charging = current > idleThreshold;
-    const discharging = current < -idleThreshold;
+    const current     = snap.current || 0;
+    const chgPower    = snap.chgPower || 0;
+    const dischgPower = snap.dischgPower || 0;
+    const netPower    = Math.abs(snap.power || 0);
+    const solarW      = chgPower > 0 ? chgPower : (current > 0 ? netPower : 0);
+    const batteryW    = dischgPower > 0 ? dischgPower : (chgPower > 0 ? chgPower : netPower);
+    const idleThresh  = 0.005 * (this._bridge.battSpec?.fullAh || 100);
+    const charging    = current > idleThresh;
+    const discharging = current < -idleThresh;
 
-    this._setIconGlow('iconSolar', solarW > 10 ? 'icon-sun-active' : 'glow-dim', solarW);
+    const gridSnap = this._bridge.getGridSnap?.() || {};
+    const gridW    = gridSnap.gridPower || 0;
 
     if (!this._els.flowWrap1) {
       this._els.flowWrap1 = root.getElementById('flowWrap1');
       this._els.flowWatt1 = root.getElementById('flowWatt1');
       this._els.flowWrap2 = root.getElementById('flowWrap2');
       this._els.flowWatt2 = root.getElementById('flowWatt2');
+      this._els.flowWrap3 = root.getElementById('flowWrap3');
+      this._els.flowWatt3 = root.getElementById('flowWatt3');
     }
-    const wrap1 = this._els.flowWrap1;
-    const watt1 = this._els.flowWatt1;
-    if (charging) {
+
+    // Flow 1: Solar → Home (vertical, top→bottom)
+    const wrap1 = this._els.flowWrap1, watt1 = this._els.flowWatt1;
+    if (solarW > 10) {
       wrap1.classList.remove('flow-idle');
       this._animateValue(watt1, parseFloat(watt1.textContent) || 0, Math.round(solarW), 600, v => Math.round(v) + ' W');
       watt1.style.color = '#00F0FF';
-      if (this._flowPS1) this._flowPS1.start(solarW);
+      this._flowPS1?.start(solarW, 1);
     } else {
       wrap1.classList.add('flow-idle');
       this._animateValue(watt1, parseFloat(watt1.textContent) || 0, 0, 600, v => Math.round(v) + ' W');
       watt1.style.color = 'var(--text2)';
-      if (this._flowPS1) this._flowPS1.stop();
+      this._flowPS1?.stop();
     }
 
-    this._setIconGlow('iconBattery', charging ? 'icon-batt-charge' : discharging ? 'icon-batt-discharge' : 'glow-dim', Math.abs(batteryW));
+    this._setIconGlow('iconSolar', solarW > 10 ? 'icon-sun-active' : 'glow-dim', solarW);
+
+    // Battery arcs + icon
     this._battArcPowerW = Math.abs(batteryW);
+    this._setIconGlow('iconBattery',
+      charging ? 'icon-batt-charge' : discharging ? 'icon-batt-discharge' : 'glow-dim',
+      Math.abs(batteryW));
     if (charging || discharging) {
-      const arcColor = charging ? '#00F0FF' : '#FF453A';
-      this._startBattArcs(arcColor);
+      this._startBattArcs(charging ? '#00F0FF' : '#FF453A');
     } else {
       this._stopBattArcs();
     }
 
-    const wrap2 = this._els.flowWrap2;
-    const watt2 = this._els.flowWatt2;
-    if (discharging) {
+    // Flow 2: Battery ↔ Home (bidirectional)
+    const wrap2 = this._els.flowWrap2, watt2 = this._els.flowWatt2;
+    if (charging) {
       wrap2.classList.remove('flow-idle');
-      this._animateValue(watt2, parseFloat(watt2.textContent) || 0, Math.round(Math.abs(batteryW)), 600, v => Math.round(v) + ' W');
+      this._animateValue(watt2, parseFloat(watt2.textContent) || 0, Math.round(chgPower), 600, v => Math.round(v) + ' W');
+      watt2.style.color = '#00F0FF';
+      this._flowPS2?.start(chgPower, -1);
+    } else if (discharging) {
+      wrap2.classList.remove('flow-idle');
+      this._animateValue(watt2, parseFloat(watt2.textContent) || 0, Math.round(dischgPower), 600, v => Math.round(v) + ' W');
       watt2.style.color = 'var(--red)';
-      if (this._flowPS2) this._flowPS2.start(Math.abs(batteryW));
+      this._flowPS2?.start(dischgPower, 1);
     } else {
       wrap2.classList.add('flow-idle');
       this._animateValue(watt2, parseFloat(watt2.textContent) || 0, 0, 600, v => Math.round(v) + ' W');
       watt2.style.color = 'var(--text2)';
-      if (this._flowPS2) this._flowPS2.stop();
+      this._flowPS2?.stop();
     }
 
-    this._setIconGlow('iconHome', discharging ? 'icon-home-active' : charging ? 'icon-home-idle' : 'glow-dim', Math.abs(batteryW));
+    // Flow 3: Grid → Home (import only, right→left)
+    const wrap3 = this._els.flowWrap3, watt3 = this._els.flowWatt3;
+    if (gridW > 10) {
+      wrap3.classList.remove('flow-idle');
+      this._animateValue(watt3, parseFloat(watt3.textContent) || 0, Math.round(gridW), 600, v => Math.round(v) + ' W');
+      watt3.style.color = '#FF9F0A';
+      this._flowPS3?.start(gridW, -1);
+    } else {
+      wrap3.classList.add('flow-idle');
+      this._animateValue(watt3, parseFloat(watt3.textContent) || 0, 0, 600, v => Math.round(v) + ' W');
+      watt3.style.color = 'var(--text2)';
+      this._flowPS3?.stop();
+    }
+
+    const homeActive = discharging || gridW > 10;
+    this._setIconGlow('iconHome',
+      homeActive ? 'icon-home-active' : charging ? 'icon-home-idle' : 'glow-dim',
+      Math.max(dischgPower, gridW));
+    this._setIconGlow('iconGrid', gridW > 10 ? 'icon-grid-active' : 'glow-dim', gridW);
   }
 
   // ============ CHART VALUE DISPLAYS ============
