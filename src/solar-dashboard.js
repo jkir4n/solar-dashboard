@@ -1248,6 +1248,7 @@ class SolarDashboard extends HTMLElement {
     this._intervals = [];
     if (this._flowPS1) this._flowPS1.stop();
     if (this._flowPS2) this._flowPS2.stop();
+    if (this._flowPS3) this._flowPS3.stop();
     if (this._weatherFx) this._weatherFx.destroy();
     if (this._charts) this._charts.detachAll();
     if (this._resizeHandler) window.removeEventListener('resize', this._resizeHandler);
