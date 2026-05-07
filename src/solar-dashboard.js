@@ -684,7 +684,7 @@ const WEATHER_PALETTES = {
 
 // ============ FLOW PARTICLE SYSTEM ============
 class FlowParticles {
-  constructor(root, wrapId, particlesId, lineId, arcId, color) {
+  constructor(root, wrapId, particlesId, lineId, arcId, color, vertical = false) {
     this.wrap = root.getElementById(wrapId);
     this.container = root.getElementById(particlesId);
     this.line = root.getElementById(lineId);
@@ -705,6 +705,8 @@ class FlowParticles {
         this.dots.push({ el: d, p: Math.random() });
       });
     }
+    this.vertical  = vertical;
+    this.direction = 1;
   }
 
   start(powerW) {
