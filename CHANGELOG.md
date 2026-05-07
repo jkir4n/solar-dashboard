@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.39.0 (2026-05-07)
+
+### Features
+- Powerflow cross layout with grid auto-discovery
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Styles.js
+- Ha-bridge.js
+- Ha-bridge.js
+- Ha-bridge.js
+
+
 ## v0.38.8 (2026-05-05)
 
 ### Bug Fixes
