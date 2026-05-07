@@ -1542,7 +1542,6 @@ class SolarDashboard extends HTMLElement {
           </div>
         </div>
       </div>
-    </div>
   <div class="card" id="chartsCard" style="margin-bottom:16px">
     <h2 class="section-title">${t(lang, 'analytics')}</h2>
     <div class="chart-tabs" id="chartTabs">
