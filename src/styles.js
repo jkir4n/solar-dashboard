@@ -450,7 +450,7 @@ export const STYLES = `
     min-height: 220px;
   }
 
-  .flow-hub-cell { display: contents; }
+  .flow-hub-cell { display: flex; align-items: center; justify-content: center; }
   .fh-solar-node { grid-area: fh-solar-node; }
   .fh-solar-line { grid-area: fh-solar-line; }
   .fh-bat-node   { grid-area: fh-bat-node; }
