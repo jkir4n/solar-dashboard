@@ -466,7 +466,7 @@ export const STYLES = `
   .flow-vertical {
     flex-direction: column;
     width: 56px;
-    height: 80px;
+    height: 100px;
     min-width: unset;
   }
 
