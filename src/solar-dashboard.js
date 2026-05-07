@@ -1542,6 +1542,25 @@ class SolarDashboard extends HTMLElement {
           </div>
         </div>
       </div>
+    <div class="card" id="controlsCard">
+      <h2 class="section-title">${t(lang, 'controls')}</h2>
+      <div class="ctrl">
+        <div><div class="ctrl-name">${t(lang, 'ctrlCharging')}</div><div class="ctrl-desc">${t(lang, 'descCharging')}</div></div>
+        <label class="toggle"><input type="checkbox" id="chgToggle" checked><span class="slider"></span></label>
+      </div>
+      <div class="ctrl">
+        <div><div class="ctrl-name">${t(lang, 'ctrlDischarging')}</div><div class="ctrl-desc">${t(lang, 'descDischarging')}</div></div>
+        <label class="toggle"><input type="checkbox" id="dischgToggle" checked><span class="slider"></span></label>
+      </div>
+      <div class="ctrl">
+        <div><div class="ctrl-name">${t(lang, 'ctrlBalancer')}</div><div class="ctrl-desc" id="balDesc">--</div></div>
+        <div id="balSwitch" style="display:flex;align-items:center;gap:6px">
+          <span id="balSwitchLabel" style="font-size:12px;font-weight:600;color:var(--text2)">--</span>
+          <div id="balDot" style="width:8px;height:8px;border-radius:50%;background:var(--text3)"></div>
+        </div>
+      </div>
+    </div>
+        </div>
   <div class="card" id="chartsCard" style="margin-bottom:16px">
     <h2 class="section-title">${t(lang, 'analytics')}</h2>
     <div class="chart-tabs" id="chartTabs">
@@ -1598,25 +1617,6 @@ class SolarDashboard extends HTMLElement {
       <div id="balStatus" style="text-align:center;font-size:13px;font-weight:600;color:var(--text2)"></div>
     </div>
   </div>
-    <div class="card" id="controlsCard">
-      <h2 class="section-title">${t(lang, 'controls')}</h2>
-      <div class="ctrl">
-        <div><div class="ctrl-name">${t(lang, 'ctrlCharging')}</div><div class="ctrl-desc">${t(lang, 'descCharging')}</div></div>
-        <label class="toggle"><input type="checkbox" id="chgToggle" checked><span class="slider"></span></label>
-      </div>
-      <div class="ctrl">
-        <div><div class="ctrl-name">${t(lang, 'ctrlDischarging')}</div><div class="ctrl-desc">${t(lang, 'descDischarging')}</div></div>
-        <label class="toggle"><input type="checkbox" id="dischgToggle" checked><span class="slider"></span></label>
-      </div>
-      <div class="ctrl">
-        <div><div class="ctrl-name">${t(lang, 'ctrlBalancer')}</div><div class="ctrl-desc" id="balDesc">--</div></div>
-        <div id="balSwitch" style="display:flex;align-items:center;gap:6px">
-          <span id="balSwitchLabel" style="font-size:12px;font-weight:600;color:var(--text2)">--</span>
-          <div id="balDot" style="width:8px;height:8px;border-radius:50%;background:var(--text3)"></div>
-        </div>
-      </div>
-    </div>
-        </div>
 </div>
 </div>`;
   }
