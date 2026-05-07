@@ -1599,103 +1599,6 @@ class SolarDashboard extends HTMLElement {
       <div id="balStatus" style="text-align:center;font-size:13px;font-weight:600;color:var(--text2)"></div>
     </div>
   </div>
-        <div class="powerflow-section">
-          <div class="card" id="powerFlow">
-            <h2 class="section-title">${t(lang, 'powerFlow')}</h2>
-            <div class="flow-hub">
-
-              <div class="flow-hub-cell fh-solar-node">
-                <div class="flow-node">
-                  <div class="flow-icon" id="iconSolar">
-                    <svg viewBox="0 0 48 48">
-                      <circle cx="24" cy="24" r="8"/>
-                      <line x1="24" y1="4" x2="24" y2="10"/>
-                      <line x1="24" y1="38" x2="24" y2="44"/>
-                      <line x1="4" y1="24" x2="10" y2="24"/>
-                      <line x1="38" y1="24" x2="44" y2="24"/>
-                      <line x1="9.37" y1="9.37" x2="13.6" y2="13.6"/>
-                      <line x1="34.4" y1="34.4" x2="38.63" y2="38.63"/>
-                      <line x1="38.63" y1="9.37" x2="34.4" y2="13.6"/>
-                      <line x1="13.6" y1="34.4" x2="9.37" y2="38.63"/>
-                    </svg>
-                  </div>
-                  <span class="flow-label">${t(lang, 'solarNode')}</span>
-                </div>
-              </div>
-
-              <div class="flow-hub-cell fh-solar-line">
-                <div class="flow-line-wrap flow-vertical" id="flowWrap1">
-                  <div class="flow-line" id="flowLine1"></div>
-                  <div class="flow-particles" id="flowParticles1">${'<div class="flow-dot"></div>'.repeat(20)}</div>
-                  <span class="flow-watt fh-watt-vertical" id="flowWatt1">0 W</span>
-                </div>
-              </div>
-
-              <div class="flow-hub-cell fh-bat-node">
-                <div class="flow-node">
-                  <div class="flow-icon" id="iconBattery" style="position:relative;">
-                    <svg viewBox="0 0 48 48">
-                      <rect x="8" y="14" width="32" height="24" rx="3" ry="3"/>
-                      <rect x="19" y="10" width="10" height="4" rx="2" ry="2"/>
-                    </svg>
-                    <svg id="battArcs" viewBox="0 0 48 48" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;"></svg>
-                  </div>
-                  <span class="flow-label">${t(lang, 'batteryNode')}</span>
-                </div>
-              </div>
-
-              <div class="flow-hub-cell fh-bat-line">
-                <div class="flow-line-wrap" id="flowWrap2">
-                  <div class="flow-line" id="flowLine2"></div>
-                  <canvas class="flow-arc-canvas" id="flowArc2"></canvas>
-                  <div class="flow-particles" id="flowParticles2">${'<div class="flow-dot"></div>'.repeat(20)}</div>
-                  <span class="flow-watt" id="flowWatt2">0 W</span>
-                </div>
-              </div>
-
-              <div class="flow-hub-cell fh-home-node">
-                <div class="flow-node">
-                  <div class="flow-icon" id="iconHome">
-                    <svg viewBox="0 0 48 48">
-                      <polyline points="6,22 24,6 42,22"/>
-                      <rect x="14" y="22" width="20" height="20" rx="2" ry="2"/>
-                      <rect class="home-window" x="17" y="28" width="5" height="5" rx="0.5"/>
-                      <rect class="home-window" x="26" y="28" width="5" height="5" rx="0.5"/>
-                    </svg>
-                  </div>
-                  <span class="flow-label">${t(lang, 'home')}</span>
-                </div>
-              </div>
-
-              <div class="flow-hub-cell fh-grid-line">
-                <div class="flow-line-wrap" id="flowWrap3">
-                  <div class="flow-line" id="flowLine3"></div>
-                  <div class="flow-particles" id="flowParticles3">${'<div class="flow-dot"></div>'.repeat(20)}</div>
-                  <span class="flow-watt" id="flowWatt3">0 W</span>
-                </div>
-              </div>
-
-              <div class="flow-hub-cell fh-grid-node">
-                <div class="flow-node">
-                  <div class="flow-icon" id="iconGrid">
-                    <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                      <line x1="24" y1="4"  x2="24" y2="44"/>
-                      <line x1="8"  y1="16" x2="40" y2="16"/>
-                      <line x1="12" y1="28" x2="36" y2="28"/>
-                      <line x1="24" y1="4"  x2="8"  y2="44"/>
-                      <line x1="24" y1="4"  x2="40" y2="44"/>
-                      <line x1="8"  y1="16" x2="24" y2="28"/>
-                      <line x1="40" y1="16" x2="24" y2="28"/>
-                    </svg>
-                  </div>
-                  <span class="flow-label">${t(lang, 'grid')}</span>
-                </div>
-              </div>
-
-            </div>
-          </div>
-        </div>
-  <div class="bottom-row">
     <div class="card" id="controlsCard">
       <h2 class="section-title">${t(lang, 'controls')}</h2>
       <div class="ctrl">
@@ -1714,7 +1617,7 @@ class SolarDashboard extends HTMLElement {
         </div>
       </div>
     </div>
-  </div>
+        </div>
 </div>
 </div>`;
   }
