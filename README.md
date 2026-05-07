@@ -36,6 +36,7 @@ A real-time solar monitoring dashboard for Home Assistant, built as a HACS-compa
 
 - **Home Assistant 2025.1.0+**
 - **BMS integration** — JK BMS (ESPHome), JBD, Daly, BatMON, or any integration providing BMS sensor data
+- **Solar inverter / grid integration** (optional) — Any integration that exposes a grid power sensor (see [Grid Entity Discovery](#grid-entity-discovery) below). Auto-discovered at startup — no configuration needed.
 - **Weather integration** — Any HA weather integration (Google Weather, PirateWeather, Met.no, etc.) for cloud cover, conditions, and wind speed. The dashboard auto-selects the freshest available source.
 - **Moon integration** (optional) — Built-in HA integration for moon phase brightness. Enable via Settings → Devices & Services → Add Integration → "Moon". The dashboard auto-discovers the moon phase entity — no configuration needed.
 - **HACS** (optional) — for automated installation and updates
