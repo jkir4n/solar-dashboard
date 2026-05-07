@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.39.2 (2026-05-07)
+
+### Bug Fixes
+- Battery+powerflow top row, solar+controls mid row
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Styles.js
+- Styles.js
+- Styles.js
+
+
 ## v0.39.1 (2026-05-07)
 
 ### Bug Fixes
