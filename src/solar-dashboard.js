@@ -709,7 +709,11 @@ class FlowParticles {
     this.direction = 1;
   }
 
-  start(powerW) {
+  start(powerW, direction = 1) {
+    if (this.direction !== direction) {
+      this.direction = direction;
+      this.dots.forEach(d => { d.p = 1 - d.p; });
+    }
     this.active = true;
     this.powerW = powerW;
     const MAX_W = 5000;
