@@ -169,6 +169,30 @@ The dashboard automatically detects battery chemistry using two methods:
 
 The detected chemistry is displayed in the battery card and used to calculate the correct nominal voltage.
 
+## Grid Entity Discovery
+
+The dashboard automatically discovers grid power sensors from any major inverter integration — no manual configuration required. It scans `hass.states` by keyword at startup and handles both split sensors (separate import/export) and signed sensors (a single positive/negative value).
+
+### Supported Inverter Integrations
+
+| Integration | Notes |
+|-------------|-------|
+| SolarEdge | `sensor.*grid*power*` |
+| Enphase Envoy | `sensor.*grid*power*` |
+| SMA | `sensor.*grid*power*` |
+| Fronius | `sensor.*grid*power*` |
+| Huawei SUN2000 (`huawei_solar`) | `sensor.*grid*power*` |
+| GoodWe | `sensor.*grid*power*` |
+| Sungrow | `sensor.*grid*power*` |
+| Deye / Solarman | `sensor.*grid*power*` |
+| Growatt | `sensor.*grid*power*` |
+| Victron | `sensor.*grid*power*` |
+| Sofar Solar | `sensor.*grid*power*` |
+| Shelly EM | `sensor.*grid*power*` / `sensor.*channel*power*` |
+| ESPHome grid monitors | keyword-matched grid power sensors |
+
+The grid line in the powerflow card shows amber import flow when grid power is being consumed, and goes idle when no grid entity is found.
+
 ## Required Entities
 
 The dashboard reads from these entity groups:
