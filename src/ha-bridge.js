@@ -343,6 +343,55 @@ export class HABridge {
     return discovered;
   }
 
+  _discoverGridEntities() {
+    if (!this._hass) return;
+    const states = this._hass.states;
+    const found = {};
+    const SIGNED = new Set(['pgrid', 'total_grid_power', 'export_power']);
+
+    for (const [key, keywords] of Object.entries(GRID_KEYWORDS)) {
+      let best = null, bestScore = 0;
+      for (const [entityId, state] of Object.entries(states)) {
+        if (!entityId.startsWith('sensor.')) continue;
+        const attrs = state.attributes || {};
+        if (['GRID_POWER', 'PV_POWER'].includes(key)) {
+          if (attrs.unit_of_measurement !== 'W') continue;
+        }
+        for (const kw of keywords) {
+          if (entityId.includes(kw)) {
+            const score = kw.length;
+            if (score > bestScore) {
+              bestScore = score;
+              best = { entityId, signed: SIGNED.has(kw) };
+            }
+          }
+        }
+      }
+      if (best) found[key] = best;
+    }
+    this._gridEntityIds = found;
+  }
+
+  getGridSnap() {
+    if (!this._gridEntityIds) this._discoverGridEntities();
+    const snap = { gridPower: 0, gridVoltage: null, gridFreq: null, pvPower: null, gridAvailable: false };
+
+    const getPow = (key) => {
+      const entry = this._gridEntityIds?.[key];
+      if (!entry) return null;
+      const raw = this.getVal(entry.entityId);
+      if (raw === null) return null;
+      snap.gridAvailable = true;
+      return entry.signed ? Math.max(0, raw) : raw;
+    };
+
+    snap.gridPower   = getPow('GRID_POWER') ?? 0;
+    snap.pvPower     = getPow('PV_POWER');
+    snap.gridVoltage = this.getVal(this._gridEntityIds?.GRID_VOLTAGE?.entityId);
+    snap.gridFreq    = this.getVal(this._gridEntityIds?.GRID_FREQ?.entityId);
+    return snap;
+  }
+
   async _createBmsPrefixHelper() {
     if (!this._hass?.user?.is_admin) return;
     const def = { type: 'input_text', name: 'BMS Entity Prefix', id: 'input_text.bms_entity_prefix', initial: 'jk_bms_jk_bms', mode: 'text' };
