@@ -427,11 +427,12 @@ export const STYLES = `
   .card.revealed:nth-child(3)::after { --shimmer-angle: 130deg; --shimmer-o: 0.022; --shimmer-peak: 0.038; --shimmer-duration: 12s; --shimmer-delay: -8s; }
   .card.revealed:nth-child(4)::after { --shimmer-angle: 150deg; --shimmer-o: 0.015; --shimmer-peak: 0.028; --shimmer-duration: 15s; --shimmer-delay: -2s; }
 
-  /* ── Powerflow full-width section ── */
-  .powerflow-section {
-    width: 100%;
-    padding: 0 16px 16px;
+  /* ── Power flow card fill ── */
+  #powerFlow {
+    height: 100%;
     box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
   }
 
   /* ── Flow hub cross layout ── */
