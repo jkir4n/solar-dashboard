@@ -780,12 +780,18 @@ class FlowParticles {
         }
         continue;
       }
-      d.p += this.speed;
+      d.p += this.speed * this.direction;
       if (d.p >= 1) d.p -= 1;
+      if (d.p < 0)  d.p += 1;
       let edgeFade = 1;
       if (d.p < 0.08) edgeFade = d.p / 0.08;
       else if (d.p > 0.92) edgeFade = (1 - d.p) / 0.08;
-      d.el.style.left = (d.p * 100) + '%';
+      if (this.vertical) {
+        d.el.style.top  = (d.p * 100) + '%';
+        d.el.style.left = '50%';
+      } else {
+        d.el.style.left = (d.p * 100) + '%';
+      }
       d.el.style.opacity = (maxOpacity * edgeFade).toFixed(3);
       d.el.style.background = this.color;
       d.el.style.boxShadow = `0 0 6px 2px ${this.color}, 0 0 12px 4px ${this.color}55`;
