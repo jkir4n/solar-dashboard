@@ -198,6 +198,7 @@ The grid line in the powerflow card shows amber import flow when grid power is b
 The dashboard reads from these entity groups:
 
 - **BMS entities** — Auto-discovered via keyword matching (see table above). No hardcoded entity IDs required.
+- **Grid power sensor** (optional) — Auto-discovered from any supported inverter integration (see [Grid Entity Discovery](#grid-entity-discovery)). Powers the grid node in the powerflow card.
 - **`weather.*`** — Cloud cover, weather condition, and wind speed (for solar forecast adjustment, weather effects, and wind-reactive particles). The dashboard automatically selects the most recently updated `weather.*` entity, skipping unavailable ones — no manual configuration needed.
 - **Moon phase sensor** (optional) — Moon phase for disc brightness. Provided by the built-in Moon integration. Auto-discovered by state value — no hardcoded entity ID.
 - **`input_number.solar_*`** — Panel configuration helpers (auto-created)
