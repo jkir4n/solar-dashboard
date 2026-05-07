@@ -448,7 +448,8 @@ export const STYLES = `
     justify-items: center;
     padding: 24px 32px;
     gap: 0 8px;
-    min-height: 220px;
+    flex: 1;
+    min-height: 180px;
   }
 
   .flow-hub-cell { display: flex; align-items: center; justify-content: center; }
