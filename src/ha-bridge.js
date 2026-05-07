@@ -127,6 +127,7 @@ export class HABridge {
         this._helperCreated = true;
       }
     }
+    if (!this._gridEntityIds) this._discoverGridEntities();
     // Resolve battery chemistry only when relevant inputs change
     const _ci = `${this.getStrVal(this.E.BATTERY_TYPE)}|${this.getVal(this.E.VOLTAGE)}|${this.getVal(this.E.STRINGS)}`;
     if (_ci !== this._lastChemInput) { this._lastChemInput = _ci; this._resolveChemistry(); }
