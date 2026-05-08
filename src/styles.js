@@ -503,9 +503,11 @@ export const STYLES = `
     height: 100px;
     min-width: unset;
     margin-top: 0;
+    flex: none;
   }
 
   .flow-vertical .flow-line {
+    position: absolute;
     width: 2px;
     height: 100%;
     left: 50%;
