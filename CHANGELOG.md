@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.41.0 (2026-05-08)
+
+### Features
+- Restructure power flow hub as plus-sign cross layout with center junction
+- Styles.js
+- Solar-dashboard.js
+
+
 ## v0.40.8 (2026-05-08)
 
 ### Bug Fixes
