@@ -1449,6 +1449,7 @@ class SolarDashboard extends HTMLElement {
                         <line x1="8"  y1="16" x2="24" y2="28"/>
                         <line x1="40" y1="16" x2="24" y2="28"/>
                       </svg>
+                      <span class="grid-status-dot" id="gridStatusDot"></span>
                     </div>
                     <span class="flow-label">${t(lang, 'grid')}</span>
                   </div>
