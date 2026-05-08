@@ -438,69 +438,53 @@ export const STYLES = `
   /* ── Flow hub cross layout ── */
   .flow-hub {
     position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    display: grid;
+    grid-template-columns: auto 1fr 56px 1fr auto;
+    grid-template-rows: auto 1fr 1fr auto;
     padding: 16px 24px;
     flex: 1;
     min-height: 200px;
   }
 
   .flow-hub-cell { display: flex; align-items: center; justify-content: center; }
-  
-  /* All rows span full hub width for proper centering */
-  .fh-solar-row { 
-    display: flex; 
-    flex-direction: column; 
-    align-items: center; 
-    width: 100%; 
-    flex: 1;
-    justify-content: center;
-    align-self: stretch;
+
+  /* Grid placements */
+  .fh-solar-node { grid-column: 3; grid-row: 1; align-self: end; }
+  .fh-solar-line { grid-column: 3; grid-row: 2; align-self: stretch; }
+  .fh-bat-line   { grid-column: 3; grid-row: 3; align-self: stretch; }
+  .fh-bat-node   { grid-column: 3; grid-row: 4; align-self: start; }
+  .fh-grid-node  { grid-column: 1; grid-row: 2 / 4; align-self: center; }
+  .fh-home-node  { grid-column: 5; grid-row: 2 / 4; align-self: center; }
+  .fh-grid-line  { grid-column: 2; grid-row: 2 / 4; align-self: center; width: 100%; justify-content: normal; }
+  .fh-home-line  { grid-column: 4; grid-row: 2 / 4; align-self: center; width: 100%; justify-content: normal; }
+
+  /* Extend horizontal lines 28px into center column so they meet the vertical line */
+  .fh-grid-line .flow-line-wrap { width: calc(100% + 28px); }
+  .fh-home-line .flow-line-wrap { width: calc(100% + 28px); margin-left: -28px; }
+
+  /* Junction dot at the cross-center */
+  .fh-junction {
+    grid-column: 3;
+    grid-row: 2 / 4;
+    align-self: center;
+    justify-self: center;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    pointer-events: none;
+    z-index: 2;
+    position: relative;
   }
-  .fh-middle-row { 
-    display: flex; 
-    flex-direction: row; 
-    align-items: center; 
-    width: 100%; 
-    justify-content: space-between;
-  }
-  .fh-battery-row { 
-    display: flex; 
-    flex-direction: column; 
-    align-items: center; 
-    width: 100%; 
-    flex: 1;
-    justify-content: center;
-    align-self: stretch;
-  }
-  
-  /* Vertical lines - span full row width, center the line */
-  .fh-solar-line { 
-    width: 100%; 
-    display: flex; 
-    justify-content: center; 
-    align-items: center;
-  }
-  .fh-bat-line { 
-    width: 100%; 
-    display: flex; 
-    justify-content: center; 
-    align-items: center;
-  }
-  
-  /* Horizontal line containers */
-  .fh-grid-line { flex: 1; min-width: 60px; display: flex; justify-content: flex-end; }
-  .fh-home-line { flex: 1; min-width: 60px; display: flex; justify-content: flex-start; }
-  
+
   .flow-hub .flow-line-wrap { margin-top: 0; }
 
-  /* ── Vertical flow line (Solar → Home) ── */
+  /* ── Vertical flow line ── */
   .flow-vertical {
     flex-direction: column;
     width: 56px;
-    height: 100px;
+    height: 100%;
     min-width: unset;
     margin-top: 0;
     flex: none;
