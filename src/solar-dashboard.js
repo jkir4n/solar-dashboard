@@ -2069,7 +2069,8 @@ class SolarDashboard extends HTMLElement {
     if (homeW > 10) {
       wrap4.classList.remove('flow-idle');
       this._animateValue(watt4, parseFloat(watt4.textContent) || 0, Math.round(homeW), 600, v => Math.round(v) + ' W');
-      watt4.style.color = '#FF9F0A';
+      // Color reflects primary power source: solar=yellow, battery=red, grid=blue
+      watt4.style.color = solarW > dischgPower && solarW > gridW ? '#FFD60A' : dischgPower > gridW ? '#FF453A' : '#0A84FF';
       this._flowPS4?.start(homeW, 1);
     } else {
       wrap4.classList.add('flow-idle');
