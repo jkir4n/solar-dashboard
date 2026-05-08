@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.40.6 (2026-05-08)
+
+### Bug Fixes
+- Make all power flow rows full width for vertical line centering
+
+
 ## v0.40.5 (2026-05-08)
 
 ### Bug Fixes
