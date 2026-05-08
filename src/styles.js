@@ -448,7 +448,8 @@ export const STYLES = `
   }
 
   .flow-hub-cell { display: flex; align-items: center; justify-content: center; }
-  .fh-top { display: flex; flex-direction: column; align-items: center; position: relative; }
+  .fh-top { display: flex; flex-direction: column; align-items: center; position: relative; width: 100%; }
+  .fh-solar-line { width: 100%; display: flex; justify-content: center; }
   .fh-middle {
     display: flex;
     flex-direction: row;
@@ -461,7 +462,8 @@ export const STYLES = `
   .fh-grid-line { flex: 1; min-width: 60px; max-width: calc(50% - 40px); }
   .fh-home-line { flex: 1; min-width: 60px; max-width: calc(50% - 40px); }
   .fh-home-node { position: relative; }
-  .fh-bottom { display: flex; flex-direction: column; align-items: center; margin-top: -34px; position: relative; }
+  .fh-bottom { display: flex; flex-direction: column; align-items: center; margin-top: -34px; position: relative; width: 100%; }
+  .fh-bat-line { width: 100%; display: flex; justify-content: center; }
   .flow-hub .flow-line-wrap { margin-top: 0; }
 
   /* ── Vertical flow line (Solar → Home) ── */
