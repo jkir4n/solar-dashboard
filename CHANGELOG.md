@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.40.7 (2026-05-08)
+
+### Bug Fixes
+- Center vertical flow lines in power flow hub
+
+
 ## v0.40.6 (2026-05-08)
 
 ### Bug Fixes
