@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.39.5 (2026-05-08)
+
+### Bug Fixes
+- Vertical flow line meets hub center, proper cross layout
+- Rebuild dist
+- Styles.js
+
+
 ## v0.39.4 (2026-05-08)
 
 ### Bug Fixes
