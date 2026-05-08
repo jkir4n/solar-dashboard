@@ -436,22 +436,7 @@ export const STYLES = `
   }
 
   /* ── Flow hub cross layout ── */
-  .flow-hub {
-    display: grid;
-    grid-template-columns: auto 1fr auto 1fr auto;
-    grid-template-rows: auto auto auto;
-    grid-template-areas:
-      ".           .            fh-solar-node  .             ."
-      ".           .            fh-solar-line  .             ."
-      "fh-bat-node fh-bat-line  fh-home-node   fh-grid-line  fh-grid-node";
-    align-items: center;
-    justify-items: center;
-    padding: 24px 32px;
-    gap: 12px 8px;
-    align-content: center;
-    flex: 1;
-    min-height: 180px;
-  }
+  .flow-hub { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px 24px; flex: 1; min-height: 200px; }
 
   .flow-hub-cell { display: flex; align-items: center; justify-content: center; }
   .fh-solar-node { grid-area: fh-solar-node; }
