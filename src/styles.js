@@ -213,7 +213,9 @@ export const STYLES = `
   /* Power Flow */
   .flow { display: flex; align-items: flex-start; justify-content: center; padding: 16px 0 24px; gap: 0; }
   .flow-node { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 56px; }
-  .flow-icon { width: 48px; height: 48px; transition: filter 0.6s ease; }
+  .flow-icon { width: 48px; height: 48px; position: relative; transition: filter 0.6s ease; }
+  .grid-status-dot { position: absolute; top: 1px; right: 1px; width: 8px; height: 8px; border-radius: 50%; background: #30D158; box-shadow: 0 0 4px #30D15888; border: 1.5px solid var(--card-bg, #111); transition: background 0.4s ease, box-shadow 0.4s ease; }
+  .grid-status-dot.offline { background: #FF453A; box-shadow: 0 0 4px #FF453A88; }
   .flow-icon svg { width: 100%; height: 100%; stroke: var(--icon-fill); fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; transition: stroke 0.6s ease; }
   /* Sun: shimmer with twinkling rays */
   .flow-icon.icon-sun-active svg { stroke: var(--orange); }
