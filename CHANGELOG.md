@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.41.2 (2026-05-08)
+
+### Bug Fixes
+- Remove arc canvas from battery flow line to stop horizontal arc artefacts
+- Solar-dashboard.js
+- Solar-dashboard.js
+
+
 ## v0.41.1 (2026-05-08)
 
 ### Bug Fixes
