@@ -449,23 +449,22 @@ export const STYLES = `
 
   .flow-hub-cell { display: flex; align-items: center; justify-content: center; }
   
-  /* Node rows */
-  .fh-solar-row { display: flex; flex-direction: column; align-items: center; }
+  /* All rows same width for proper centering */
+  .fh-solar-row { display: flex; flex-direction: column; align-items: center; width: 100%; }
   .fh-middle-row { 
     display: flex; 
     flex-direction: row; 
     align-items: center; 
     width: 100%; 
     justify-content: space-between;
-    position: relative;
   }
-  .fh-battery-row { display: flex; flex-direction: column; align-items: center; }
+  .fh-battery-row { display: flex; flex-direction: column; align-items: center; width: 100%; }
   
   /* Line containers */
-  .fh-solar-line { display: flex; justify-content: center; }
+  .fh-solar-line { display: flex; justify-content: center; width: 100%; }
   .fh-grid-line { flex: 1; min-width: 60px; display: flex; justify-content: flex-end; }
   .fh-home-line { flex: 1; min-width: 60px; display: flex; justify-content: flex-start; }
-  .fh-bat-line { display: flex; justify-content: center; }
+  .fh-bat-line { display: flex; justify-content: center; width: 100%; }
   
   .flow-hub .flow-line-wrap { margin-top: 0; }
 
