@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.41.1 (2026-05-08)
+
+### Bug Fixes
+- Extend grid flow line to junction using negative margin
+- Styles.js
+
+
 ## v0.41.0 (2026-05-08)
 
 ### Features
