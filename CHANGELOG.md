@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.43.0 (2026-05-08)
+
+### Features
+- Add grid status dot badge to grid node icon
+- Styles.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+
+
 ## v0.42.0 (2026-05-08)
 
 ### Features
