@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.40.5 (2026-05-08)
+
+### Bug Fixes
+- Reorder power flow nodes and lines for proper center alignment
+
+
 ## v0.40.4 (2026-05-08)
 
 ### Bug Fixes
