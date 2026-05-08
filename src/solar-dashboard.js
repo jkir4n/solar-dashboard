@@ -2070,6 +2070,8 @@ class SolarDashboard extends HTMLElement {
       homeActive ? 'icon-home-active' : charging ? 'icon-home-idle' : 'glow-dim',
       Math.max(dischgPower, gridW));
     this._setIconGlow('iconGrid', gridSnap.gridAvailable === false ? 'icon-grid-offline' : gridW > 10 ? 'icon-grid-active' : 'glow-dim', gridW);
+    const _gsDot = this.shadowRoot?.getElementById('gridStatusDot');
+    if (_gsDot) _gsDot.classList.toggle('offline', gridSnap.gridAvailable === false);
   }
 
   // ============ CHART VALUE DISPLAYS ============
