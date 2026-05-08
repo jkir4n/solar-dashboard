@@ -2068,7 +2068,7 @@ class SolarDashboard extends HTMLElement {
     this._setIconGlow('iconHome',
       homeActive ? 'icon-home-active' : charging ? 'icon-home-idle' : 'glow-dim',
       Math.max(dischgPower, gridW));
-    this._setIconGlow('iconGrid', gridW > 10 ? 'icon-grid-active' : 'glow-dim', gridW);
+    this._setIconGlow('iconGrid', gridSnap.gridAvailable === false ? 'icon-grid-offline' : gridW > 10 ? 'icon-grid-active' : 'glow-dim', gridW);
   }
 
   // ============ CHART VALUE DISPLAYS ============
