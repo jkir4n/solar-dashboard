@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.40.3 (2026-05-08)
+
+### Bug Fixes
+- Center vertical flow lines at cross hub
+
+
 ## v0.40.2 (2026-05-08)
 
 ### Bug Fixes
