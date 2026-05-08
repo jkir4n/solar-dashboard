@@ -459,8 +459,8 @@ export const STYLES = `
   .fh-home-line  { grid-column: 4; grid-row: 2 / 4; align-self: center; width: 100%; justify-content: normal; }
 
   /* Extend horizontal lines 28px into center column so they meet the vertical line */
-  .fh-grid-line .flow-line-wrap { width: calc(100% + 28px); }
-  .fh-home-line .flow-line-wrap { width: calc(100% + 28px); margin-left: -28px; }
+  .fh-grid-line .flow-line-wrap { margin-right: -28px; }
+  .fh-home-line .flow-line-wrap { margin-left: -28px; }
 
   /* Junction dot at the cross-center */
   .fh-junction {
