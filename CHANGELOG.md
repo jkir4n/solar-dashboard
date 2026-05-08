@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.40.8 (2026-05-08)
+
+### Bug Fixes
+- Center vertical flow line using absolute positioning
+- Styles.js
+
+
 ## v0.40.7 (2026-05-08)
 
 ### Bug Fixes
