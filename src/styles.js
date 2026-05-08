@@ -436,13 +436,35 @@ export const STYLES = `
   }
 
   /* ── Flow hub cross layout ── */
-  .flow-hub { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px 24px; flex: 1; min-height: 200px; }
+  .flow-hub {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 16px 24px;
+    flex: 1;
+    min-height: 200px;
+  }
 
   .flow-hub-cell { display: flex; align-items: center; justify-content: center; }
-  .fh-top { display: flex; flex-direction: column; align-items: center; }
-  .fh-middle { display: flex; flex-direction: row; align-items: center; width: 100%; justify-content: center; margin-top: -34px; }
+  .fh-top { display: flex; flex-direction: column; align-items: center; position: relative; }
+  .fh-middle {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    justify-content: flex-start;
+    margin-top: -34px;
+    position: relative;
+  }
   .fh-grid-line { flex: 1; min-width: 60px; }
-  .fh-bottom { display: flex; flex-direction: column; align-items: center; margin-top: -34px; }
+  .fh-home-node {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  .fh-bottom { display: flex; flex-direction: column; align-items: center; margin-top: -34px; position: relative; }
   .flow-hub .flow-line-wrap { margin-top: 0; }
 
   /* ── Vertical flow line (Solar → Home) ── */
