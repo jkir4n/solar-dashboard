@@ -1412,9 +1412,7 @@ class SolarDashboard extends HTMLElement {
     <div class="card" id="powerFlow">
             <h2 class="section-title">${t(lang, 'powerFlow')}</h2>
             <div class="flow-hub">
-              <!-- Solar row: node + vertical line down to center -->
-              <div class="fh-solar-row">
-                <div class="flow-hub-cell fh-solar-node">
+              <div class="flow-hub-cell fh-solar-node">
                   <div class="flow-node">
                     <div class="flow-icon" id="iconSolar">
                       <svg viewBox="0 0 48 48">
@@ -1439,10 +1437,6 @@ class SolarDashboard extends HTMLElement {
                     <span class="flow-watt fh-watt-vertical" id="flowWatt1">0 W</span>
                   </div>
                 </div>
-              </div>
-
-              <!-- Middle row: grid node + grid line + home line + home node -->
-              <div class="fh-middle-row">
                 <div class="flow-hub-cell fh-grid-node">
                   <div class="flow-node">
                     <div class="flow-icon" id="iconGrid">
@@ -1486,10 +1480,6 @@ class SolarDashboard extends HTMLElement {
                     <span class="flow-label">${t(lang, 'home')}</span>
                   </div>
                 </div>
-              </div>
-
-              <!-- Battery row: vertical line up to center + node -->
-              <div class="fh-battery-row">
                 <div class="flow-hub-cell fh-bat-line">
                   <div class="flow-line-wrap flow-vertical" id="flowWrap2">
                     <div class="flow-line" id="flowLine2"></div>
@@ -1510,7 +1500,7 @@ class SolarDashboard extends HTMLElement {
                     <span class="flow-label">${t(lang, 'batteryNode')}</span>
                   </div>
                 </div>
-              </div>
+              <div class="fh-junction"></div>
             </div>
           </div>
   </div>
