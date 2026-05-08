@@ -440,7 +440,7 @@ export const STYLES = `
 
   .flow-hub-cell { display: flex; align-items: center; justify-content: center; }
   .fh-top { display: flex; flex-direction: column; align-items: center; }
-  .fh-middle { display: flex; flex-direction: row; align-items: center; width: 100%; justify-content: center; }
+  .fh-middle { display: flex; flex-direction: row; align-items: center; width: 100%; justify-content: center; margin-top: -34px; }
   .fh-bat-line, .fh-grid-line { flex: 1; min-width: 60px; }
   .flow-hub .flow-line-wrap { margin-top: 0; }
 
