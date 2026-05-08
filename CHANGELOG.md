@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.39.3 (2026-05-08)
+
+### Bug Fixes
+- Powerflow cross layout centered, solar+controls mid-row, analytics+cells full-width
+- Rebuild dist
+- Solar-dashboard.js
+- Styles.js
+- Styles.js
+
+
 ## v0.39.2 (2026-05-07)
 
 ### Bug Fixes
