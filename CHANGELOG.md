@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.39.4 (2026-05-08)
+
+### Bug Fixes
+- Powerflow flex cross layout, solar aligned above home
+- Rebuild dist
+- Styles.js
+- Solar-dashboard.js
+- Styles.js
+- Styles.js
+
+
 ## v0.39.3 (2026-05-08)
 
 ### Bug Fixes
