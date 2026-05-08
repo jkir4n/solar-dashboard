@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.42.0 (2026-05-08)
+
+### Features
+- Visualize grid presence/absence using grid_status sensor
+- Solar-dashboard.js
+- Styles.js
+- Ha-bridge.js
+- Ha-bridge.js
+
+
 ## v0.41.3 (2026-05-08)
 
 ### Bug Fixes
