@@ -391,6 +391,11 @@ export class HABridge {
     snap.pvPower     = getPow('PV_POWER');
     snap.gridVoltage = this.getVal(this._gridEntityIds?.GRID_VOLTAGE?.entityId);
     snap.gridFreq    = this.getVal(this._gridEntityIds?.GRID_FREQ?.entityId);
+    const statusEntry = this._gridEntityIds?.GRID_STATUS;
+    if (statusEntry) {
+      const statusState = this._hass?.states?.[statusEntry.entityId]?.state;
+      snap.gridAvailable = parseFloat(statusState) === 1;
+    }
     return snap;
   }
 
