@@ -520,7 +520,7 @@ export const STYLES = `
   /* ── Vertical watt label (beside the vertical line) ── */
   .fh-watt-vertical {
     position: absolute;
-    left: calc(100% + 8px);
+    left: calc(50% + 5px);
     top: 50%;
     transform: translateY(-50%);
     bottom: auto !important;
