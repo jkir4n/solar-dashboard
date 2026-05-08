@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.40.0 (2026-05-08)
+
+### Features
+- Restructure power flow to 4-way cross layout (Battery bottom, Grid left)
+
+
 ## v0.39.5 (2026-05-08)
 
 ### Bug Fixes
