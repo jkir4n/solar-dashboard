@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.41.3 (2026-05-08)
+
+### Bug Fixes
+- Move vertical flow watt text closer to line
+- Styles.js
+
+
 ## v0.41.2 (2026-05-08)
 
 ### Bug Fixes
