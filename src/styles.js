@@ -450,6 +450,7 @@ export const STYLES = `
     width: 56px;
     height: 100px;
     min-width: unset;
+    margin-top: 0;
   }
 
   .flow-vertical .flow-line {
