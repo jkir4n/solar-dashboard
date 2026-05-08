@@ -1483,7 +1483,6 @@ class SolarDashboard extends HTMLElement {
                 <div class="flow-hub-cell fh-bat-line">
                   <div class="flow-line-wrap flow-vertical" id="flowWrap2">
                     <div class="flow-line" id="flowLine2"></div>
-                    <canvas class="flow-arc-canvas" id="flowArc2"></canvas>
                     <div class="flow-particles" id="flowParticles2">${'<div class="flow-dot"></div>'.repeat(20)}</div>
                     <span class="flow-watt fh-watt-vertical" id="flowWatt2">0 W</span>
                   </div>
