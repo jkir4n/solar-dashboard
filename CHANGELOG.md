@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.40.1 (2026-05-08)
+
+### Bug Fixes
+- Power flow alignment - center Home node and stretch Grid line
+
+
 ## v0.40.0 (2026-05-08)
 
 ### Features
