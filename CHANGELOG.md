@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.40.2 (2026-05-08)
+
+### Bug Fixes
+- Home flow line color reflects primary power source
+- Fix power flow layout: move Home to right side of cross hub
+
+
 ## v0.40.1 (2026-05-08)
 
 ### Bug Fixes
