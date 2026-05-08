@@ -531,6 +531,11 @@ export const STYLES = `
     filter: drop-shadow(0 0 8px #FF9F0A) drop-shadow(0 0 16px #FF9F0A88);
     color: #FF9F0A;
   }
+  .icon-grid-offline {
+    filter: none;
+    color: var(--text3, #555);
+    opacity: 0.35;
+  }
 
   /* ── Mobile adjustments ── */
   @media (max-width: 700px) {
