@@ -871,6 +871,7 @@ class SolarDashboard extends HTMLElement {
     this._flowPS1 = null;
     this._flowPS2 = null;
     this._flowPS3 = null;
+    this._flowPS4 = null;
     this._battArcInterval = null;
     this._boltTimeouts = [];
     this._resizeTimeout = null;
@@ -1067,6 +1068,7 @@ class SolarDashboard extends HTMLElement {
       this._flowPS1 = new FlowParticles(root, 'flowWrap1', 'flowParticles1', 'flowLine1', null,       '#FFD60A', true);
       this._flowPS2 = new FlowParticles(root, 'flowWrap2', 'flowParticles2', 'flowLine2', 'flowArc2', '#00F0FF', true);
       this._flowPS3 = new FlowParticles(root, 'flowWrap3', 'flowParticles3', 'flowLine3', null,       '#0A84FF');
+      this._flowPS4 = new FlowParticles(root, 'flowWrap4', 'flowParticles4', 'flowLine4', null,       '#FF9F0A');
 
       // Wire chart tab handlers
       const tabs = root.querySelectorAll('.chart-tab');
@@ -1135,6 +1137,8 @@ class SolarDashboard extends HTMLElement {
           this._intervals = [];
           if (this._flowPS1) this._flowPS1.stop();
           if (this._flowPS2) this._flowPS2.stop();
+          if (this._flowPS3) this._flowPS3.stop();
+          if (this._flowPS4) this._flowPS4.stop();
           this._stopBattArcs();
           this._cancelAllAnimations();
         if (this._weatherFx) this._weatherFx.stop();
@@ -1171,6 +1175,8 @@ class SolarDashboard extends HTMLElement {
         this._intervals = [];
         if (this._flowPS1) this._flowPS1.stop();
         if (this._flowPS2) this._flowPS2.stop();
+        if (this._flowPS3) this._flowPS3.stop();
+        if (this._flowPS4) this._flowPS4.stop();
         this._stopBattArcs();
         this._cancelAllAnimations();
         if (this._weatherFx) this._weatherFx.stop();
@@ -1249,6 +1255,7 @@ class SolarDashboard extends HTMLElement {
     if (this._flowPS1) this._flowPS1.stop();
     if (this._flowPS2) this._flowPS2.stop();
     if (this._flowPS3) this._flowPS3.stop();
+    if (this._flowPS4) this._flowPS4.stop();
     if (this._weatherFx) this._weatherFx.destroy();
     if (this._charts) this._charts.detachAll();
     if (this._resizeHandler) window.removeEventListener('resize', this._resizeHandler);
@@ -1458,6 +1465,14 @@ class SolarDashboard extends HTMLElement {
                     <div class="flow-line" id="flowLine3"></div>
                     <div class="flow-particles" id="flowParticles3">${'<div class="flow-dot"></div>'.repeat(20)}</div>
                     <span class="flow-watt" id="flowWatt3">0 W</span>
+                  </div>
+                </div>
+
+                <div class="flow-hub-cell fh-home-line">
+                  <div class="flow-line-wrap" id="flowWrap4">
+                    <div class="flow-line" id="flowLine4"></div>
+                    <div class="flow-particles" id="flowParticles4">${'<div class="flow-dot"></div>'.repeat(20)}</div>
+                    <span class="flow-watt" id="flowWatt4">0 W</span>
                   </div>
                 </div>
 
@@ -1984,6 +1999,8 @@ class SolarDashboard extends HTMLElement {
       this._els.flowWatt2 = root.getElementById('flowWatt2');
       this._els.flowWrap3 = root.getElementById('flowWrap3');
       this._els.flowWatt3 = root.getElementById('flowWatt3');
+      this._els.flowWrap4 = root.getElementById('flowWrap4');
+      this._els.flowWatt4 = root.getElementById('flowWatt4');
     }
 
     // Flow 1: Solar → Home (vertical, top→bottom)
@@ -2044,6 +2061,21 @@ class SolarDashboard extends HTMLElement {
       this._animateValue(watt3, parseFloat(watt3.textContent) || 0, 0, 600, v => Math.round(v) + ' W');
       watt3.style.color = 'var(--text2)';
       this._flowPS3?.stop();
+    }
+
+    // Flow 4: Center → Home (total home consumption, center→right)
+    const homeW = solarW + dischgPower + (gridW > 0 ? gridW : 0);
+    const wrap4 = this._els.flowWrap4, watt4 = this._els.flowWatt4;
+    if (homeW > 10) {
+      wrap4.classList.remove('flow-idle');
+      this._animateValue(watt4, parseFloat(watt4.textContent) || 0, Math.round(homeW), 600, v => Math.round(v) + ' W');
+      watt4.style.color = '#FF9F0A';
+      this._flowPS4?.start(homeW, 1);
+    } else {
+      wrap4.classList.add('flow-idle');
+      this._animateValue(watt4, parseFloat(watt4.textContent) || 0, 0, 600, v => Math.round(v) + ' W');
+      watt4.style.color = 'var(--text2)';
+      this._flowPS4?.stop();
     }
 
     const homeActive = discharging || gridW > 10;

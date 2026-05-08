@@ -454,16 +454,13 @@ export const STYLES = `
     flex-direction: row;
     align-items: center;
     width: 100%;
-    justify-content: flex-start;
+    justify-content: center;
     margin-top: -34px;
     position: relative;
   }
-  .fh-grid-line { flex: 1; min-width: 60px; }
-  .fh-home-node {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-  }
+  .fh-grid-line { flex: 1; min-width: 60px; max-width: calc(50% - 40px); }
+  .fh-home-line { flex: 1; min-width: 60px; max-width: calc(50% - 40px); }
+  .fh-home-node { position: relative; }
   .fh-bottom { display: flex; flex-direction: column; align-items: center; margin-top: -34px; position: relative; }
   .flow-hub .flow-line-wrap { margin-top: 0; }
 
