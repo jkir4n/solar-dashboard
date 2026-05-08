@@ -1066,7 +1066,7 @@ class SolarDashboard extends HTMLElement {
 
       // Init flow particles
       this._flowPS1 = new FlowParticles(root, 'flowWrap1', 'flowParticles1', 'flowLine1', null,       '#FFD60A', true);
-      this._flowPS2 = new FlowParticles(root, 'flowWrap2', 'flowParticles2', 'flowLine2', 'flowArc2', '#00F0FF', true);
+      this._flowPS2 = new FlowParticles(root, 'flowWrap2', 'flowParticles2', 'flowLine2', null, '#00F0FF', true);
       this._flowPS3 = new FlowParticles(root, 'flowWrap3', 'flowParticles3', 'flowLine3', null,       '#0A84FF');
       this._flowPS4 = new FlowParticles(root, 'flowWrap4', 'flowParticles4', 'flowLine4', null,       '#FF9F0A');
 
