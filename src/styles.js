@@ -438,32 +438,28 @@ export const STYLES = `
   /* ── Flow hub cross layout ── */
   .flow-hub {
     position: relative;
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    grid-template-rows: auto auto auto;
     align-items: center;
-    justify-content: center;
+    justify-items: center;
     padding: 16px 24px;
     flex: 1;
     min-height: 200px;
   }
 
   .flow-hub-cell { display: flex; align-items: center; justify-content: center; }
-  .fh-top { display: flex; flex-direction: column; align-items: center; position: relative; width: 100%; }
-  .fh-solar-line { width: 100%; display: flex; justify-content: center; }
-  .fh-middle {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    width: 100%;
-    justify-content: center;
-    margin-top: -34px;
-    position: relative;
-  }
-  .fh-grid-line { flex: 1; min-width: 60px; max-width: calc(50% - 40px); }
-  .fh-home-line { flex: 1; min-width: 60px; max-width: calc(50% - 40px); }
-  .fh-home-node { position: relative; }
-  .fh-bottom { display: flex; flex-direction: column; align-items: center; margin-top: -34px; position: relative; width: 100%; }
-  .fh-bat-line { width: 100%; display: flex; justify-content: center; }
+  
+  /* Grid positions */
+  .fh-solar-node { grid-column: 2; grid-row: 1; }
+  .fh-solar-line { grid-column: 2; grid-row: 1 / 3; align-self: end; justify-self: center; }
+  .fh-grid-node  { grid-column: 1; grid-row: 2; }
+  .fh-grid-line  { grid-column: 1 / 3; grid-row: 2; align-self: center; justify-self: stretch; }
+  .fh-home-line  { grid-column: 2 / 4; grid-row: 2; align-self: center; justify-self: stretch; }
+  .fh-home-node  { grid-column: 3; grid-row: 2; }
+  .fh-bat-line   { grid-column: 2; grid-row: 2 / 4; align-self: start; justify-self: center; }
+  .fh-bat-node   { grid-column: 2; grid-row: 3; }
+
   .flow-hub .flow-line-wrap { margin-top: 0; }
 
   /* ── Vertical flow line (Solar → Home) ── */
