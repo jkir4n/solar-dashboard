@@ -1064,9 +1064,9 @@ class SolarDashboard extends HTMLElement {
       });
 
       // Init flow particles
-      this._flowPS1 = new FlowParticles(root, 'flowWrap1', 'flowParticles1', 'flowLine1', null,       '#00F0FF', true);
-      this._flowPS2 = new FlowParticles(root, 'flowWrap2', 'flowParticles2', 'flowLine2', 'flowArc2', '#00F0FF');
-      this._flowPS3 = new FlowParticles(root, 'flowWrap3', 'flowParticles3', 'flowLine3', null,       '#FF9F0A');
+      this._flowPS1 = new FlowParticles(root, 'flowWrap1', 'flowParticles1', 'flowLine1', null,       '#FFD60A', true);
+      this._flowPS2 = new FlowParticles(root, 'flowWrap2', 'flowParticles2', 'flowLine2', 'flowArc2', '#00F0FF', true);
+      this._flowPS3 = new FlowParticles(root, 'flowWrap3', 'flowParticles3', 'flowLine3', null,       '#0A84FF');
 
       // Wire chart tab handlers
       const tabs = root.querySelectorAll('.chart-tab');
@@ -1436,25 +1436,28 @@ class SolarDashboard extends HTMLElement {
               </div>
 
               <div class="fh-middle">
-                <div class="flow-hub-cell fh-bat-node">
+                <div class="flow-hub-cell fh-grid-node">
                   <div class="flow-node">
-                    <div class="flow-icon" id="iconBattery" style="position:relative;">
-                      <svg viewBox="0 0 48 48">
-                        <rect x="8" y="14" width="32" height="24" rx="3" ry="3"/>
-                        <rect x="19" y="10" width="10" height="4" rx="2" ry="2"/>
+                    <div class="flow-icon" id="iconGrid">
+                      <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="24" y1="4"  x2="24" y2="44"/>
+                        <line x1="8"  y1="16" x2="40" y2="16"/>
+                        <line x1="12" y1="28" x2="36" y2="28"/>
+                        <line x1="24" y1="4"  x2="8"  y2="44"/>
+                        <line x1="24" y1="4"  x2="40" y2="44"/>
+                        <line x1="8"  y1="16" x2="24" y2="28"/>
+                        <line x1="40" y1="16" x2="24" y2="28"/>
                       </svg>
-                      <svg id="battArcs" viewBox="0 0 48 48" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;"></svg>
                     </div>
-                    <span class="flow-label">${t(lang, 'batteryNode')}</span>
+                    <span class="flow-label">${t(lang, 'grid')}</span>
                   </div>
                 </div>
 
-                <div class="flow-hub-cell fh-bat-line">
-                  <div class="flow-line-wrap" id="flowWrap2">
-                    <div class="flow-line" id="flowLine2"></div>
-                    <canvas class="flow-arc-canvas" id="flowArc2"></canvas>
-                    <div class="flow-particles" id="flowParticles2">${'<div class="flow-dot"></div>'.repeat(20)}</div>
-                    <span class="flow-watt" id="flowWatt2">0 W</span>
+                <div class="flow-hub-cell fh-grid-line">
+                  <div class="flow-line-wrap" id="flowWrap3">
+                    <div class="flow-line" id="flowLine3"></div>
+                    <div class="flow-particles" id="flowParticles3">${'<div class="flow-dot"></div>'.repeat(20)}</div>
+                    <span class="flow-watt" id="flowWatt3">0 W</span>
                   </div>
                 </div>
 
@@ -1471,29 +1474,28 @@ class SolarDashboard extends HTMLElement {
                     <span class="flow-label">${t(lang, 'home')}</span>
                   </div>
                 </div>
+              </div>
 
-                <div class="flow-hub-cell fh-grid-line">
-                  <div class="flow-line-wrap" id="flowWrap3">
-                    <div class="flow-line" id="flowLine3"></div>
-                    <div class="flow-particles" id="flowParticles3">${'<div class="flow-dot"></div>'.repeat(20)}</div>
-                    <span class="flow-watt" id="flowWatt3">0 W</span>
+              <div class="fh-bottom">
+                <div class="flow-hub-cell fh-bat-line">
+                  <div class="flow-line-wrap flow-vertical" id="flowWrap2">
+                    <div class="flow-line" id="flowLine2"></div>
+                    <canvas class="flow-arc-canvas" id="flowArc2"></canvas>
+                    <div class="flow-particles" id="flowParticles2">${'<div class="flow-dot"></div>'.repeat(20)}</div>
+                    <span class="flow-watt fh-watt-vertical" id="flowWatt2">0 W</span>
                   </div>
                 </div>
 
-                <div class="flow-hub-cell fh-grid-node">
+                <div class="flow-hub-cell fh-bat-node">
                   <div class="flow-node">
-                    <div class="flow-icon" id="iconGrid">
-                      <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="24" y1="4"  x2="24" y2="44"/>
-                        <line x1="8"  y1="16" x2="40" y2="16"/>
-                        <line x1="12" y1="28" x2="36" y2="28"/>
-                        <line x1="24" y1="4"  x2="8"  y2="44"/>
-                        <line x1="24" y1="4"  x2="40" y2="44"/>
-                        <line x1="8"  y1="16" x2="24" y2="28"/>
-                        <line x1="40" y1="16" x2="24" y2="28"/>
+                    <div class="flow-icon" id="iconBattery" style="position:relative;">
+                      <svg viewBox="0 0 48 48">
+                        <rect x="8" y="14" width="32" height="24" rx="3" ry="3"/>
+                        <rect x="19" y="10" width="10" height="4" rx="2" ry="2"/>
                       </svg>
+                      <svg id="battArcs" viewBox="0 0 48 48" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;"></svg>
                     </div>
-                    <span class="flow-label">${t(lang, 'grid')}</span>
+                    <span class="flow-label">${t(lang, 'batteryNode')}</span>
                   </div>
                 </div>
               </div>
@@ -1989,7 +1991,7 @@ class SolarDashboard extends HTMLElement {
     if (solarW > 10) {
       wrap1.classList.remove('flow-idle');
       this._animateValue(watt1, parseFloat(watt1.textContent) || 0, Math.round(solarW), 600, v => Math.round(v) + ' W');
-      watt1.style.color = '#00F0FF';
+      watt1.style.color = '#FFD60A';
       this._flowPS1?.start(solarW, 1);
     } else {
       wrap1.classList.add('flow-idle');
@@ -2017,12 +2019,12 @@ class SolarDashboard extends HTMLElement {
       wrap2.classList.remove('flow-idle');
       this._animateValue(watt2, parseFloat(watt2.textContent) || 0, Math.round(chgPower), 600, v => Math.round(v) + ' W');
       watt2.style.color = '#00F0FF';
-      this._flowPS2?.start(chgPower, -1);
+      this._flowPS2?.start(chgPower, 1);
     } else if (discharging) {
       wrap2.classList.remove('flow-idle');
       this._animateValue(watt2, parseFloat(watt2.textContent) || 0, Math.round(dischgPower), 600, v => Math.round(v) + ' W');
       watt2.style.color = 'var(--red)';
-      this._flowPS2?.start(dischgPower, 1);
+      this._flowPS2?.start(dischgPower, -1);
     } else {
       wrap2.classList.add('flow-idle');
       this._animateValue(watt2, parseFloat(watt2.textContent) || 0, 0, 600, v => Math.round(v) + ' W');
@@ -2030,13 +2032,13 @@ class SolarDashboard extends HTMLElement {
       this._flowPS2?.stop();
     }
 
-    // Flow 3: Grid → Home (import only, right→left)
+    // Flow 3: Grid → Home (import only, left→right)
     const wrap3 = this._els.flowWrap3, watt3 = this._els.flowWatt3;
     if (gridW > 10) {
       wrap3.classList.remove('flow-idle');
       this._animateValue(watt3, parseFloat(watt3.textContent) || 0, Math.round(gridW), 600, v => Math.round(v) + ' W');
-      watt3.style.color = '#FF9F0A';
-      this._flowPS3?.start(gridW, -1);
+      watt3.style.color = '#0A84FF';
+      this._flowPS3?.start(gridW, 1);
     } else {
       wrap3.classList.add('flow-idle');
       this._animateValue(watt3, parseFloat(watt3.textContent) || 0, 0, 600, v => Math.round(v) + ' W');
