@@ -37,6 +37,7 @@ const GRID_KEYWORDS = {
   PV_POWER:    ['pv_power', 'ppv', 'solar_power', 'input_power', 'pv1_power',
                 'total_dc_power', 'current_power_production', 'power_ac',
                 'total_active_power'],
+  GRID_STATUS: ['grid_status'],
 };
 
 // Keywords to exclude from POWER matching (too specific entities that contain "power")
