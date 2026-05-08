@@ -439,13 +439,10 @@ export const STYLES = `
   .flow-hub { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px 24px; flex: 1; min-height: 200px; }
 
   .flow-hub-cell { display: flex; align-items: center; justify-content: center; }
-  .fh-solar-node { grid-area: fh-solar-node; }
-  .fh-solar-line { grid-area: fh-solar-line; }
-  .fh-bat-node   { grid-area: fh-bat-node; }
-  .fh-bat-line   { grid-area: fh-bat-line;  width: 100%; }
-  .fh-home-node  { grid-area: fh-home-node; }
-  .fh-grid-line  { grid-area: fh-grid-line; width: 100%; }
-  .fh-grid-node  { grid-area: fh-grid-node; }
+  .fh-top { display: flex; flex-direction: column; align-items: center; }
+  .fh-middle { display: flex; flex-direction: row; align-items: center; width: 100%; justify-content: center; }
+  .fh-bat-line, .fh-grid-line { flex: 1; min-width: 60px; }
+  .flow-hub .flow-line-wrap { margin-top: 0; }
 
   /* ── Vertical flow line (Solar → Home) ── */
   .flow-vertical {
