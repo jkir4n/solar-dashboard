@@ -1606,7 +1606,7 @@ class SolarDashboard extends HTMLElement {
         <label class="toggle"><input type="checkbox" id="gridToggle"><span class="slider"></span></label>
       </div>
       <div class="ctrl">
-        <div><div class="ctrl-name">${t(lang, 'ctrlAbsorption')}</div><div class="ctrl-desc" id="absorptionDesc">${t(lang, 'absNotArmed')}</div></div>
+        <div><div class="ctrl-name">${t(lang, 'ctrlAbsorption')}</div><div class="ctrl-desc" id="absorptionDesc">${t(lang, 'absNotArmed')}</div><div class="ctrl-desc" id="absorptionDetails" style="font-size:0.78em;opacity:0.65;display:none"></div></div>
         <label class="toggle"><input type="checkbox" id="absorptionToggle"><span class="slider"></span></label>
       </div>
       <div class="ctrl">
