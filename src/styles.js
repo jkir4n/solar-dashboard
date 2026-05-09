@@ -216,6 +216,8 @@ export const STYLES = `
   .flow-icon { width: 48px; height: 48px; position: relative; transition: filter 0.6s ease; }
   .grid-status-dot { position: absolute; top: 1px; right: 1px; width: 8px; height: 8px; border-radius: 50%; background: #30D158; box-shadow: 0 0 4px #30D15888; border: 1.5px solid var(--card-bg, #111); transition: background 0.4s ease, box-shadow 0.4s ease; }
   .grid-status-dot.offline { background: #FF453A; box-shadow: 0 0 4px #FF453A88; }
+  .grid-info { display:flex; flex-direction:column; align-items:center; gap:1px; margin-top:4px; }
+  .grid-info span { font-size:10px; font-weight:500; color:#30D158; opacity:0.85; line-height:1.3; letter-spacing:0.2px; }
   .flow-icon svg { width: 100%; height: 100%; stroke: var(--icon-fill); fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; transition: stroke 0.6s ease; }
   /* Sun: shimmer with twinkling rays */
   .flow-icon.icon-sun-active svg { stroke: var(--orange); }
