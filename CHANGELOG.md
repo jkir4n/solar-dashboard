@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.44.0 (2026-05-09)
+
+### Features
+- Grid voltage/freq display and solar-battery-home power routing
+- Rebuild dist
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Styles.js
+- Solar-dashboard.js
+
+
 ## v0.43.0 (2026-05-08)
 
 ### Features
