@@ -31,7 +31,7 @@ const L = {
     descCharging: 'Enable or disable battery charging',
     descDischarging: 'Enable or disable battery discharging',
       ctrlGridInput: 'Grid Input', descGridInput: 'Bypass battery and power home from grid',
-      ctrlAbsorption: 'Absorption Mode', descAbsorption: 'Force battery to absorption voltage',
+      ctrlAbsorption: 'Top Balancing', descAbsorption: 'No-load cell top balance',
       absNotArmed: 'Not armed', absArmed: 'Armed — waiting for SOC 100%',
       absActive: 'Active', absLastRun: 'Last run',
       ctrlGridConnect: 'Grid Connect SOC', descGridConnect: 'Connect grid when battery falls below this %',
