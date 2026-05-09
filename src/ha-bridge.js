@@ -112,6 +112,20 @@ export class HABridge {
     const currentPrefix = this.getStrVal('input_text.bms_entity_prefix');
     if (!hasKeyEntities || this._discoveryRun === 0 || (currentPrefix && currentPrefix !== this._prefixBeforeChange)) {
       this._entities = this._discoverEntities(hass);
+      // Always discover number entities — these may be on a separate device from the BMS
+      if (this._hass) {
+        const states = this._hass.states;
+        for (const [entityId, state] of Object.entries(states)) {
+          if (!entityId.startsWith('number.')) continue;
+          const name = (state.attributes?.friendly_name || '').toLowerCase();
+          for (const [role, kws] of Object.entries(NUMBER_KEYWORDS)) {
+            if (this._entities[role]) continue;
+            for (const kw of kws) {
+              if (entityId.includes(kw) || name.includes(kw)) { this._entities[role] = entityId; break; }
+            }
+          }
+        }
+      }
       this._cellVoltageIds = null;
       this._discoveryRun++;
       this._prefixBeforeChange = currentPrefix;
