@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.44.1 (2026-05-09)
+
+### Bug Fixes
+- HomeW uses solarW when charging, dischgPower when discharging (no grid)
+- Rebuild dist
+- Solar-dashboard.js
+
+
 ## v0.44.0 (2026-05-09)
 
 ### Features
