@@ -2057,7 +2057,7 @@ class SolarDashboard extends HTMLElement {
     }
 
     // Flow 4: Center → Home (total home consumption, center→right)
-    const homeW = gridPowering ? gridW : dischgPower;
+    const homeW = gridPowering ? gridW : charging ? solarW : dischgPower;
     const wrap4 = this._els.flowWrap4, watt4 = this._els.flowWatt4;
     if (homeW > 10) {
       wrap4.classList.remove('flow-idle');
