@@ -1996,7 +1996,7 @@ class SolarDashboard extends HTMLElement {
     if (solarW > 10) {
       wrap1.classList.remove('flow-idle');
       this._animateValue(watt1, parseFloat(watt1.textContent) || 0, Math.round(solarW), 600, v => Math.round(v) + ' W');
-      watt1.style.color = '#FFD60A';
+      watt1.style.color = gridPowering ? '#00F0FF' : '#FFD60A';
       this._flowPS1?.start(solarW, 1);
     } else {
       wrap1.classList.add('flow-idle');
