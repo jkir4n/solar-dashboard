@@ -1836,6 +1836,17 @@ class SolarDashboard extends HTMLElement {
       if (eid === E.DISCHG_SWITCH) root.getElementById('dischgToggle').checked = val === 'on';
       if (eid === E.GRID_SWITCH) { const el = root.getElementById('gridToggle'); if (el) el.checked = val === 'on'; }
       if (eid === E.ABSORPTION_SWITCH) { const el = root.getElementById('absorptionToggle'); if (el) el.checked = val === 'on'; }
+      const absStatusEid = this._bridge._gridEntityIds?.ABSORPTION_STATUS?.entityId;
+      if (absStatusEid && eid === absStatusEid) {
+        const el = root.getElementById('absorptionDesc');
+        if (el && val) {
+          el.textContent = val;
+          if (val.startsWith('Active')) el.style.color = 'var(--orange)';
+          else if (val.startsWith('Armed')) el.style.color = 'var(--amber, #f59e0b)';
+          else if (val.startsWith('Last run')) el.style.color = 'var(--green)';
+          else { el.style.color = ''; }
+        }
+      }
       if (eid === E.GRID_CONNECT_SOC) { const el = root.getElementById('gridConnectVal'); if (el) el.textContent = parseFloat(val) + '%'; }
       if (eid === E.GRID_DISCONNECT_SOC) { const el = root.getElementById('gridDisconnectVal'); if (el) el.textContent = parseFloat(val) + '%'; }
     }
