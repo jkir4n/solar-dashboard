@@ -1978,6 +1978,7 @@ class SolarDashboard extends HTMLElement {
 
     const gridSnap = this._bridge.getGridSnap?.() || {};
     const gridW    = gridSnap.gridPower || 0;
+    const gridPowering = gridSnap.gridAvailable !== false && gridW > 10;
 
     if (!this._els.flowWrap1) {
       this._els.flowWrap1 = root.getElementById('flowWrap1');
