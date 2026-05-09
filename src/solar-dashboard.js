@@ -1832,6 +1832,10 @@ class SolarDashboard extends HTMLElement {
       }
       if (eid === E.CHG_SWITCH) root.getElementById('chgToggle').checked = val === 'on';
       if (eid === E.DISCHG_SWITCH) root.getElementById('dischgToggle').checked = val === 'on';
+      if (eid === E.GRID_SWITCH) { const el = root.getElementById('gridToggle'); if (el) el.checked = val === 'on'; }
+      if (eid === E.ABSORPTION_SWITCH) { const el = root.getElementById('absorptionToggle'); if (el) el.checked = val === 'on'; }
+      if (eid === E.GRID_CONNECT_SOC) { const el = root.getElementById('gridConnectVal'); if (el) el.textContent = parseFloat(val) + '%'; }
+      if (eid === E.GRID_DISCONNECT_SOC) { const el = root.getElementById('gridDisconnectVal'); if (el) el.textContent = parseFloat(val) + '%'; }
     }
   }
 
