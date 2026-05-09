@@ -390,6 +390,10 @@ export const STYLES = `
   .slider::before { content: ''; position: absolute; width: 18px; height: 18px; left: 3px; bottom: 3px; background: var(--text); border-radius: 50%; transition: 0.3s; }
   .toggle input:checked + .slider { background: var(--green); box-shadow: 0 0 10px var(--green-glow); }
   .toggle input:checked + .slider::before { transform: translateX(20px); background: #fff; }
+  .ctrl-stepper{display:flex;align-items:center;gap:6px;flex-shrink:0}
+  .step-btn{width:26px;height:26px;border-radius:6px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text);font-size:16px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.2s}
+  .step-btn:hover{background:var(--glass-border)}
+  .step-val{font-size:13px;font-weight:600;min-width:36px;text-align:center;color:var(--text)}
   .info-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 8px; word-break: break-word; }
   .info-row:last-of-type { margin-bottom: 0; }
   .inf { text-align: center; padding: 8px 4px; }
