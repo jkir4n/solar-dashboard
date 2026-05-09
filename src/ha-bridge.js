@@ -51,8 +51,15 @@ const BINARY_SENSOR_KEYWORDS = {
 };
 
 const SWITCH_KEYWORDS = {
-  CHG_SWITCH:   ['charging'],
-  DISCHG_SWITCH:['discharging'],
+  CHG_SWITCH:        ['charging'],
+  DISCHG_SWITCH:     ['discharging'],
+  ABSORPTION_SWITCH: ['absorption_mode'],
+  GRID_SWITCH:       ['grid_input_grid_input', 'grid_enable', 'grid_toggle'],
+};
+
+const NUMBER_KEYWORDS = {
+  GRID_CONNECT_SOC:    ['grid_connect_soc', 'connect_soc_threshold'],
+  GRID_DISCONNECT_SOC: ['grid_disconnect_soc', 'disconnect_soc_threshold'],
 };
 
 // Dynamic battery specs — updated from BMS entities (v9 line 748)
