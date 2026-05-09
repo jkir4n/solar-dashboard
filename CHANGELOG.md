@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.45.1 (2026-05-09)
+
+### Bug Fixes
+- SOC threshold display, absorption status indicator, correct grid input description
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Ha-bridge.js
+- Ha-bridge.js
+- Ha-bridge.js
+- Ha-bridge.js
+- Ha-bridge.js
+
+
 ## v0.45.0 (2026-05-09)
 
 ### Features
