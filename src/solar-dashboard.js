@@ -30,7 +30,7 @@ const L = {
     ctrlCharging: 'Charging', ctrlDischarging: 'Discharging', ctrlBalancer: 'Balancer',
     descCharging: 'Enable or disable battery charging',
     descDischarging: 'Enable or disable battery discharging',
-      ctrlGridInput: 'Grid Input', descGridInput: 'Enable or disable grid charging',
+      ctrlGridInput: 'Grid Input', descGridInput: 'Bypass battery and power home from grid',
       ctrlAbsorption: 'Absorption Mode', descAbsorption: 'Force battery to absorption voltage',
       absNotArmed: 'Not armed', absArmed: 'Armed — waiting for SOC 100%',
       absActive: 'Active', absLastRun: 'Last run',
