@@ -2079,6 +2079,20 @@ class SolarDashboard extends HTMLElement {
     this._setIconGlow('iconGrid', gridSnap.gridAvailable === false ? 'icon-grid-offline' : gridW > 10 ? 'icon-grid-active' : 'glow-dim', gridW);
     const _gsDot = this.shadowRoot?.getElementById('gridStatusDot');
     if (_gsDot) _gsDot.classList.toggle('offline', gridSnap.gridAvailable === false);
+
+    // Grid voltage / frequency display
+    const _gridInfo     = this.shadowRoot?.getElementById('gridInfo');
+    const _gridVoltDisp = this.shadowRoot?.getElementById('gridVoltDisp');
+    const _gridFreqDisp = this.shadowRoot?.getElementById('gridFreqDisp');
+    if (_gridInfo) {
+      const showStats = gridSnap.gridAvailable !== false;
+      _gridInfo.style.display = showStats ? '' : 'none';
+      if (showStats) {
+        const gv = gridSnap.gridVoltage; const gf = gridSnap.gridFreq;
+        if (_gridVoltDisp) _gridVoltDisp.textContent = gv ? Math.round(gv) + ' V' : '--';
+        if (_gridFreqDisp) _gridFreqDisp.textContent = gf ? gf.toFixed(1) + ' Hz' : '--';
+      }
+    }
   }
 
   // ============ CHART VALUE DISPLAYS ============
