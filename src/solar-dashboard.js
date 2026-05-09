@@ -1099,6 +1099,41 @@ class SolarDashboard extends HTMLElement {
             { entity_id: this._bridge.E.DISCHG_SWITCH })?.catch(() => {});
         });
       }
+      const gridToggle = root.getElementById('gridToggle');
+      if (gridToggle) {
+        gridToggle.addEventListener('change', () => {
+          this._bridge._hass?.callService('switch', gridToggle.checked ? 'turn_on' : 'turn_off',
+            { entity_id: this._bridge.E.GRID_SWITCH })?.catch(() => {});
+        });
+      }
+      const absorptionToggle = root.getElementById('absorptionToggle');
+      if (absorptionToggle) {
+        absorptionToggle.addEventListener('change', () => {
+          this._bridge._hass?.callService('switch', absorptionToggle.checked ? 'turn_on' : 'turn_off',
+            { entity_id: this._bridge.E.ABSORPTION_SWITCH })?.catch(() => {});
+        });
+      }
+      const makeStepper = (minusId, plusId, valId, entityKey) => {
+        const minus = root.getElementById(minusId);
+        const plus = root.getElementById(plusId);
+        if (!minus || !plus) return;
+        const step = (delta) => {
+          const eid = this._bridge.E[entityKey];
+          const state = this._bridge._hass?.states?.[eid];
+          if (!state) return;
+          const cur = parseFloat(state.state);
+          const min = parseFloat(state.attributes.min ?? 0);
+          const max = parseFloat(state.attributes.max ?? 100);
+          const val = Math.min(max, Math.max(min, cur + delta));
+          this._bridge._hass?.callService('number', 'set_value',
+            { entity_id: eid, value: val })?.catch(() => {});
+          root.getElementById(valId).textContent = val + '%';
+        };
+        minus.addEventListener('click', () => step(-1));
+        plus.addEventListener('click', () => step(1));
+      };
+      makeStepper('gridConnectMinus', 'gridConnectPlus', 'gridConnectVal', 'GRID_CONNECT_SOC');
+      makeStepper('gridDisconnectMinus', 'gridDisconnectPlus', 'gridDisconnectVal', 'GRID_DISCONNECT_SOC');
 
       // Start clock
       this._startClock();
