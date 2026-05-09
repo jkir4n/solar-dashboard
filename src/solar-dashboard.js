@@ -1850,7 +1850,7 @@ class SolarDashboard extends HTMLElement {
           if (detailEl) {
             if (isLastRun) {
               const durEid = this._bridge._gridEntityIds?.ABSORPTION_DURATION?.entityId;
-              const durMins = durEid ? parseFloat(this._hass?.states?.[durEid]?.state) : NaN;
+              const durMins = durEid ? parseFloat(this._bridge._hass?.states?.[durEid]?.state) : NaN;
               const lastChanged = this._hass?.states?.[absStatusEid]?.last_changed;
               const parts = [];
               if (!isNaN(durMins)) { const h = Math.floor(durMins / 60); const m = Math.round(durMins % 60); parts.push(h > 0 ? `${h}h ${m}m` : `${m}m`); }
