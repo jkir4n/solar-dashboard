@@ -412,6 +412,7 @@ export class HABridge {
       const statusState = this._hass?.states?.[statusEntry.entityId]?.state;
       snap.gridAvailable = parseFloat(statusState) === 1;
     }
+    snap.absorptionStatus = this.getStrVal(this._gridEntityIds?.ABSORPTION_STATUS?.entityId);
     return snap;
   }
 
