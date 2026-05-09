@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.45.0 (2026-05-09)
+
+### Features
+- Add absorption mode, grid toggle, and grid SOC threshold controls
+- Styles.js
+- Ha-bridge.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Ha-bridge.js
+
+
 ## v0.44.1 (2026-05-09)
 
 ### Bug Fixes
