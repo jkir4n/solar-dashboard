@@ -1565,6 +1565,30 @@ class SolarDashboard extends HTMLElement {
         <label class="toggle"><input type="checkbox" id="dischgToggle" checked><span class="slider"></span></label>
       </div>
       <div class="ctrl">
+        <div><div class="ctrl-name">${t(lang, 'ctrlGridInput')}</div><div class="ctrl-desc">${t(lang, 'descGridInput')}</div></div>
+        <label class="toggle"><input type="checkbox" id="gridToggle"><span class="slider"></span></label>
+      </div>
+      <div class="ctrl">
+        <div><div class="ctrl-name">${t(lang, 'ctrlAbsorption')}</div><div class="ctrl-desc">${t(lang, 'descAbsorption')}</div></div>
+        <label class="toggle"><input type="checkbox" id="absorptionToggle"><span class="slider"></span></label>
+      </div>
+      <div class="ctrl">
+        <div><div class="ctrl-name">${t(lang, 'ctrlGridConnect')}</div><div class="ctrl-desc">${t(lang, 'descGridConnect')}</div></div>
+        <div class="ctrl-stepper">
+          <button class="step-btn" id="gridConnectMinus">−</button>
+          <span id="gridConnectVal" class="step-val">--</span>
+          <button class="step-btn" id="gridConnectPlus">+</button>
+        </div>
+      </div>
+      <div class="ctrl">
+        <div><div class="ctrl-name">${t(lang, 'ctrlGridDisconnect')}</div><div class="ctrl-desc">${t(lang, 'descGridDisconnect')}</div></div>
+        <div class="ctrl-stepper">
+          <button class="step-btn" id="gridDisconnectMinus">−</button>
+          <span id="gridDisconnectVal" class="step-val">--</span>
+          <button class="step-btn" id="gridDisconnectPlus">+</button>
+        </div>
+      </div>
+      <div class="ctrl">
         <div><div class="ctrl-name">${t(lang, 'ctrlBalancer')}</div><div class="ctrl-desc" id="balDesc">--</div></div>
         <div id="balSwitch" style="display:flex;align-items:center;gap:6px">
           <span id="balSwitchLabel" style="font-size:12px;font-weight:600;color:var(--text2)">--</span>
