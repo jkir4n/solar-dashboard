@@ -36,7 +36,7 @@ const GRID_KEYWORDS = {
                 'grid_consumption'],
   PV_POWER:    ['pv_power', 'ppv', 'solar_power', 'input_power', 'pv1_power',
                 'total_dc_power', 'current_power_production', 'power_ac',
-                'total_active_power'],
+                'total_active_power', 'total_pv_power', 'pv_total_power', 'solar_generation'],
   GRID_STATUS:         ['grid_status'],
   ABSORPTION_STATUS:   ['absorption_status'],
   ABSORPTION_DURATION: ['last_absorption_duration'],
