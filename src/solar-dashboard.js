@@ -2020,7 +2020,12 @@ class SolarDashboard extends HTMLElement {
 
     // Flow 2: Battery ↔ Home (bidirectional)
     const wrap2 = this._els.flowWrap2, watt2 = this._els.flowWatt2;
-    if (charging) {
+    if (gridPowering && solarW > 10) {
+      wrap2.classList.remove('flow-idle');
+      this._animateValue(watt2, parseFloat(watt2.textContent) || 0, Math.round(solarW), 600, v => Math.round(v) + ' W');
+      watt2.style.color = '#00F0FF';
+      this._flowPS2?.start(solarW, 1);
+    } else if (charging) {
       wrap2.classList.remove('flow-idle');
       this._animateValue(watt2, parseFloat(watt2.textContent) || 0, Math.round(chgPower), 600, v => Math.round(v) + ' W');
       watt2.style.color = '#00F0FF';
@@ -2028,7 +2033,7 @@ class SolarDashboard extends HTMLElement {
     } else if (discharging) {
       wrap2.classList.remove('flow-idle');
       this._animateValue(watt2, parseFloat(watt2.textContent) || 0, Math.round(dischgPower), 600, v => Math.round(v) + ' W');
-      watt2.style.color = 'var(--red)';
+      watt2.style.color = '#FF453A';
       this._flowPS2?.start(dischgPower, -1);
     } else {
       wrap2.classList.add('flow-idle');
