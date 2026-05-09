@@ -1,4 +1,4 @@
-// BMS entity keyword definitions — covers JK, JBD, Daly, BatMON integrations
+// BMS entity keyword definitions — covers JK, JBD, Daly, BatMON, Pylontech, Victron BMV/SmartShunt, EG4, Seplos, and generic ESPHome/Modbus integrations
 const SENSOR_KEYWORDS = {
   SOC:          ['capacity_remaining'],
   VOLTAGE:      ['total_voltage'],
