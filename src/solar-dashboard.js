@@ -1452,6 +1452,7 @@ class SolarDashboard extends HTMLElement {
                       <span class="grid-status-dot" id="gridStatusDot"></span>
                     </div>
                     <span class="flow-label">${t(lang, 'grid')}</span>
+                    <div class="grid-info" id="gridInfo" style="display:none"><span id="gridVoltDisp">--</span><span id="gridFreqDisp">--</span></div>
                   </div>
                 </div>
                 <div class="flow-hub-cell fh-grid-line">
