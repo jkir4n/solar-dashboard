@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.47.0 (2026-05-09)
+
+### Features
+- Expand BMS and inverter keyword coverage for Pylontech, Victron, EG4, Seplos and multi-string PV
+- Ha-bridge.js
+- Ha-bridge.js
+- Ha-bridge.js
+- Ha-bridge.js
+
+
 ## v0.46.1 (2026-05-09)
 
 ### Bug Fixes
