@@ -3119,7 +3119,8 @@ class SolarDashboard extends HTMLElement {
     // Dispatch all system entities
     const systemEntities = [E.TEMP1, E.TEMP2, E.MOSFET_TEMP, E.CYCLES, E.RUNTIME, E.THROUGHPUT,
       E.MIN_CELL_V, E.MAX_CELL_V, E.FIRMWARE, E.MANUFACTURER, E.BAL_SWITCH, E.CHG_SWITCH, E.DISCHG_SWITCH,
-      E.STRINGS, E.REMAINING];
+      E.STRINGS, E.REMAINING, E.GRID_SWITCH, E.ABSORPTION_SWITCH, E.GRID_CONNECT_SOC, E.GRID_DISCONNECT_SOC,
+      this._bridge._gridEntityIds?.ABSORPTION_STATUS?.entityId].filter(Boolean);
     this._updateUI(systemEntities.filter(id => this._bridge.getState(id)));
   }
 
