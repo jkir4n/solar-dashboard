@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.46.1 (2026-05-09)
+
+### Bug Fixes
+- Top balancing last-run details not showing (use this._bridge._hass for state access)
+- Solar-dashboard.js
+- Solar-dashboard.js
+
+
 ## v0.46.0 (2026-05-09)
 
 ### Features
