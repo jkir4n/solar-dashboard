@@ -328,6 +328,14 @@ export class HABridge {
             }
           }
         }
+        if (entityId.startsWith('number.')) {
+          for (const [role, kws] of Object.entries(NUMBER_KEYWORDS)) {
+            if (discovered[role]) continue;
+            for (const kw of kws) {
+              if (entityId.includes(kw) || name.includes(kw)) { discovered[role] = entityId; break; }
+            }
+          }
+        }
       }
 
       // Cell voltage fallback
