@@ -491,6 +491,7 @@ export class HABridge {
     const changed = [];
     const tracked = [
       ...Object.values(this._entities || {}),
+      ...Object.values(this._gridEntityIds || {}).map(e => e?.entityId).filter(Boolean),
       'input_number.solar_panel_count', 'input_number.solar_panel_rated_watts',
       'input_number.solar_panel_efficiency', 'input_number.solar_panel_tilt',
       'input_number.solar_panel_azimuth', 'input_number.solar_panel_width',
