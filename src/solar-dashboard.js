@@ -1839,12 +1839,28 @@ class SolarDashboard extends HTMLElement {
       const absStatusEid = this._bridge._gridEntityIds?.ABSORPTION_STATUS?.entityId;
       if (absStatusEid && eid === absStatusEid) {
         const el = root.getElementById('absorptionDesc');
+        const detailEl = root.getElementById('absorptionDetails');
         if (el && val) {
-          el.textContent = val;
+          const isLastRun = val.startsWith('Last run');
+          el.textContent = isLastRun ? 'Last run' : val;
           if (val.startsWith('Active')) el.style.color = 'var(--orange)';
           else if (val.startsWith('Armed')) el.style.color = 'var(--amber, #f59e0b)';
-          else if (val.startsWith('Last run')) el.style.color = 'var(--green)';
+          else if (isLastRun) el.style.color = 'var(--green)';
           else { el.style.color = ''; }
+          if (detailEl) {
+            if (isLastRun) {
+              const durEid = this._bridge._gridEntityIds?.ABSORPTION_DURATION?.entityId;
+              const durMins = durEid ? parseFloat(this._hass?.states?.[durEid]?.state) : NaN;
+              const lastChanged = this._hass?.states?.[absStatusEid]?.last_changed;
+              const parts = [];
+              if (!isNaN(durMins)) { const h = Math.floor(durMins / 60); const m = Math.round(durMins % 60); parts.push(h > 0 ? `${h}h ${m}m` : `${m}m`); }
+              if (lastChanged) { const d = new Date(lastChanged); parts.push(d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })); parts.push(d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })); }
+              detailEl.textContent = parts.join(' · ');
+              detailEl.style.display = '';
+            } else {
+              detailEl.style.display = 'none';
+            }
+          }
         }
       }
       if (eid === E.GRID_CONNECT_SOC) { const el = root.getElementById('gridConnectVal'); if (el) el.textContent = parseFloat(val) + '%'; }
