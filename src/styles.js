@@ -319,6 +319,13 @@ export const STYLES = `
 
   .batt-zone-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); margin: 12px 0 4px; }
   .sol-output { font-size: 42px; font-weight: 800; text-shadow: 0 0 24px var(--orange-glow); color: var(--orange); }
+  .weather-hero { display: flex; align-items: center; gap: 14px; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--glass-border); background: var(--glass); margin-bottom: 14px; }
+  .weather-hero-icon { font-size: 36px; line-height: 1; flex-shrink: 0; }
+  .weather-hero-body { flex: 1; min-width: 0; }
+  .weather-hero-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .weather-hero-condition { font-size: 16px; font-weight: 700; color: var(--text); }
+  .weather-hero-temp { font-size: 22px; font-weight: 800; color: var(--orange); white-space: nowrap; }
+  .weather-hero-sub { font-size: 12px; color: var(--text3); margin-top: 4px; }
   .sol-output-empty { color: var(--text3) !important; text-shadow: none !important; font-size: 18px !important; font-weight: 400 !important; text-align: center; padding: 8px 0; display: flex; flex-direction: column; align-items: center; gap: 4px; }
   .sol-output-empty .moon-icon { font-size: 36px; display: block; }
   .sol-output-empty .sunrise-time { font-size: 13px; font-weight: 600; color: var(--text2); }
