@@ -2715,12 +2715,34 @@ class SolarDashboard extends HTMLElement {
       if (solForecast) {
         this._animateValue(solForecast, parseFloat(solForecast.textContent) || 0, 0, 600, v => v.toFixed(1) + ' kWh');
       }
+      // Night empty state: replace -- W with moon icon + sunrise time
+      const solActualEl = root.getElementById('solActual');
+      if (solActualEl && !solActualEl.classList.contains('sol-output-empty')) {
+        const isEmpty = solActualEl.textContent.includes('--');
+        if (isEmpty) {
+          solActualEl.classList.add('sol-output-empty');
+          const nextRise = this._getNextSunrise();
+          solActualEl.innerHTML = `<span class="moon-icon">🌙</span><span class="sunrise-time">Resumes at ${nextRise}</span><span class="sunrise-sub">Sun below horizon</span>`;
+          const solOutputWrap = solOutput?.parentElement;
+          if (solOutputWrap) solOutputWrap.style.opacity = '0.3';
+        }
+      }
       return;
     }
 
     // Day: full solar math pipeline
     if (!this._wasDay) this._lastForecastHour = -1; // reset on sunrise
     this._wasDay = true;
+    // Clear night empty state if it was active
+    const solActualDayEl = root.getElementById('solActual');
+    if (solActualDayEl && solActualDayEl.classList.contains('sol-output-empty')) {
+      solActualDayEl.classList.remove('sol-output-empty');
+      solActualDayEl.innerHTML = '-- W';
+      solActualDayEl.style.color = 'var(--green)';
+      const solOutputEl = root.getElementById('solOutput');
+      const solOutputWrap = solOutputEl?.parentElement;
+      if (solOutputWrap) solOutputWrap.style.opacity = '';
+    }
     const panelConfig = this._getPanelConfig();
     this._engine.getDegradationInfo(now, panelConfig);
     const result = this._engine.calcSolarOutput(now, panelConfig, (1 - this._weatherCloudFactor) * 100, this._weatherAmbientC);
