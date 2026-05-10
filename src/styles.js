@@ -318,6 +318,10 @@ export const STYLES = `
   .flow-arc-canvas { position: absolute; top: 50%; left: 0; transform: translateY(-50%); width: 100%; height: 20px; pointer-events: none; z-index: 1; }
 
   .sol-output { font-size: 42px; font-weight: 800; text-shadow: 0 0 24px var(--orange-glow); color: var(--orange); }
+  .sol-output-empty { color: var(--text3) !important; text-shadow: none !important; font-size: 18px !important; font-weight: 400 !important; text-align: center; padding: 8px 0; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .sol-output-empty .moon-icon { font-size: 36px; display: block; }
+  .sol-output-empty .sunrise-time { font-size: 13px; font-weight: 600; color: var(--text2); }
+  .sol-output-empty .sunrise-sub { font-size: 11px; color: var(--text3); }
   .health-bar { height: 8px; border-radius: 4px; background: var(--glass-border); overflow: hidden; margin: 12px 0; }
   .health-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--red), var(--orange), var(--green)); transition: width 0.5s ease; position: relative; }
   .health-fill::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 50%; background: linear-gradient(180deg, rgba(255,255,255,0.3) 0%, transparent 100%); border-radius: 4px 4px 0 0; }
