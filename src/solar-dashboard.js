@@ -2741,6 +2741,14 @@ class SolarDashboard extends HTMLElement {
     }
   }
 
+  _getNextSunrise() {
+    const nextRising = this._hass?.states?.['sun.sun']?.attributes?.next_rising;
+    if (nextRising) {
+      return new Date(nextRising).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    return '06:00';
+  }
+
   _updateSolarUI() {
     if (!this._engine) return;
     const root = this.shadowRoot;
