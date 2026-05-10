@@ -2473,6 +2473,8 @@ class SolarDashboard extends HTMLElement {
     const condition = state.state || '--';
     const condEl = root.getElementById('wxCondition');
     if (condEl) condEl.textContent = COND_LABELS[condition] || condition.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    const emojiEl = root.getElementById('wxEmoji');
+    if (emojiEl) emojiEl.textContent = WEATHER_EMOJI[condition] || '🌤️';
 
     const tempEl = root.getElementById('wxTemp');
     if (tempEl) {
