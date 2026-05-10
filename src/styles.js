@@ -345,7 +345,7 @@ export const STYLES = `
   .cell-bar { height: 100%; border-radius: 7px; background: linear-gradient(90deg, var(--orange), var(--green)); transition: width 0.5s ease, background 0.8s ease, opacity 0.8s ease; position: relative; }
   .cell-bar::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 50%; background: linear-gradient(180deg, rgba(255,255,255,0.25) 0%, transparent 100%); border-radius: 7px 7px 0 0; }
   .cell-val { font-size: 12px; font-weight: 600; width: 50px; text-align: right; transition: color 0.8s ease; }
-  .cell-tag { font-size: 10px; font-weight: 700; margin-left: 2px; }
+  .cell-tag { font-size: 13px; font-weight: 800; margin-left: 2px; }
   .cell-tag.high { color: var(--red); }
   .cell-tag.low { color: var(--blue); }
   .cell-row-item.cell-high { background: rgba(255, 59, 48, 0.12); box-shadow: 0 0 12px rgba(255, 59, 48, 0.15); animation: pulseHigh 2.5s ease-in-out infinite alternate; }
