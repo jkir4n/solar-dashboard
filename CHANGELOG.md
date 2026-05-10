@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.48.0 (2026-05-10)
+
+### Features
+- Visual improvements batch 1 — night empty state, cell outlier borders, junction pulse
+- Styles.js
+- Solar-dashboard.js
+- Styles.js
+- Styles.js
+- Solar-dashboard.js
+- Styles.js
+- Styles.js
+
+
 ## v0.47.1 (2026-05-10)
 
 ### Bug Fixes
