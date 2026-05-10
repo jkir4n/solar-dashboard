@@ -2737,6 +2737,9 @@ class SolarDashboard extends HTMLElement {
           solActualEl.classList.add('sol-output-empty');
           const nextRise = this._getNextSunrise();
           solActualEl.innerHTML = `<span class="moon-icon">🌙</span><span class="sunrise-time">Resumes at ${nextRise}</span><span class="sunrise-sub">Sun below horizon</span>`;
+          // Hide the sibling "actual" label
+          const actualLabel = solActualEl.nextElementSibling;
+          if (actualLabel) actualLabel.style.display = 'none';
           const solOutputWrap = solOutput?.parentElement;
           if (solOutputWrap) solOutputWrap.style.opacity = '0.3';
         }
