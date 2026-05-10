@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.49.0 (2026-05-10)
+
+### Features
+- Visual improvements batch 2 — weather hero, battery zone labels
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Styles.js
+- Styles.js
+
+
 ## v0.48.0 (2026-05-10)
 
 ### Features
