@@ -2756,6 +2756,9 @@ class SolarDashboard extends HTMLElement {
       solActualDayEl.classList.remove('sol-output-empty');
       solActualDayEl.innerHTML = '-- W';
       solActualDayEl.style.color = 'var(--green)';
+      // Restore the sibling "actual" label
+      const actualLabel = solActualDayEl.nextElementSibling;
+      if (actualLabel) actualLabel.style.display = '';
       const solOutputEl = root.getElementById('solOutput');
       const solOutputWrap = solOutputEl?.parentElement;
       if (solOutputWrap) solOutputWrap.style.opacity = '';
