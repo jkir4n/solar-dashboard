@@ -348,12 +348,12 @@ export const STYLES = `
   .cell-tag { font-size: 13px; font-weight: 800; margin-left: 2px; }
   .cell-tag.high { color: var(--red); }
   .cell-tag.low { color: var(--blue); }
-  .cell-row-item.cell-high { background: rgba(255, 59, 48, 0.12); box-shadow: 0 0 12px rgba(255, 59, 48, 0.15); animation: pulseHigh 2.5s ease-in-out infinite alternate; }
-  .cell-row-item.cell-high .cell-id { color: var(--red); }
-  .cell-row-item.cell-high .cell-val { color: var(--red); }
-  .cell-row-item.cell-low { background: rgba(0, 122, 255, 0.12); box-shadow: 0 0 12px rgba(0, 122, 255, 0.15); animation: pulseLow 2.5s ease-in-out infinite alternate; }
-  .cell-row-item.cell-low .cell-id { color: var(--blue); }
-  .cell-row-item.cell-low .cell-val { color: var(--blue); }
+  .cell-row-item.cell-high { background: rgba(255, 59, 48, 0.12); box-shadow: 0 0 12px rgba(255, 59, 48, 0.15); animation: pulseHigh 2.5s ease-in-out infinite alternate; border-left: 3px solid var(--red); padding-left: 10px; }
+  .cell-row-item.cell-high .cell-id { color: var(--red); font-weight: 800; }
+  .cell-row-item.cell-high .cell-val { color: var(--red); font-weight: 800; }
+  .cell-row-item.cell-low { background: rgba(0, 122, 255, 0.12); box-shadow: 0 0 12px rgba(0, 122, 255, 0.15); animation: pulseLow 2.5s ease-in-out infinite alternate; border-left: 3px solid var(--blue); padding-left: 10px; }
+  .cell-row-item.cell-low .cell-id { color: var(--blue); font-weight: 800; }
+  .cell-row-item.cell-low .cell-val { color: var(--blue); font-weight: 800; }
   @keyframes pulseHigh { from { background: rgba(255, 59, 48, 0.06); box-shadow: 0 0 8px rgba(255, 59, 48, 0.08); } to { background: rgba(255, 59, 48, 0.18); box-shadow: 0 0 16px rgba(255, 59, 48, 0.22); } }
   @keyframes pulseLow { from { background: rgba(0, 122, 255, 0.06); box-shadow: 0 0 8px rgba(0, 122, 255, 0.08); } to { background: rgba(0, 122, 255, 0.18); box-shadow: 0 0 16px rgba(0, 122, 255, 0.22); } }
   /* Balancing animation highlights */
