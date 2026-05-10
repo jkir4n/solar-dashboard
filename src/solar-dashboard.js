@@ -1560,6 +1560,16 @@ class SolarDashboard extends HTMLElement {
         <div class="mid-row">
       <div class="card" id="solarCard">
         <h2 class="section-title">${t(lang, 'solarPanels')}</h2>
+        <div class="weather-hero">
+          <span id="wxEmoji" class="weather-hero-icon">🌤️</span>
+          <div class="weather-hero-body">
+            <div class="weather-hero-top">
+              <span id="wxCondition" class="weather-hero-condition">--</span>
+              <span id="wxTemp" class="weather-hero-temp">--</span>
+            </div>
+            <div class="weather-hero-sub"><span id="wxCloud">--</span>% cloud&thinsp;·&thinsp;<span id="wxHumid">--</span>% humidity <span id="wxSource" style="font-size:9px;opacity:0.45;margin-left:4px"></span></div>
+          </div>
+        </div>
         <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
           <span id="solActual" class="sol-output" style="color:var(--green)">-- W</span>
           <span style="font-size:13px;color:var(--text2)">${t(lang, 'actual')}</span>
