@@ -317,6 +317,7 @@ export const STYLES = `
   .flow-idle .flow-line { opacity: 0.3; }
   .flow-arc-canvas { position: absolute; top: 50%; left: 0; transform: translateY(-50%); width: 100%; height: 20px; pointer-events: none; z-index: 1; }
 
+  .batt-zone-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); margin: 12px 0 4px; }
   .sol-output { font-size: 42px; font-weight: 800; text-shadow: 0 0 24px var(--orange-glow); color: var(--orange); }
   .sol-output-empty { color: var(--text3) !important; text-shadow: none !important; font-size: 18px !important; font-weight: 400 !important; text-align: center; padding: 8px 0; display: flex; flex-direction: column; align-items: center; gap: 4px; }
   .sol-output-empty .moon-icon { font-size: 36px; display: block; }
