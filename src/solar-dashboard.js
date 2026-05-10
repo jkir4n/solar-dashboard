@@ -628,6 +628,15 @@ const COND_LABELS = {
   'windy-variant': 'Windy',
 };
 
+const WEATHER_EMOJI = {
+  'clear-night': '🌙', 'cloudy': '☁️', 'exceptional': '✨',
+  'fog': '🌫️', 'hail': '🌨️', 'lightning': '⚡',
+  'lightning-rainy': '⛈️', 'partlycloudy': '⛅',
+  'pouring': '🌧️', 'rainy': '🌦️', 'snowy': '❄️',
+  'snowy-rainy': '🌨️', 'sunny': '☀️', 'windy': '💨',
+  'windy-variant': '🌬️',
+};
+
 const CONDITION_PALETTE_MAP = {
   'sunny': 'sunny', 'clear-night': 'night',
   'partlycloudy': 'partlycloudy', 'cloudy': 'cloudy',
