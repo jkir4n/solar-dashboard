@@ -1602,15 +1602,6 @@ class SolarDashboard extends HTMLElement {
           <div class="stat-item"><div class="stat-val" id="solYrN">--</div><div class="stat-label">${t(lang, 'annualLoss')}</div></div>
           <div class="stat-item"><div class="stat-val" id="solNextYr">--</div><div class="stat-label">${t(lang, 'nextYear')}</div></div>
         </div>
-        <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--glass-border)">
-          <div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:1px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center"><span>${t(lang, 'weather')}</span><span id="wxSource" style="font-size:9px;font-weight:500;letter-spacing:0.4px;opacity:0.45;text-transform:none"></span></div>
-          <div class="stat-grid">
-            <div class="stat-item"><div class="stat-val" id="wxCondition">--</div><div class="stat-label">${t(lang, 'condition')}</div></div>
-            <div class="stat-item"><div class="stat-val" id="wxTemp">--</div><div class="stat-label">${t(lang, 'temp')}</div></div>
-            <div class="stat-item"><div class="stat-val" id="wxCloud">--</div><div class="stat-label">${t(lang, 'cloud')}</div></div>
-            <div class="stat-item"><div class="stat-val" id="wxHumid">--</div><div class="stat-label">${t(lang, 'humidity')}</div></div>
-          </div>
-        </div>
       </div>
     <div class="card" id="controlsCard">
       <h2 class="section-title">${t(lang, 'controls')}</h2>
