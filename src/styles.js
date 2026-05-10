@@ -319,7 +319,7 @@ export const STYLES = `
 
   .batt-zone-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); margin: 12px 0 4px; }
   .sol-output { font-size: 42px; font-weight: 800; text-shadow: 0 0 24px var(--orange-glow); color: var(--orange); }
-  .weather-hero { display: flex; align-items: center; gap: 14px; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--glass-border); background: var(--glass); margin-bottom: 14px; }
+  .weather-hero { display: flex; align-items: center; gap: 12px; padding: 0 0 12px; margin-bottom: 12px; border-bottom: 1px solid var(--glass-border); }
   .weather-hero-icon { font-size: 36px; line-height: 1; flex-shrink: 0; }
   .weather-hero-body { flex: 1; min-width: 0; }
   .weather-hero-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
