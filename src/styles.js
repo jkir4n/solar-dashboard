@@ -480,14 +480,19 @@ export const STYLES = `
     grid-row: 2 / 4;
     align-self: center;
     justify-self: center;
-    width: 10px;
-    height: 10px;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.2);
     border: 1px solid rgba(255, 255, 255, 0.35);
     pointer-events: none;
     z-index: 2;
     position: relative;
+    animation: junctionPulse 2.5s ease-in-out infinite;
+  }
+  @keyframes junctionPulse {
+    0%, 100% { box-shadow: 0 0 6px rgba(0, 240, 255, 0.2); background: rgba(255, 255, 255, 0.2); }
+    50% { box-shadow: 0 0 16px rgba(0, 240, 255, 0.45); background: rgba(255, 255, 255, 0.35); }
   }
 
   .flow-hub .flow-line-wrap { margin-top: 0; }
