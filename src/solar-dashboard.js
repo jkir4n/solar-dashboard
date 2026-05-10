@@ -1427,6 +1427,7 @@ class SolarDashboard extends HTMLElement {
           <span id="battStatus" style="font-size:13px;font-weight:600;">${t(lang, 'idle')}</span>
         </div>
       </div>
+      <div class="batt-zone-label">Live</div>
       <div class="stat-grid">
         <div class="stat-item"><div class="stat-val" id="battVolt">--</div><div class="stat-label">${t(lang, 'voltage')}</div></div>
         <div class="stat-item"><div class="stat-val" id="battCurr">--</div><div class="stat-label">${t(lang, 'current')}</div></div>
@@ -1440,6 +1441,7 @@ class SolarDashboard extends HTMLElement {
         <div class="stat-item"><div class="stat-val" id="battTTE">--</div><div class="stat-label" id="battTTELabel">${t(lang, 'tte')}</div></div>
       </div>
       <div class="stat-divider"></div>
+      <div class="batt-zone-label">Pack Info</div>
       <div class="info-row">
         <div class="inf"><div class="inf-v" id="sysCycles">--</div><div class="inf-k">${t(lang, 'cycles')}</div></div>
         <div class="inf"><div class="inf-v" id="sysCapacity">215 Ah</div><div class="inf-k">${t(lang, 'capacity')}</div></div>
