@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.50.8 (2026-05-11)
+
+### Bug Fixes
+- Use fetchHistoryRange, remove dead vars, fix null check
+
+
 ## v0.50.7 (2026-05-11)
 
 ### Bug Fixes
