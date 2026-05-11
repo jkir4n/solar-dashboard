@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.50.0 (2026-05-11)
+
+### Features
+- Add smooth fade transitions to solar night mode
+
+
 ## v0.49.3 (2026-05-11)
 
 ### Bug Fixes
