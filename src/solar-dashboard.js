@@ -1567,7 +1567,7 @@ class SolarDashboard extends HTMLElement {
               <span id="wxCondition" class="weather-hero-condition">--</span>
               <span id="wxTemp" class="weather-hero-temp">--</span>
             </div>
-            <div class="weather-hero-sub"><span><span id="wxCloud">--</span>% cloud&thinsp;·&thinsp;<span id="wxHumid">--</span>% humidity</span><span id="wxSource" class="weather-hero-source"></span></div>
+            <div class="weather-hero-sub"><span><span id="wxCloud">--</span> cloud&thinsp;·&thinsp;<span id="wxHumid">--</span> humidity</span><span id="wxSource" class="weather-hero-source"></span></div>
           </div>
         </div>
         <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
