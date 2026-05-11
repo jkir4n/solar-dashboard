@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.50.1 (2026-05-11)
+
+### Bug Fixes
+- Add money saved, peak power and panel temperature to solar card
+
+
 ## v0.50.0 (2026-05-11)
 
 ### Features
