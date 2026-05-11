@@ -918,9 +918,7 @@ class SolarDashboard extends HTMLElement {
     this._peakPowerToday = 0;
     this._sunHoursToday = 0;
     this._sunHourSet = null;
-    this._monthlyKwh = 0;
-    this._lastMonthlyResetMonth = -1;
-    this._lastTodayIn = 0;
+    this._monthStartThroughput = 0;
     this._performancePct = null;
     this._efficiencyPct = null;
     this._solarActualWatts = 0;
@@ -2644,10 +2642,9 @@ class SolarDashboard extends HTMLElement {
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
       const throughputEntity = this._bridge.E.THROUGHPUT;
       if (!throughputEntity) return;
-      const history = await this._bridge._hass.callApi('GET', `history/period/${startOfMonth.toISOString()}?filter_entity_id=${throughputEntity}&minimal_response=true&no_attributes=true`);
-      if (history && history[0] && history[0].length > 0) {
-        const firstState = history[0][0];
-        this._monthStartThroughput = parseFloat(firstState.state) || 0;
+      const history = await this._bridge.fetchHistoryRange(throughputEntity, startOfMonth, now, true);
+      if (history && history.length > 0) {
+        this._monthStartThroughput = history[0].v || 0;
       }
     } catch (_) { this._monthStartThroughput = 0; }
     // Refresh UI once month-start data is loaded
@@ -2947,7 +2944,7 @@ class SolarDashboard extends HTMLElement {
 
     // Monthly savings: delta from month-start throughput (fetched from HA history)
     let monthKwh = this._todayIn; // fallback: today only
-    if (this._monthStartThroughput > 0) {
+    if (this._monthStartThroughput != null) {
       const monthAh = throughput - this._monthStartThroughput;
       monthKwh = monthAh * nomV / 1000;
     }
