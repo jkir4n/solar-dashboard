@@ -82,6 +82,13 @@ const HELPER_DEFS = [
   { type: 'input_text', name: 'BMS Entity Prefix', id: 'input_text.bms_entity_prefix', initial: 'jk_bms_jk_bms', mode: 'text' },
 ];
 
+export function getCurrencySymbol(hass) {
+  const costSensor = hass.states['sensor.grid_input_grid_energy_consumed_cost'];
+  const code = costSensor?.attributes?.unit_of_measurement || 'INR';
+  const map = { INR: '\u20B9', USD: '$', EUR: '\u20AC', GBP: '\u00A3', AUD: 'A$' };
+  return map[code] || '\u20B9';
+}
+
 export class HABridge {
   constructor() {
     this._hass = null;
@@ -201,6 +208,17 @@ export class HABridge {
     }
     // Default
     this._battSpec.voltsPerCell = 3.2; this._battSpec.chemistry = 'LiFePO₄';
+  }
+
+  async _fetchEnergyPrice() {
+    try {
+      const prefs = await this._hass.callWS({ type: 'energy/get_prefs' });
+      const gridSource = prefs?.energy_sources?.find(s => s.type === 'grid');
+      const rate = gridSource?.number_energy_price || 0;
+      return rate;
+    } catch (e) {
+      return 0;
+    }
   }
 
   _buildFallbacks(prefix) {

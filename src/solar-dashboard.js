@@ -1,4 +1,4 @@
-import { HABridge } from './ha-bridge.js';
+import { HABridge, getCurrencySymbol } from './ha-bridge.js';
 import { SolarEngine, cloudTransmission } from './solar-engine.js';
 import { WeatherFX } from './weather-fx.js';
 import { ChartManager } from './charts.js';
@@ -41,6 +41,7 @@ const L = {
     balEnabledIdle: 'Enabled \u00B7 not currently balancing',
     sevenDAvg: '7d avg', west: 'W est',
     mVBalancing: 'mV \u2014 Balancing', mV: 'mV',
+    savedToday: 'Saved today', savedTotal: 'Total saved', peakPower: 'Peak', panelTemp: 'Panel',
   },
   de: {
     solar: 'Solar', live: 'Live', battery: 'Batterie', powerFlow: 'Leistungsfluss',
@@ -914,6 +915,10 @@ class SolarDashboard extends HTMLElement {
     this._lastLiveChartFetch = 0;
     this._chartFetchDebounce = {}; // P22: debounce guard for tab clicks / visibility resume
     this._cycleRatePerDay = null;
+    this._peakPowerToday = 0;
+    this._energyPrice = 0;
+    this._currencySymbol = '\u20B9';
+    this._panelTemp = null;
     this._pendingChanges = new Set();
     this._updateRafId = null;
     this._chartsLoaded = false;
@@ -1154,6 +1159,9 @@ class SolarDashboard extends HTMLElement {
       // Start calcTodayInOut
       this._calcTodayInOut().catch(() => {});
       this._intervals.push(setInterval(() => this._calcTodayInOut().catch(() => {}), 300000));
+
+      // Fetch energy price and currency
+      this._fetchEnergyPriceAndCurrency().catch(() => {});
 
       // Start solar estimate update
       this._updateSolarEstimate();
@@ -1604,6 +1612,12 @@ class SolarDashboard extends HTMLElement {
           <div class="stat-item"><div class="stat-val" id="solYrN">--</div><div class="stat-label">${t(lang, 'annualLoss')}</div></div>
           <div class="stat-item"><div class="stat-val" id="solNextYr">--</div><div class="stat-label">${t(lang, 'nextYear')}</div></div>
         </div>
+        <div class="stat-grid">
+          <div class="stat-item"><div class="stat-val" id="solSavedToday">--</div><div class="stat-label">${t(lang, 'savedToday')}</div></div>
+          <div class="stat-item"><div class="stat-val" id="solSavedTotal">--</div><div class="stat-label">${t(lang, 'savedTotal')}</div></div>
+          <div class="stat-item"><div class="stat-val" id="solPeakPower">--</div><div class="stat-label">${t(lang, 'peakPower')}</div></div>
+          <div class="stat-item"><div class="stat-val" id="solPanelTemp">--</div><div class="stat-label">${t(lang, 'panelTemp')}</div></div>
+        </div>
       </div>
     <div class="card" id="controlsCard">
       <h2 class="section-title">${t(lang, 'controls')}</h2>
@@ -1977,6 +1991,11 @@ class SolarDashboard extends HTMLElement {
 
     // Update actual solar (charging power = solar input)
     const solarActual = chgPower > 0 ? chgPower : (cur > 0 ? Math.abs(power || 0) : 0);
+    if (solarActual > this._peakPowerToday) {
+      this._peakPowerToday = solarActual;
+      const peakEl = this.shadowRoot.getElementById('solPeakPower');
+      if (peakEl) peakEl.textContent = this._peakPowerToday.toLocaleString() + ' W';
+    }
     const solActualEl = this._els.solActual;
     this._animateValue(solActualEl, parseFloat(solActualEl.textContent) || 0, solarActual, 600, v => Math.round(v) + ' W');
 
@@ -2575,6 +2594,17 @@ class SolarDashboard extends HTMLElement {
   }
 
   // ============ SOLAR UPDATE ============
+  async _fetchEnergyPriceAndCurrency() {
+    try {
+      const rate = await this._bridge._fetchEnergyPrice();
+      this._energyPrice = rate || 0;
+    } catch (_) { this._energyPrice = 0; }
+    try {
+      const sym = getCurrencySymbol(this._bridge._hass);
+      this._currencySymbol = sym || '\u20B9';
+    } catch (_) { this._currencySymbol = '\u20B9'; }
+  }
+
   _getPanelConfig() {
     return {
       count: this._bridge.panelCount,
@@ -2763,7 +2793,10 @@ class SolarDashboard extends HTMLElement {
     }
 
     // Day: full solar math pipeline
-    if (!this._wasDay) this._lastForecastHour = -1; // reset on sunrise
+    if (!this._wasDay) {
+      this._lastForecastHour = -1; // reset on sunrise
+      this._peakPowerToday = 0;
+    }
     this._wasDay = true;
     // Clear night empty state if it was active
     const solActualDayEl = root.getElementById('solActual');
@@ -2790,6 +2823,7 @@ class SolarDashboard extends HTMLElement {
     const panelConfig = this._getPanelConfig();
     this._engine.getDegradationInfo(now, panelConfig);
     const result = this._engine.calcSolarOutput(now, panelConfig, (1 - this._weatherCloudFactor) * 100, this._weatherAmbientC);
+    this._panelTemp = result.panelTemp != null ? result.panelTemp : null;
 
     const solOutput = root.getElementById('solOutput');
     if (solOutput) {
@@ -2841,6 +2875,24 @@ class SolarDashboard extends HTMLElement {
 
     const nextYrEl = root.getElementById('solNextYr');
     if (nextYrEl) this._animateValue(nextYrEl, parseFloat(nextYrEl.textContent) || 0, s.nextYrW, 600, v => Math.round(v) + ' W');
+
+    // Money saved + peak + panel temp
+    const savedToday = this._todayIn * this._energyPrice;
+    const throughput = this._bridge.getVal(this._bridge.E.THROUGHPUT) || 0;
+    const nomV = this._bridge.battSpec?.nomV || 51.2;
+    const savedTotal = (throughput * nomV / 1000) * this._energyPrice;
+
+    const savedTodayEl = root.getElementById('solSavedToday');
+    if (savedTodayEl) savedTodayEl.textContent = this._currencySymbol + Math.round(savedToday).toLocaleString();
+    const savedTotalEl = root.getElementById('solSavedTotal');
+    if (savedTotalEl) savedTotalEl.textContent = this._currencySymbol + Math.round(savedTotal).toLocaleString();
+    const peakPowerEl = root.getElementById('solPeakPower');
+    if (peakPowerEl) peakPowerEl.textContent = this._peakPowerToday.toLocaleString() + ' W';
+    const panelTempEl = root.getElementById('solPanelTemp');
+    if (panelTempEl) {
+      if (this._panelTemp != null) panelTempEl.textContent = Math.round(this._panelTemp) + '\u00B0C';
+      else panelTempEl.textContent = '--';
+    }
   }
 
   // ============ CELL BALANCE ============

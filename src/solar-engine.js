@@ -328,10 +328,10 @@ export class SolarEngine {
 
   // Temperature derating (v9 line 1890) — null guard for missing weather data
   _tempDerate(poaKW, ambientC) {
-    if (ambientC == null) return 1;
+    if (ambientC == null) return { derate: 1, panelTemp: 25 };
     const G = poaKW * 1000; // W/m²
     const Tcell = ambientC + (INSTALL.noct - 20) * (G / 800);
-    return 1 + INSTALL.tempCoeffPmax * (Tcell - 25);
+    return { derate: 1 + INSTALL.tempCoeffPmax * (Tcell - 25), panelTemp: Tcell };
   }
 
   // Cloud transmission model — 5-band linear interpolation (v9 line 774)
@@ -357,13 +357,15 @@ export class SolarEngine {
 
     const cloudFactor = this._cloudTransmission(cloudCoverPct);
     const monthClarity = INSTALL.monthlyClarity[date.getMonth()];
-    const tempDerate = this._tempDerate(poa * cloudFactor, ambientC);
+    const tempResult = this._tempDerate(poa * cloudFactor, ambientC);
+    const tempDerate = tempResult.derate;
+    const panelTemp = tempResult.panelTemp;
     const degradationFactor = this._degradationFactor(date);
 
     const panelArea = panelConfig.count * panelConfig.areaEach;
     const watts = poa * 1000 * panelArea * panelConfig.efficiency * degradationFactor * cloudFactor * tempDerate * monthClarity * INSTALL.systemDerate;
 
-    return { watts: Math.max(0, Math.round(watts)), elevation: pos.elevation, azimuth: pos.azimuth, poaKW: poa };
+    return { watts: Math.max(0, Math.round(watts)), elevation: pos.elevation, azimuth: pos.azimuth, poaKW: poa, panelTemp };
   }
 
   // Degradation factor (v9 line 1978)
