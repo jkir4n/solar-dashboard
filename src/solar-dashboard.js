@@ -2753,6 +2753,7 @@ class SolarDashboard extends HTMLElement {
       this._wasDay = false;
       this._cachedForecastKWh = 0;
       this._lastForecastHour = -1;
+      this._panelTemp = this._weatherAmbientC != null ? this._weatherAmbientC : null;
       const solOutput = root.getElementById('solOutput');
       if (solOutput) {
         this._animateValue(solOutput, parseFloat(solOutput.textContent) || 0, 0, 600, v => Math.round(v) + ' W');
