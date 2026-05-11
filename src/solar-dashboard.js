@@ -1171,6 +1171,7 @@ class SolarDashboard extends HTMLElement {
 
       // Fetch energy price and currency
       this._fetchEnergyPriceAndCurrency().catch(() => {});
+      this._fetchMonthStartThroughput().catch(() => {});
 
       // Start solar estimate update
       this._updateSolarEstimate();
@@ -2635,6 +2636,20 @@ class SolarDashboard extends HTMLElement {
     } catch (_) { this._currencySymbol = '\u20B9'; }
   }
 
+  async _fetchMonthStartThroughput() {
+    try {
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
+      const throughputEntity = this._bridge.E.THROUGHPUT;
+      if (!throughputEntity) return;
+      const history = await this._bridge._hass.callApi('GET', `history/period/${startOfMonth.toISOString()}?filter_entity_id=${throughputEntity}&minimal_response=true&no_attributes=true`);
+      if (history && history[0] && history[0].length > 0) {
+        const firstState = history[0][0];
+        this._monthStartThroughput = parseFloat(firstState.state) || 0;
+      }
+    } catch (_) { this._monthStartThroughput = 0; }
+  }
+
   _getPanelConfig() {
     return {
       count: this._bridge.panelCount,
@@ -2926,18 +2941,13 @@ class SolarDashboard extends HTMLElement {
     const nomV = this._bridge.battSpec?.nomV || 51.2;
     const savedTotal = (throughput * nomV / 1000) * this._energyPrice;
 
-    // Monthly accumulator: reset on 1st of month, accumulate daily deltas
-    if (this._lastMonthlyResetMonth === -1) {
-      this._lastMonthlyResetMonth = now.getMonth();
-    } else if (now.getDate() === 1 && this._lastMonthlyResetMonth !== now.getMonth()) {
-      this._monthlyKwh = 0;
-      this._lastMonthlyResetMonth = now.getMonth();
+    // Monthly savings: delta from month-start throughput (fetched from HA history)
+    let monthKwh = this._todayIn; // fallback: today only
+    if (this._monthStartThroughput > 0) {
+      const monthAh = throughput - this._monthStartThroughput;
+      monthKwh = monthAh * nomV / 1000;
     }
-    if (this._todayIn >= (this._lastTodayIn || 0)) {
-      this._monthlyKwh += this._todayIn - (this._lastTodayIn || 0);
-    }
-    this._lastTodayIn = this._todayIn;
-    const savedMonth = this._monthlyKwh * this._energyPrice;
+    const savedMonth = monthKwh * this._energyPrice;
 
     const savedTodayEl = root.getElementById('solSavedToday');
     if (savedTodayEl) savedTodayEl.textContent = this._currencySymbol + Math.round(savedToday).toLocaleString();
