@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.50.7 (2026-05-11)
+
+### Bug Fixes
+- Animate money saved and peak power values like battery card
+
+
 ## v0.50.6 (2026-05-11)
 
 ### Bug Fixes
