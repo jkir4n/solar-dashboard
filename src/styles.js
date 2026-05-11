@@ -206,6 +206,7 @@ export const STYLES = `
   .batt-soc { font-size: 48px; font-weight: 800; }
   .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 16px; }
   .stat-item { text-align: center; }
+  .stat-val.night-icon { color: var(--text3); opacity: 0.4; }
   .stat-val { font-size: 18px; font-weight: 700; color: var(--text); }
   .stat-label { font-size: 11px; font-weight: 500; color: var(--text2); margin-top: 2px; }
   .stat-divider { height: 1px; background: var(--glass-border); margin: 12px 0; opacity: 0.5; }

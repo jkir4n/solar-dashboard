@@ -2949,16 +2949,29 @@ class SolarDashboard extends HTMLElement {
     if (peakPowerEl) peakPowerEl.textContent = this._peakPowerToday.toLocaleString() + ' W';
     const isNight = !this._wasDay;
     const performanceEl = root.getElementById('solPerformance');
-    if (performanceEl) performanceEl.textContent = isNight ? '\u{1F319}' : (this._performancePct != null ? this._performancePct.toFixed(0) : '0') + '%';
+    if (performanceEl) {
+      performanceEl.textContent = isNight ? '\u{1F319}' : (this._performancePct != null ? this._performancePct.toFixed(0) : '0') + '%';
+      performanceEl.classList.toggle('night-icon', isNight);
+    }
     const efficiencyEl = root.getElementById('solEfficiency');
-    if (efficiencyEl) efficiencyEl.textContent = isNight ? '\u{1F319}' : (this._efficiencyPct != null ? this._efficiencyPct.toFixed(1) : '0.0') + '%';
+    if (efficiencyEl) {
+      efficiencyEl.textContent = isNight ? '\u{1F319}' : (this._efficiencyPct != null ? this._efficiencyPct.toFixed(1) : '0.0') + '%';
+      efficiencyEl.classList.toggle('night-icon', isNight);
+    }
     const sunHoursEl = root.getElementById('solSunHours');
-    if (sunHoursEl) sunHoursEl.textContent = isNight ? '\u{1F319}' : (this._sunHoursToday || 0) + 'h';
+    if (sunHoursEl) {
+      sunHoursEl.textContent = isNight ? '\u{1F319}' : (this._sunHoursToday || 0) + 'h';
+      sunHoursEl.classList.toggle('night-icon', isNight);
+    }
     const panelTempEl = root.getElementById('solPanelTemp');
     if (panelTempEl) {
-      if (isNight) panelTempEl.textContent = '\u{1F319}';
-      else if (this._panelTemp != null) panelTempEl.textContent = Math.round(this._panelTemp) + '\u00B0C';
-      else panelTempEl.textContent = '--';
+      if (isNight) {
+        panelTempEl.textContent = '\u{1F319}';
+        panelTempEl.classList.add('night-icon');
+      } else {
+        panelTempEl.textContent = this._panelTemp != null ? Math.round(this._panelTemp) + '\u00B0C' : '--';
+        panelTempEl.classList.remove('night-icon');
+      }
     }
   }
 
