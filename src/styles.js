@@ -324,8 +324,9 @@ export const STYLES = `
   .weather-hero-body { flex: 1; min-width: 0; }
   .weather-hero-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
   .weather-hero-condition { font-size: 16px; font-weight: 700; color: var(--text); }
-  .weather-hero-temp { font-size: 22px; font-weight: 800; color: var(--orange); white-space: nowrap; }
-  .weather-hero-sub { font-size: 12px; color: var(--text3); margin-top: 4px; }
+  .weather-hero-temp { font-size: 22px; font-weight: 800; color: var(--text); white-space: nowrap; }
+  .weather-hero-sub { display: flex; justify-content: space-between; align-items: baseline; font-size: 16px; color: var(--text); margin-top: 4px; }
+  .weather-hero-source { font-size: 12px; opacity: 0.45; }
   .sol-output-empty { color: var(--text3) !important; text-shadow: none !important; font-size: 18px !important; font-weight: 400 !important; text-align: center; padding: 8px 0; display: flex; flex-direction: column; align-items: center; gap: 4px; }
   .sol-output-empty .moon-icon { font-size: 36px; display: block; }
   .sol-output-empty .sunrise-time { font-size: 13px; font-weight: 600; color: var(--text2); }
