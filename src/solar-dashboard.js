@@ -41,7 +41,7 @@ const L = {
     balEnabledIdle: 'Enabled \u00B7 not currently balancing',
     sevenDAvg: '7d avg', west: 'W est',
     mVBalancing: 'mV \u2014 Balancing', mV: 'mV',
-    savedToday: 'Saved today', savedTotal: 'Total saved', peakPower: 'Peak', panelTemp: 'Panel',
+    savedToday: 'Saved today', savedMonth: 'Saved this month', savedTotal: 'Total saved', peakPower: 'Peak', performance: 'Performance', efficiency: 'Efficiency', sunHours: 'Sun hours', panelTemp: 'Panel',
   },
   de: {
     solar: 'Solar', live: 'Live', battery: 'Batterie', powerFlow: 'Leistungsfluss',
@@ -916,6 +916,15 @@ class SolarDashboard extends HTMLElement {
     this._chartFetchDebounce = {}; // P22: debounce guard for tab clicks / visibility resume
     this._cycleRatePerDay = null;
     this._peakPowerToday = 0;
+    this._sunHoursToday = 0;
+    this._sunHourSet = null;
+    this._monthlyKwh = 0;
+    this._lastMonthlyResetMonth = -1;
+    this._lastTodayIn = 0;
+    this._performancePct = null;
+    this._efficiencyPct = null;
+    this._solarActualWatts = 0;
+    this._solarEstimatedWatts = 0;
     this._energyPrice = 0;
     this._currencySymbol = '\u20B9';
     this._panelTemp = null;
@@ -1614,8 +1623,14 @@ class SolarDashboard extends HTMLElement {
         </div>
         <div class="stat-grid">
           <div class="stat-item"><div class="stat-val" id="solSavedToday">--</div><div class="stat-label">${t(lang, 'savedToday')}</div></div>
+          <div class="stat-item"><div class="stat-val" id="solSavedMonth">--</div><div class="stat-label">${t(lang, 'savedMonth')}</div></div>
           <div class="stat-item"><div class="stat-val" id="solSavedTotal">--</div><div class="stat-label">${t(lang, 'savedTotal')}</div></div>
           <div class="stat-item"><div class="stat-val" id="solPeakPower">--</div><div class="stat-label">${t(lang, 'peakPower')}</div></div>
+        </div>
+        <div class="stat-grid">
+          <div class="stat-item"><div class="stat-val" id="solPerformance">--</div><div class="stat-label">${t(lang, 'performance')}</div></div>
+          <div class="stat-item"><div class="stat-val" id="solEfficiency">--</div><div class="stat-label">${t(lang, 'efficiency')}</div></div>
+          <div class="stat-item"><div class="stat-val" id="solSunHours">--</div><div class="stat-label">${t(lang, 'sunHours')}</div></div>
           <div class="stat-item"><div class="stat-val" id="solPanelTemp">--</div><div class="stat-label">${t(lang, 'panelTemp')}</div></div>
         </div>
       </div>
@@ -1906,6 +1921,7 @@ class SolarDashboard extends HTMLElement {
     const power = snap.power;
     const remaining = snap.remaining;
     const battSpec = this._bridge.battSpec;
+    const now = new Date();
 
     const r = 80, circ = 2 * Math.PI * r;
     const ring = this._els.battRing;
@@ -1991,11 +2007,25 @@ class SolarDashboard extends HTMLElement {
 
     // Update actual solar (charging power = solar input)
     const solarActual = chgPower > 0 ? chgPower : (cur > 0 ? Math.abs(power || 0) : 0);
+    this._solarActualWatts = solarActual;
     if (solarActual > this._peakPowerToday) {
       this._peakPowerToday = solarActual;
       const peakEl = this.shadowRoot.getElementById('solPeakPower');
       if (peakEl) peakEl.textContent = this._peakPowerToday.toLocaleString() + ' W';
     }
+
+    // Track sun hours — count unique hours where solar output > 10% of rated
+    const panelConfig = this._getPanelConfig();
+    const ratedTotal = panelConfig.count * panelConfig.ratedWatts;
+    if (ratedTotal > 0 && solarActual > 0) {
+      const threshold = ratedTotal * 0.1;
+      if (solarActual > threshold) {
+        if (!this._sunHourSet) this._sunHourSet = new Set();
+        this._sunHourSet.add(now.getHours());
+        this._sunHoursToday = this._sunHourSet.size;
+      }
+    }
+
     const solActualEl = this._els.solActual;
     this._animateValue(solActualEl, parseFloat(solActualEl.textContent) || 0, solarActual, 600, v => Math.round(v) + ' W');
 
@@ -2797,6 +2827,8 @@ class SolarDashboard extends HTMLElement {
     if (!this._wasDay) {
       this._lastForecastHour = -1; // reset on sunrise
       this._peakPowerToday = 0;
+      this._sunHourSet = new Set();
+      this._sunHoursToday = 0;
     }
     this._wasDay = true;
     // Clear night empty state if it was active
@@ -2825,6 +2857,17 @@ class SolarDashboard extends HTMLElement {
     this._engine.getDegradationInfo(now, panelConfig);
     const result = this._engine.calcSolarOutput(now, panelConfig, (1 - this._weatherCloudFactor) * 100, this._weatherAmbientC);
     this._panelTemp = result.panelTemp != null ? result.panelTemp : null;
+    this._solarEstimatedWatts = result.watts;
+
+    // Performance %: actual vs estimated
+    if (result.watts > 0 && this._solarActualWatts > 0) {
+      this._performancePct = (this._solarActualWatts / result.watts) * 100;
+    }
+    // Efficiency %: actual vs rated capacity
+    const ratedTotal = panelConfig.count * panelConfig.ratedWatts;
+    if (ratedTotal > 0 && this._solarActualWatts > 0) {
+      this._efficiencyPct = (this._solarActualWatts / ratedTotal) * 100;
+    }
 
     const solOutput = root.getElementById('solOutput');
     if (solOutput) {
@@ -2877,18 +2920,39 @@ class SolarDashboard extends HTMLElement {
     const nextYrEl = root.getElementById('solNextYr');
     if (nextYrEl) this._animateValue(nextYrEl, parseFloat(nextYrEl.textContent) || 0, s.nextYrW, 600, v => Math.round(v) + ' W');
 
-    // Money saved + peak + panel temp
+    // Money saved + peak + performance + efficiency + sun hours + panel temp
     const savedToday = this._todayIn * this._energyPrice;
     const throughput = this._bridge.getVal(this._bridge.E.THROUGHPUT) || 0;
     const nomV = this._bridge.battSpec?.nomV || 51.2;
     const savedTotal = (throughput * nomV / 1000) * this._energyPrice;
 
+    // Monthly accumulator: reset on 1st of month, accumulate daily deltas
+    if (this._lastMonthlyResetMonth === -1) {
+      this._lastMonthlyResetMonth = now.getMonth();
+    } else if (now.getDate() === 1 && this._lastMonthlyResetMonth !== now.getMonth()) {
+      this._monthlyKwh = 0;
+      this._lastMonthlyResetMonth = now.getMonth();
+    }
+    if (this._todayIn >= (this._lastTodayIn || 0)) {
+      this._monthlyKwh += this._todayIn - (this._lastTodayIn || 0);
+    }
+    this._lastTodayIn = this._todayIn;
+    const savedMonth = this._monthlyKwh * this._energyPrice;
+
     const savedTodayEl = root.getElementById('solSavedToday');
     if (savedTodayEl) savedTodayEl.textContent = this._currencySymbol + Math.round(savedToday).toLocaleString();
+    const savedMonthEl = root.getElementById('solSavedMonth');
+    if (savedMonthEl) savedMonthEl.textContent = this._currencySymbol + Math.round(savedMonth).toLocaleString();
     const savedTotalEl = root.getElementById('solSavedTotal');
     if (savedTotalEl) savedTotalEl.textContent = this._currencySymbol + Math.round(savedTotal).toLocaleString();
     const peakPowerEl = root.getElementById('solPeakPower');
     if (peakPowerEl) peakPowerEl.textContent = this._peakPowerToday.toLocaleString() + ' W';
+    const performanceEl = root.getElementById('solPerformance');
+    if (performanceEl) performanceEl.textContent = this._performancePct != null ? this._performancePct.toFixed(0) + '%' : '--';
+    const efficiencyEl = root.getElementById('solEfficiency');
+    if (efficiencyEl) efficiencyEl.textContent = this._efficiencyPct != null ? this._efficiencyPct.toFixed(1) + '%' : '--';
+    const sunHoursEl = root.getElementById('solSunHours');
+    if (sunHoursEl) sunHoursEl.textContent = this._sunHoursToday > 0 ? this._sunHoursToday + 'h' : '--';
     const panelTempEl = root.getElementById('solPanelTemp');
     if (panelTempEl) {
       if (this._panelTemp != null) panelTempEl.textContent = Math.round(this._panelTemp) + '\u00B0C';
