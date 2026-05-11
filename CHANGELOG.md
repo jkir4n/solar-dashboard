@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.50.6 (2026-05-11)
+
+### Bug Fixes
+- Calculate monthly savings from historical BMS throughput instead of accumulator
+
+
 ## v0.50.5 (2026-05-11)
 
 ### Bug Fixes
