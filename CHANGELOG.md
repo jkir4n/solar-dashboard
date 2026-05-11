@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.50.3 (2026-05-11)
+
+### Bug Fixes
+- Reorganize stats into 2 rows - money+peak and performance+panel
+
+
 ## v0.50.2 (2026-05-11)
 
 ### Bug Fixes
