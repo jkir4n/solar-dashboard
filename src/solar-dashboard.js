@@ -71,6 +71,7 @@ const L = {
     balEnabledIdle: 'Aktiviert \u00B7 derzeit kein Ausgleich',
     sevenDAvg: '7d \u00D8', west: 'W est',
     mVBalancing: 'mV \u2014 Ausgleich', mV: 'mV',
+    savedToday: 'Heute gespart', savedMonth: 'Diesen Monat gespart', savedTotal: 'Gesamt gespart', peakPower: 'Spitzenleistung', performance: 'Leistung', efficiency: 'Effizienz', sunHours: 'Sonnenstunden', panelTemp: 'Panel-Temp',
   },
   fr: {
     solar: 'Solaire', live: 'Direct', battery: 'Batterie', powerFlow: 'Flux d\'\u00E9nergie',
@@ -100,6 +101,7 @@ const L = {
     balEnabledIdle: 'Activ\u00E9 \u00B7 pas d\'\u00E9quilibrage actuel',
     sevenDAvg: '7j moy', west: 'O est',
     mVBalancing: 'mV \u2014 \u00C9quilibrage', mV: 'mV',
+    savedToday: 'Économisé aujourd\'hui', savedMonth: 'Économisé ce mois', savedTotal: 'Total économisé', peakPower: 'Puissance crête', performance: 'Performance', efficiency: 'Efficacité', sunHours: 'Heures de soleil', panelTemp: 'Temp. panneau',
   },
   es: {
     solar: 'Solar', live: 'En vivo', battery: 'Bater\u00EDa', powerFlow: 'Flujo de energ\u00EDa',
@@ -129,6 +131,7 @@ const L = {
     balEnabledIdle: 'Activado \u00B7 sin equilibrio actual',
     sevenDAvg: '7d prom', west: 'O est',
     mVBalancing: 'mV \u2014 Equilibrio', mV: 'mV',
+    savedToday: 'Ahorrado hoy', savedMonth: 'Ahorrado este mes', savedTotal: 'Total ahorrado', peakPower: 'Pico de potencia', performance: 'Rendimiento', efficiency: 'Eficiencia', sunHours: 'Horas de sol', panelTemp: 'Temp. panel',
   },
   it: {
     solar: 'Solare', live: 'Live', battery: 'Batteria', powerFlow: 'Flusso energia',
@@ -158,6 +161,7 @@ const L = {
     balEnabledIdle: 'Abilitato \u00B7 nessun bilanciamento attuale',
     sevenDAvg: '7g media', west: 'O est',
     mVBalancing: 'mV \u2014 Bilanciamento', mV: 'mV',
+    savedToday: 'Risparmio oggi', savedMonth: 'Risparmio mese', savedTotal: 'Totale risparmio', peakPower: 'Picco', performance: 'Prestazioni', efficiency: 'Efficienza', sunHours: 'Ore di sole', panelTemp: 'Temp. pannello',
   },
   nl: {
     solar: 'Zonne', live: 'Live', battery: 'Batterij', powerFlow: 'Energieverloop',
@@ -187,6 +191,7 @@ const L = {
     balEnabledIdle: 'Ingeschakeld \u00B7 momenteel geen balancering',
     sevenDAvg: '7d gem', west: 'W est',
     mVBalancing: 'mV \u2014 Balancering', mV: 'mV',
+    savedToday: 'Vandaag bespaard', savedMonth: 'Deze maand bespaard', savedTotal: 'Totaal bespaard', peakPower: 'Piekvermogen', performance: 'Prestatie', efficiency: 'Efficiëntie', sunHours: 'Zonuren', panelTemp: 'Paneel temp',
   },
   pt: {
     solar: 'Solar', live: 'Ao vivo', battery: 'Bateria', powerFlow: 'Fluxo de energia',
@@ -216,6 +221,7 @@ const L = {
     balEnabledIdle: 'Ativado \u00B7 sem balanceamento atual',
     sevenDAvg: '7d m\u00E9d', west: 'O est',
     mVBalancing: 'mV \u2014 Balanceamento', mV: 'mV',
+    savedToday: 'Economia hoje', savedMonth: 'Economia este mês', savedTotal: 'Economia total', peakPower: 'Pico de potência', performance: 'Desempenho', efficiency: 'Eficiência', sunHours: 'Horas de sol', panelTemp: 'Temp. painel',
   },
   'pt-BR': {
     solar: 'Solar', live: 'Ao vivo', battery: 'Bateria', powerFlow: 'Fluxo de energia',
@@ -245,6 +251,7 @@ const L = {
     balEnabledIdle: 'Ativado \u00B7 sem balanceamento atual',
     sevenDAvg: '7d m\u00E9d', west: 'O est',
     mVBalancing: 'mV \u2014 Balanceamento', mV: 'mV',
+    savedToday: 'Economia hoje', savedMonth: 'Economia este mês', savedTotal: 'Economia total', peakPower: 'Pico de potência', performance: 'Desempenho', efficiency: 'Eficiência', sunHours: 'Horas de sol', panelTemp: 'Temp. painel',
   },
   sv: {
     solar: 'Sol', live: 'Live', battery: 'Batteri', powerFlow: 'Energifl\u00F6de',
@@ -274,6 +281,7 @@ const L = {
     balEnabledIdle: 'Aktiverad \u00B7 ingen balansering just nu',
     sevenDAvg: '7d snitt', west: 'V est',
     mVBalancing: 'mV \u2014 Balansering', mV: 'mV',
+    savedToday: 'Sparat idag', savedMonth: 'Sparat denna månad', savedTotal: 'Totalt sparat', peakPower: 'Topp-effekt', performance: 'Prestanda', efficiency: 'Effektivitet', sunHours: 'Soltimmar', panelTemp: 'Panel temp',
   },
   no: {
     solar: 'Sol', live: 'Live', battery: 'Batteri', powerFlow: 'Energiflyt',
@@ -303,6 +311,7 @@ const L = {
     balEnabledIdle: 'Aktivert \u00B7 ingen balansering n\u00E5',
     sevenDAvg: '7d snitt', west: 'V est',
     mVBalancing: 'mV \u2014 Balansering', mV: 'mV',
+    savedToday: 'Spart i dag', savedMonth: 'Spart denne måneden', savedTotal: 'Totalt spart', peakPower: 'Topp-effekt', performance: 'Ytelse', efficiency: 'Effektivitet', sunHours: 'Solskinnstimer', panelTemp: 'Panel temp',
   },
   da: {
     solar: 'Sol', live: 'Live', battery: 'Batteri', powerFlow: 'Energiflow',
@@ -332,6 +341,7 @@ const L = {
     balEnabledIdle: 'Aktiveret \u00B7 ingen balancering lige nu',
     sevenDAvg: '7d snit', west: 'V est',
     mVBalancing: 'mV \u2014 Balancering', mV: 'mV',
+    savedToday: 'Sparet i dag', savedMonth: 'Sparet denne måned', savedTotal: 'Sparet i alt', peakPower: 'Top-effekt', performance: 'Ydeevne', efficiency: 'Effektivitet', sunHours: 'Solskinstimer', panelTemp: 'Panel temp',
   },
   fi: {
     solar: 'Aurinko', live: 'Live', battery: 'Akku', powerFlow: 'Tehonkulku',
@@ -361,6 +371,7 @@ const L = {
     balEnabledIdle: 'K\u00E4yt\u00F6ss\u00E4 \u00B7 ei tasausta t\u00E4ll\u00E4 hetkell\u00E4',
     sevenDAvg: '7pv keski', west: 'L est',
     mVBalancing: 'mV \u2014 Tasaus', mV: 'mV',
+    savedToday: 'Säästetty tänään', savedMonth: 'Säästetty tässä kuussa', savedTotal: 'Säästetty yhteensä', peakPower: 'Huipputeho', performance: 'Suorituskyky', efficiency: 'Tehokkuus', sunHours: 'Aurinkotunnit', panelTemp: 'Paneelin lämpö',
   },
   pl: {
     solar: 'Solar', live: 'Na \u017Cywo', battery: 'Bateria', powerFlow: 'Przep\u0142yw energii',
@@ -390,6 +401,7 @@ const L = {
     balEnabledIdle: 'W\u0142\u0105czony \u00B7 brak balansowania',
     sevenDAvg: '7d \u015Br', west: 'Z est',
     mVBalancing: 'mV \u2014 Balansowanie', mV: 'mV',
+    savedToday: 'Oszczędność dziś', savedMonth: 'Oszczędność w tym miesiącu', savedTotal: 'Całkowite oszczędności', peakPower: 'Moc szczytowa', performance: 'Wydajność', efficiency: 'Efektywność', sunHours: 'Godziny słoneczne', panelTemp: 'Temp. panelu',
   },
   ru: {
     solar: '\u0421\u043E\u043B\u043D\u0435\u0447\u043D\u0430\u044F', live: '\u041B\u0430\u0439\u0432', battery: '\u0410\u043A\u043A\u0443\u043C\u0443\u043B\u044F\u0442\u043E\u0440', powerFlow: '\u041F\u043E\u0442\u043E\u043A \u044D\u043D\u0435\u0440\u0433\u0438\u0438',
@@ -419,6 +431,7 @@ const L = {
     balEnabledIdle: '\u0412\u043A\u043B\u044E\u0447\u0435\u043D \u00B7 \u0431\u0430\u043B\u0430\u043D\u0441\u0438\u0440\u043E\u0432\u043A\u0430 \u043D\u0435 \u0430\u043A\u0442\u0438\u0432\u043D\u0430',
     sevenDAvg: '7\u0434 \u0441\u0440', west: '\u0417 est',
     mVBalancing: '\u043C\u0412 \u2014 \u0411\u0430\u043B\u0430\u043D\u0441\u0438\u0440\u043E\u0432\u043A\u0430', mV: '\u043C\u0412',
+    savedToday: 'Сэкономлено сегодня', savedMonth: 'Сэкономлено в этом месяце', savedTotal: 'Всего сэкономлено', peakPower: 'Пиковая мощность', performance: 'Производительность', efficiency: 'Эффективность', sunHours: 'Солнечные часы', panelTemp: 'Темп. панели',
   },
   'zh-Hans': {
     solar: '\u592A\u9633\u80FD', live: '\u5B9E\u65F6', battery: '\u7535\u6C60', powerFlow: '\u80FD\u91CF\u6D41\u5411',
@@ -477,6 +490,7 @@ const L = {
     balEnabledIdle: '\u6709\u52B9 \u00B7 \u73FE\u5728\u30D0\u30E9\u30F3\u30B9\u3055\u308C\u3066\u3044\u307E\u305B\u3093',
     sevenDAvg: '7\u65E5\u5E73\u5747', west: '\u897F est',
     mVBalancing: 'mV \u2014 \u30D0\u30E9\u30F3\u30B9\u4E2D', mV: 'mV',
+    savedToday: '本日の節約', savedMonth: '今月の節約', savedTotal: '総節約額', peakPower: 'ピーク電力', performance: 'パフォーマンス', efficiency: '効率', sunHours: '日照時間', panelTemp: 'パネル温度',
   },
   ko: {
     solar: '\uC194\uB77C', live: '\uC2E4\uC2DC\uAC04', battery: '\uBC30\uD130\uB9AC', powerFlow: '\uC804\uB825 \uD750\uB984',
@@ -506,6 +520,7 @@ const L = {
     balEnabledIdle: '\uD65C\uC131\uD654 \u00B7 \uD604\uC7AC \uADE0\uD615 \uC548 \uD568',
     sevenDAvg: '7\uC77C \uD3C9\uADE0', west: '\uC11C est',
     mVBalancing: 'mV \u2014 \uADE0\uD615 \uC911', mV: 'mV',
+    savedToday: '오늘 절약', savedMonth: '이번 달 절약', savedTotal: '총 절약', peakPower: '최대 전력', performance: '성능', efficiency: '효율', sunHours: '일조 시간', panelTemp: '패널 온도',
   },
   tr: {
     solar: 'G\u00FCne\u015F', live: 'Canl\u0131', battery: 'Batarya', powerFlow: 'G\u00FC\u00E7 ak\u0131\u015F\u0131',
@@ -535,6 +550,7 @@ const L = {
     balEnabledIdle: 'Etkin \u00B7 \u015Fu anda dengeleme yok',
     sevenDAvg: '7g ort', west: 'B est',
     mVBalancing: 'mV \u2014 Dengeleme', mV: 'mV',
+    savedToday: 'Bugün tasarruf', savedMonth: 'Bu ay tasarruf', savedTotal: 'Toplam tasarruf', peakPower: 'Tepe güç', performance: 'Performans', efficiency: 'Verimlilik', sunHours: 'Güneş saatleri', panelTemp: 'Panel sıcaklığı',
   },
   cs: {
     solar: 'Sol\u00E1rn\u00ED', live: '\u017Div\u011B', battery: 'Baterie', powerFlow: 'Tok energie',
@@ -564,6 +580,7 @@ const L = {
     balEnabledIdle: 'Povoleno \u00B7 aktu\u00E1ln\u011B nevyva\u017Euje',
     sevenDAvg: '7d pr\u016Fm', west: 'Z est',
     mVBalancing: 'mV \u2014 Vyva\u017Eov\u00E1n\u00ED', mV: 'mV',
+    savedToday: 'Ušetřeno dnes', savedMonth: 'Ušetřeno tento měsíc', savedTotal: 'Celkem ušetřeno', peakPower: 'Špičkový výkon', performance: 'Výkon', efficiency: 'Účinnost', sunHours: 'Sluneční hodiny', panelTemp: 'Teplota panelu',
   },
   uk: {
     solar: '\u0421\u043E\u043D\u044F\u0447\u043D\u0430', live: '\u041D\u0430\u0436\u0438\u0432\u043E', battery: '\u0410\u043A\u0443\u043C\u0443\u043B\u044F\u0442\u043E\u0440', powerFlow: '\u041F\u043E\u0442\u0456\u043A \u0435\u043D\u0435\u0440\u0433\u0456\u0457',
@@ -593,6 +610,7 @@ const L = {
     balEnabledIdle: '\u0423\u0432\u0456\u043C\u043A\u043D\u0435\u043D\u043E \u00B7 \u043D\u0435 \u0431\u0430\u043B\u0430\u043D\u0441\u0443\u0454\u0442\u044C\u0441\u044F',
     sevenDAvg: '7\u0434 \u0441\u0435\u0440', west: '\u0417 est',
     mVBalancing: '\u043C\u0412 \u2014 \u0411\u0430\u043B\u0430\u043D\u0441\u0443\u0432\u0430\u043D\u043D\u044F', mV: '\u043C\u0412',
+    savedToday: 'Заощаджено сьогодні', savedMonth: 'Заощаджено цього місяця', savedTotal: 'Всього заощаджено', peakPower: 'Пікова потужність', performance: 'Продуктивність', efficiency: 'Ефективність', sunHours: 'Сонячні години', panelTemp: 'Темп. панелі',
   },
 };
 function t(lang, key) {
