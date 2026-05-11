@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.50.9 (2026-05-11)
+
+### Bug Fixes
+- Add solar savings translations for all 18 supported languages
+
+
 ## v0.50.8 (2026-05-11)
 
 ### Bug Fixes
