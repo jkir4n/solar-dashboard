@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.50.4 (2026-05-11)
+
+### Bug Fixes
+- Dim moon icons at night to match night block style
+- Show moon icon for performance metrics at night instead of 0 values
+
+
 ## v0.50.3 (2026-05-11)
 
 ### Bug Fixes
