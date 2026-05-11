@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.50.5 (2026-05-11)
+
+### Bug Fixes
+- Add smooth transition for day/night stat value changes
+
+
 ## v0.50.4 (2026-05-11)
 
 ### Bug Fixes
