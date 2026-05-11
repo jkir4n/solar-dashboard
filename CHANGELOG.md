@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.49.3 (2026-05-11)
+
+### Bug Fixes
+- Remove duplicate percent signs in cloud/humidity display
+
+
 ## v0.49.2 (2026-05-11)
 
 ### Bug Fixes
