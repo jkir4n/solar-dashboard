@@ -2634,6 +2634,8 @@ class SolarDashboard extends HTMLElement {
       const sym = getCurrencySymbol(this._bridge._hass);
       this._currencySymbol = sym || '\u20B9';
     } catch (_) { this._currencySymbol = '\u20B9'; }
+    // Refresh UI once price/currency is loaded
+    this._updateSolarUI();
   }
 
   async _fetchMonthStartThroughput() {
@@ -2648,6 +2650,8 @@ class SolarDashboard extends HTMLElement {
         this._monthStartThroughput = parseFloat(firstState.state) || 0;
       }
     } catch (_) { this._monthStartThroughput = 0; }
+    // Refresh UI once month-start data is loaded
+    this._updateSolarUI();
   }
 
   _getPanelConfig() {
@@ -2950,13 +2954,13 @@ class SolarDashboard extends HTMLElement {
     const savedMonth = monthKwh * this._energyPrice;
 
     const savedTodayEl = root.getElementById('solSavedToday');
-    if (savedTodayEl) savedTodayEl.textContent = this._currencySymbol + Math.round(savedToday).toLocaleString();
+    if (savedTodayEl) this._animateValue(savedTodayEl, parseFloat(savedTodayEl.textContent.replace(/[^0-9.-]/g, '')) || 0, savedToday, 600, v => this._currencySymbol + Math.round(v).toLocaleString());
     const savedMonthEl = root.getElementById('solSavedMonth');
-    if (savedMonthEl) savedMonthEl.textContent = this._currencySymbol + Math.round(savedMonth).toLocaleString();
+    if (savedMonthEl) this._animateValue(savedMonthEl, parseFloat(savedMonthEl.textContent.replace(/[^0-9.-]/g, '')) || 0, savedMonth, 600, v => this._currencySymbol + Math.round(v).toLocaleString());
     const savedTotalEl = root.getElementById('solSavedTotal');
-    if (savedTotalEl) savedTotalEl.textContent = this._currencySymbol + Math.round(savedTotal).toLocaleString();
+    if (savedTotalEl) this._animateValue(savedTotalEl, parseFloat(savedTotalEl.textContent.replace(/[^0-9.-]/g, '')) || 0, savedTotal, 600, v => this._currencySymbol + Math.round(v).toLocaleString());
     const peakPowerEl = root.getElementById('solPeakPower');
-    if (peakPowerEl) peakPowerEl.textContent = this._peakPowerToday.toLocaleString() + ' W';
+    if (peakPowerEl) this._animateValue(peakPowerEl, parseFloat(peakPowerEl.textContent) || 0, this._peakPowerToday, 600, v => Math.round(v).toLocaleString() + ' W');
     const isNight = !this._wasDay;
     const performanceEl = root.getElementById('solPerformance');
     if (performanceEl) {
