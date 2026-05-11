@@ -318,7 +318,7 @@ export const STYLES = `
   .flow-arc-canvas { position: absolute; top: 50%; left: 0; transform: translateY(-50%); width: 100%; height: 20px; pointer-events: none; z-index: 1; }
 
   .batt-zone-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); margin: 12px 0 4px; }
-  .sol-output { font-size: 42px; font-weight: 800; text-shadow: 0 0 24px var(--orange-glow); color: var(--orange); }
+  .sol-output { font-size: 42px; font-weight: 800; text-shadow: 0 0 24px var(--orange-glow); color: var(--orange); transition: opacity 0.3s ease; }
   .weather-hero { display: flex; align-items: center; gap: 12px; padding: 0 0 12px; margin-bottom: 12px; border-bottom: 1px solid var(--glass-border); }
   .weather-hero-icon { font-size: 36px; line-height: 1; flex-shrink: 0; }
   .weather-hero-body { flex: 1; min-width: 0; }

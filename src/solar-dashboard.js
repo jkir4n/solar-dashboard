@@ -897,6 +897,7 @@ class SolarDashboard extends HTMLElement {
     this._cardsRevealed = false;
     this._weatherEntityId = null;
     this._moonPhaseEntityId = null;
+    this._fadeTimeout = null;
     this._issPos = null;
     this._lastMoonBrightness = 0.5;
     this._weatherCloudFactor = 1.0;
@@ -1233,7 +1234,8 @@ class SolarDashboard extends HTMLElement {
         if (this._meshRafId) { cancelAnimationFrame(this._meshRafId); this._meshRafId = null; }
         if (this._connCheckInterval) { clearInterval(this._connCheckInterval); this._connCheckInterval = null; }
         if (this._issScheduleId) { clearTimeout(this._issScheduleId); this._issScheduleId = null; }
-        if (this._initRetryId) { clearTimeout(this._initRetryId); this._initRetryId = null; }
+    if (this._initRetryId) { clearTimeout(this._initRetryId); this._initRetryId = null; }
+    if (this._fadeTimeout) { clearTimeout(this._fadeTimeout); this._fadeTimeout = null; }
       };
       this._resumeHandler = () => {
         // Browser thawed — force full recovery
@@ -1570,15 +1572,15 @@ class SolarDashboard extends HTMLElement {
             <div class="weather-hero-sub"><span><span id="wxCloud">--</span> cloud&thinsp;·&thinsp;<span id="wxHumid">--</span> humidity</span><span id="wxSource" class="weather-hero-source"></span></div>
           </div>
         </div>
-        <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
+        <div id="solActualWrap" style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
           <span id="solActual" class="sol-output" style="color:var(--green)">-- W</span>
-          <span style="font-size:13px;color:var(--text2)">${t(lang, 'actual')}</span>
+          <span id="solActualLabel" style="font-size:13px;color:var(--text2)">${t(lang, 'actual')}</span>
         </div>
-        <div style="display:flex;align-items:baseline;gap:12px;margin-top:4px;flex-wrap:wrap">
+        <div id="solEstimatedWrap" style="display:flex;align-items:baseline;gap:12px;margin-top:4px;flex-wrap:wrap">
           <span id="solOutput" style="font-size:20px;font-weight:700;color:var(--orange)">--- W</span>
           <span style="font-size:13px;color:var(--text2)">${t(lang, 'estimated')}</span>
         </div>
-        <div style="display:flex;align-items:baseline;gap:8px;margin-top:4px;flex-wrap:wrap">
+        <div id="solGenWrap" style="display:flex;align-items:baseline;gap:8px;margin-top:4px;flex-wrap:wrap">
           <span id="solTodayGen" style="font-size:15px;font-weight:600;color:var(--green)">--</span>
           <span style="font-size:12px;color:var(--text3)">${t(lang, 'generatedToday')}</span>
           <span style="font-size:12px;color:var(--text3)">&middot;</span>
@@ -2731,17 +2733,30 @@ class SolarDashboard extends HTMLElement {
       }
       // Night empty state: replace -- W with moon icon + sunrise time
       const solActualEl = root.getElementById('solActual');
-      if (solActualEl && !solActualEl.classList.contains('sol-output-empty')) {
+      if (solActualEl && !solActualEl.classList.contains('sol-output-empty') && !this._fadeTimeout) {
         const isEmpty = solActualEl.textContent.includes('--');
         if (isEmpty) {
-          solActualEl.classList.add('sol-output-empty');
-          const nextRise = this._getNextSunrise();
-          solActualEl.innerHTML = `<span class="moon-icon">🌙</span><span class="sunrise-time">Resumes at ${nextRise}</span><span class="sunrise-sub">Sun below horizon</span>`;
-          // Hide the sibling "actual" label
-          const actualLabel = solActualEl.nextElementSibling;
-          if (actualLabel) actualLabel.style.display = 'none';
-          const solOutputWrap = solOutput?.parentElement;
-          if (solOutputWrap) solOutputWrap.style.opacity = '0.3';
+          // Fade out current content
+          solActualEl.style.opacity = '0';
+          // Fade out estimated row
+          const estWrap = root.getElementById('solEstimatedWrap');
+          if (estWrap) {
+            estWrap.style.transition = 'opacity 0.3s ease';
+            estWrap.style.opacity = '0';
+          }
+          this._fadeTimeout = setTimeout(() => {
+            solActualEl.classList.add('sol-output-empty');
+            const nextRise = this._getNextSunrise();
+            solActualEl.innerHTML = `<span class="moon-icon">🌙</span><span class="sunrise-time">Resumes at ${nextRise}</span><span class="sunrise-sub">Sun below horizon</span>`;
+            // Center the actual row and hide its label
+            const actualWrap = root.getElementById('solActualWrap');
+            if (actualWrap) actualWrap.style.justifyContent = 'center';
+            const actualLabel = root.getElementById('solActualLabel');
+            if (actualLabel) actualLabel.style.display = 'none';
+            // Fade in night content
+            solActualEl.style.opacity = '1';
+            this._fadeTimeout = null;
+          }, 300);
         }
       }
       return;
@@ -2752,16 +2767,25 @@ class SolarDashboard extends HTMLElement {
     this._wasDay = true;
     // Clear night empty state if it was active
     const solActualDayEl = root.getElementById('solActual');
-    if (solActualDayEl && solActualDayEl.classList.contains('sol-output-empty')) {
-      solActualDayEl.classList.remove('sol-output-empty');
-      solActualDayEl.innerHTML = '-- W';
-      solActualDayEl.style.color = 'var(--green)';
-      // Restore the sibling "actual" label
-      const actualLabel = solActualDayEl.nextElementSibling;
-      if (actualLabel) actualLabel.style.display = '';
-      const solOutputEl = root.getElementById('solOutput');
-      const solOutputWrap = solOutputEl?.parentElement;
-      if (solOutputWrap) solOutputWrap.style.opacity = '';
+    if (solActualDayEl && solActualDayEl.classList.contains('sol-output-empty') && !this._fadeTimeout) {
+      // Fade out night content
+      solActualDayEl.style.opacity = '0';
+      this._fadeTimeout = setTimeout(() => {
+        solActualDayEl.classList.remove('sol-output-empty');
+        solActualDayEl.innerHTML = '-- W';
+        solActualDayEl.style.color = 'var(--green)';
+        // Restore actual row layout
+        const actualWrap = root.getElementById('solActualWrap');
+        if (actualWrap) actualWrap.style.justifyContent = '';
+        const actualLabel = root.getElementById('solActualLabel');
+        if (actualLabel) actualLabel.style.display = '';
+        // Show estimated row again
+        const estWrap = root.getElementById('solEstimatedWrap');
+        if (estWrap) estWrap.style.opacity = '1';
+        // Fade in day content
+        solActualDayEl.style.opacity = '1';
+        this._fadeTimeout = null;
+      }, 300);
     }
     const panelConfig = this._getPanelConfig();
     this._engine.getDegradationInfo(now, panelConfig);
@@ -2784,7 +2808,7 @@ class SolarDashboard extends HTMLElement {
   }
 
   _getNextSunrise() {
-    const nextRising = this._hass?.states?.['sun.sun']?.attributes?.next_rising;
+    const nextRising = this._bridge._hass?.states?.['sun.sun']?.attributes?.next_rising;
     if (nextRising) {
       return new Date(nextRising).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
