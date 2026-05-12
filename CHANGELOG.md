@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.50.14 (2026-05-12)
+
+### Bug Fixes
+- Use HA timezone for sun hours and fix 5 calculation bugs
+
+
 ## v0.50.13 (2026-05-12)
 
 ### Bug Fixes
