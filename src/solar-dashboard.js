@@ -936,6 +936,7 @@ class SolarDashboard extends HTMLElement {
     this._peakPowerToday = 0;
     this._sunHoursToday = 0;
     this._sunHourSet = null;
+    this._lastSunHourDay = null;
     this._monthStartThroughput = 0;
     this._performancePct = null;
     this._efficiencyPct = null;
@@ -2038,10 +2039,17 @@ class SolarDashboard extends HTMLElement {
     const panelConfig = this._getPanelConfig();
     const ratedTotal = panelConfig.count * panelConfig.ratedWatts;
     if (ratedTotal > 0 && solarActual > 0) {
+      // Reset at midnight (new day in HA timezone)
+      const todayKey = this._getDateKeyInTZ();
+      if (this._lastSunHourDay !== todayKey) {
+        this._sunHourSet = new Set();
+        this._sunHoursToday = 0;
+        this._lastSunHourDay = todayKey;
+      }
       const threshold = ratedTotal * 0.1;
       if (solarActual > threshold) {
         if (!this._sunHourSet) this._sunHourSet = new Set();
-        this._sunHourSet.add(now.getHours());
+        this._sunHourSet.add(this._getHourInTZ());
         this._sunHoursToday = this._sunHourSet.size;
       }
     }
@@ -2675,10 +2683,10 @@ class SolarDashboard extends HTMLElement {
   async _fetchTodayPeakPower() {
     try {
       const now = new Date();
-      const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+      const midnight = this._getTodayMidnight();
       const chgPowerEntity = this._bridge.E.CHG_POWER;
       if (!chgPowerEntity) return;
-      const history = await this._bridge.fetchHistoryRange(chgPowerEntity, midnight, now, true);
+      const history = await this._bridge.fetchHistoryRange(chgPowerEntity, midnight, now, false);
       if (history && history.length > 0) {
         // Find max value in today's history
         const maxPower = history.reduce((max, h) => Math.max(max, h.v || 0), 0);
@@ -2692,10 +2700,10 @@ class SolarDashboard extends HTMLElement {
   async _fetchTodaySolarStats() {
     try {
       const now = new Date();
-      const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+      const midnight = this._getTodayMidnight();
       const chgPowerEntity = this._bridge.E.CHG_POWER;
       if (!chgPowerEntity) return;
-      const history = await this._bridge.fetchHistoryRange(chgPowerEntity, midnight, now, true);
+      const history = await this._bridge.fetchHistoryRange(chgPowerEntity, midnight, now, false);
       if (!history || history.length === 0) return;
       
       const panelConfig = this._getPanelConfig();
@@ -2715,7 +2723,7 @@ class SolarDashboard extends HTMLElement {
           
           // Sun hours - count unique hours above threshold
           if (watts > threshold) {
-            const hour = new Date(h.t).getHours();
+            const hour = this._getHourInTZ(h.t);
             hourSet.add(hour);
           }
         }
@@ -2725,6 +2733,8 @@ class SolarDashboard extends HTMLElement {
         this._efficiencyPct = totalEfficiency / effCount;
       }
       this._sunHoursToday = hourSet.size;
+      this._sunHourSet = hourSet;
+      this._lastSunHourDay = this._getDateKeyInTZ();
       
     } catch (_) { /* keep existing values */ }
   }
@@ -2732,10 +2742,10 @@ class SolarDashboard extends HTMLElement {
   async _fetchTodayPerformance() {
     try {
       const now = new Date();
-      const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+      const midnight = this._getTodayMidnight();
       const chgPowerEntity = this._bridge.E.CHG_POWER;
       if (!chgPowerEntity) return;
-      const history = await this._bridge.fetchHistoryRange(chgPowerEntity, midnight, now, true);
+      const history = await this._bridge.fetchHistoryRange(chgPowerEntity, midnight, now, false);
       if (!history || history.length === 0) return;
       
       const panelConfig = this._getPanelConfig();
@@ -2776,6 +2786,32 @@ class SolarDashboard extends HTMLElement {
       model: this._bridge.panelModel,
       type: this._bridge.panelType,
     };
+  }
+
+  _getTodayMidnight() {
+    const tz = this._bridge.timezone;
+    const now = new Date();
+    const todayStr = new Intl.DateTimeFormat('sv', { timeZone: tz }).format(now);
+    const svFmt = new Intl.DateTimeFormat('sv', { timeZone: tz });
+    const timeFmt = new Intl.DateTimeFormat('sv', { timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: false });
+    let candidate = new Date(`${todayStr}T12:00:00Z`);
+    if (svFmt.format(candidate) < todayStr) candidate = new Date(candidate.getTime() + 86400000);
+    if (svFmt.format(candidate) > todayStr) candidate = new Date(candidate.getTime() - 86400000);
+    const [lh, lm] = timeFmt.format(candidate).split(':').map(Number);
+    let midnightUTC = new Date(candidate.getTime() - (lh * 3600 + lm * 60) * 1000);
+    const [vh, vm] = timeFmt.format(midnightUTC).split(':').map(Number);
+    if (vh !== 0 || vm !== 0) midnightUTC = new Date(midnightUTC.getTime() - (vh * 3600 + vm * 60) * 1000);
+    return midnightUTC;
+  }
+
+  _getHourInTZ(date = new Date()) {
+    const tz = this._bridge.timezone;
+    return parseInt(new Intl.DateTimeFormat('en', { timeZone: tz, hour: 'numeric', hour12: false }).format(date), 10);
+  }
+
+  _getDateKeyInTZ(date = new Date()) {
+    const tz = this._bridge.timezone;
+    return new Intl.DateTimeFormat('sv', { timeZone: tz }).format(date);
   }
 
   _parseRgba(str) {
