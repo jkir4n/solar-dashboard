@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.50.11 (2026-05-12)
+
+### Bug Fixes
+- Fetch today's peak power from HA history instead of tracking from page load
+
+
 ## v0.50.10 (2026-05-12)
 
 ### Bug Fixes
