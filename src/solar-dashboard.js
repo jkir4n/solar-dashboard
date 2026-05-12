@@ -1188,6 +1188,7 @@ class SolarDashboard extends HTMLElement {
       // Fetch energy price and currency
       this._fetchEnergyPriceAndCurrency().catch(() => {});
       this._fetchMonthStartThroughput().catch(() => {});
+      this._fetchTodayPeakPower().catch(() => {});
 
       // Start solar estimate update
       this._updateSolarEstimate();
@@ -2667,6 +2668,23 @@ class SolarDashboard extends HTMLElement {
     } catch (_) { this._monthStartThroughput = 0; }
     // Refresh UI once month-start data is loaded
     this._updateSolarUI();
+  }
+
+  async _fetchTodayPeakPower() {
+    try {
+      const now = new Date();
+      const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+      const chgPowerEntity = this._bridge.E.CHG_POWER;
+      if (!chgPowerEntity) return;
+      const history = await this._bridge.fetchHistoryRange(chgPowerEntity, midnight, now, true);
+      if (history && history.length > 0) {
+        // Find max value in today's history
+        const maxPower = history.reduce((max, h) => Math.max(max, h.v || 0), 0);
+        if (maxPower > this._peakPowerToday) {
+          this._peakPowerToday = maxPower;
+        }
+      }
+    } catch (_) { /* keep existing peak */ }
   }
 
   _getPanelConfig() {
