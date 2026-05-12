@@ -2977,14 +2977,29 @@ class SolarDashboard extends HTMLElement {
     const peakPowerEl = root.getElementById('solPeakPower');
     if (peakPowerEl) this._animateValue(peakPowerEl, parseFloat(peakPowerEl.textContent) || 0, this._peakPowerToday, 600, v => Math.round(v).toLocaleString() + ' W');
     const isNight = !this._wasDay;
+    
+    // Calculate performance & efficiency in real-time from live data
+    const pc = this._getPanelConfig();
+    const ratedTotal = pc.count * pc.ratedWatts;
+    let perfVal = 0;
+    let effVal = 0;
+    if (!isNight) {
+      if (this._solarEstimatedWatts > 0 && this._solarActualWatts > 0) {
+        perfVal = (this._solarActualWatts / this._solarEstimatedWatts) * 100;
+      }
+      if (ratedTotal > 0 && this._solarActualWatts > 0) {
+        effVal = (this._solarActualWatts / ratedTotal) * 100;
+      }
+    }
+    
     const performanceEl = root.getElementById('solPerformance');
     if (performanceEl) {
-      performanceEl.textContent = isNight ? '\u{1F319}' : (this._performancePct != null ? this._performancePct.toFixed(0) : '0') + '%';
+      performanceEl.textContent = isNight ? '\u{1F319}' : perfVal.toFixed(0) + '%';
       performanceEl.classList.toggle('night-icon', isNight);
     }
     const efficiencyEl = root.getElementById('solEfficiency');
     if (efficiencyEl) {
-      efficiencyEl.textContent = isNight ? '\u{1F319}' : (this._efficiencyPct != null ? this._efficiencyPct.toFixed(1) : '0.0') + '%';
+      efficiencyEl.textContent = isNight ? '\u{1F319}' : effVal.toFixed(1) + '%';
       efficiencyEl.classList.toggle('night-icon', isNight);
     }
     const sunHoursEl = root.getElementById('solSunHours');
