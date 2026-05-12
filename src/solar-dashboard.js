@@ -1190,6 +1190,7 @@ class SolarDashboard extends HTMLElement {
       this._fetchMonthStartThroughput().catch(() => {});
       this._fetchTodayPeakPower().catch(() => {});
       this._fetchTodaySolarStats().catch(() => {});
+      this._fetchTodayPerformance().catch(() => {});
 
       // Start solar estimate update
       this._updateSolarEstimate();
@@ -2728,6 +2729,42 @@ class SolarDashboard extends HTMLElement {
     } catch (_) { /* keep existing values */ }
   }
 
+  async _fetchTodayPerformance() {
+    try {
+      const now = new Date();
+      const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+      const chgPowerEntity = this._bridge.E.CHG_POWER;
+      if (!chgPowerEntity) return;
+      const history = await this._bridge.fetchHistoryRange(chgPowerEntity, midnight, now, true);
+      if (!history || history.length === 0) return;
+      
+      const panelConfig = this._getPanelConfig();
+      let totalPerf = 0;
+      let perfCount = 0;
+      
+      for (const h of history) {
+        const actualWatts = h.v || 0;
+        if (actualWatts > 0) {
+          const timestamp = new Date(h.t);
+          const result = this._engine.calcSolarOutput(
+            timestamp, 
+            panelConfig, 
+            (1 - this._weatherCloudFactor) * 100, 
+            this._weatherAmbientC
+          );
+          if (result.watts > 0) {
+            totalPerf += (actualWatts / result.watts) * 100;
+            perfCount++;
+          }
+        }
+      }
+      
+      if (perfCount > 0) {
+        this._performancePct = totalPerf / perfCount;
+      }
+    } catch (_) { /* keep existing value */ }
+  }
+
   _getPanelConfig() {
     return {
       count: this._bridge.panelCount,
@@ -3037,16 +3074,16 @@ class SolarDashboard extends HTMLElement {
     if (peakPowerEl) this._animateValue(peakPowerEl, parseFloat(peakPowerEl.textContent) || 0, this._peakPowerToday, 600, v => Math.round(v).toLocaleString() + ' W');
     const isNight = !this._wasDay;
     
-    // Use historical efficiency/sun hours if available, otherwise calculate from live data
+    // Use historical efficiency/performance/sun hours if available, otherwise calculate from live data
     const pc = this._getPanelConfig();
     const ratedTotal = pc.count * pc.ratedWatts;
-    let perfVal = 0;
+    let perfVal = this._performancePct || 0;
     let effVal = this._efficiencyPct || 0;
     if (!isNight) {
-      if (this._solarEstimatedWatts > 0 && this._solarActualWatts > 0) {
+      // Only update from live data if no historical value
+      if (perfVal === 0 && this._solarEstimatedWatts > 0 && this._solarActualWatts > 0) {
         perfVal = (this._solarActualWatts / this._solarEstimatedWatts) * 100;
       }
-      // Only update efficiency from live data if no historical value
       if (effVal === 0 && ratedTotal > 0 && this._solarActualWatts > 0) {
         effVal = (this._solarActualWatts / ratedTotal) * 100;
       }
