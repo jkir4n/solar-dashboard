@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.50.12 (2026-05-12)
+
+### Bug Fixes
+- Fetch historical efficiency and sun hours from HA instead of live tracking
+
+
 ## v0.50.11 (2026-05-12)
 
 ### Bug Fixes
