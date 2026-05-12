@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.50.13 (2026-05-12)
+
+### Bug Fixes
+- Fetch historical performance from HA by calculating actual vs estimated for each timestamp
+
+
 ## v0.50.12 (2026-05-12)
 
 ### Bug Fixes
