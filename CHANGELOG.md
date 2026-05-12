@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.50.10 (2026-05-12)
+
+### Bug Fixes
+- Calculate performance and efficiency in real-time from live data
+
+
 ## v0.50.9 (2026-05-11)
 
 ### Bug Fixes
