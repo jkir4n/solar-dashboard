@@ -1176,13 +1176,14 @@ export class WeatherFX {
           + Math.sin(x * p.freq * 2.3 + t * 1.7) * p.amplitude * 0.3;
         pts.push({ x, y });
       }
-        // Vertical curtain gradient: transparent top → core colour → cool/warm fringe at bottom
-        const isOvercast = ['rainy','pouring','storm','fog','snowy','hail','snowy-rainy','lightning','lightning-rainy'].includes(this._weatherCondition);
-        const fringeHue = isOvercast ? 210 : 0;   // cool blue for rain, red for clear
-        const fringeSat = isOvercast ? 50 : 80;
-        const fringeLit = isOvercast ? 45 : 50;
-        const fringeAlpha = isOvercast ? 0.25 : 0.4;
-        const grad = ctx.createLinearGradient(0, midY - halfW, 0, midY + halfW);
+      // Vertical curtain gradient: transparent top → core colour → cool/warm fringe at bottom
+      const midY = pts[Math.floor(pts.length / 2)].y;
+      const isOvercast = ['rainy','pouring','storm','fog','snowy','hail','snowy-rainy','lightning','lightning-rainy'].includes(this._weatherCondition);
+      const fringeHue = isOvercast ? 210 : 0;   // cool blue for rain, red for clear
+      const fringeSat = isOvercast ? 50 : 80;
+      const fringeLit = isOvercast ? 45 : 50;
+      const fringeAlpha = isOvercast ? 0.25 : 0.4;
+      const grad = ctx.createLinearGradient(0, midY - halfW, 0, midY + halfW);
         grad.addColorStop(0,   `hsla(${p.hue}, 80%, 60%, 0)`);
         grad.addColorStop(0.35, `hsla(${p.hue}, 85%, 60%, 1)`);
         grad.addColorStop(0.7,  `hsla(${p.hue}, 80%, 55%, 0.8)`);
