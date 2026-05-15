@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.53.0 (2026-05-15)
+
+### Features
+- Aux sensor expansion + attribute-driven mesh backdrop modifiers
+
+
 ## v0.52.0 (2026-05-15)
 
 ### Features
