@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.54.6 (2026-05-15)
+
+### Bug Fixes
+- Cool-tone weather FX for rainy/overcast nights
+
+
 ## v0.54.5 (2026-05-15)
 
 ### Bug Fixes
