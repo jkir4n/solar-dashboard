@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.52.0 (2026-05-15)
+
+### Features
+- Visibility-driven fog overlay for non-fog conditions
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+
+
 ## v0.51.0 (2026-05-15)
 
 ### Features
