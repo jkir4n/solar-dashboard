@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.54.5 (2026-05-15)
+
+### Bug Fixes
+- Use WebSocket weather/forecast type for forecast data
+
+
 ## v0.54.4 (2026-05-15)
 
 ### Bug Fixes
