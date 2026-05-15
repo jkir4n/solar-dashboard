@@ -2595,11 +2595,13 @@ class SolarDashboard extends HTMLElement {
       this._lastWindSpeed        = windSpeed;
       this._lastCloudCoverage    = cloudCoverage;
       this._lastWindBearing      = windBearing;
+      this._lastVisibility       = visibility;
     } else {
       condition     = this._lastWeatherCondition;
       windSpeed     = this._lastWindSpeed    ?? 0;
       cloudCoverage = this._lastCloudCoverage ?? null;
       windBearing   = this._lastWindBearing  ?? 180;
+      visibility    = this._lastVisibility   ?? null;
     }
     if (!condition) return;
     const theme = rootEl.dataset.theme || 'dark';
