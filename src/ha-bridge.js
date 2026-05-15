@@ -541,6 +541,8 @@ export class HABridge {
         if (!this._cachedWeatherEntityId && eid.startsWith('weather.')) this._cachedWeatherEntityId = eid;
         if (!this._cachedMoonEntityId && eid.startsWith('sensor.') && eid.includes('moon')) this._cachedMoonEntityId = eid;
       }
+      if (this._cachedWeatherEntityId && !this._cachedWeatherAuxIds)
+        this._cachedWeatherAuxIds = this._discoverWeatherAuxSensors(this._cachedWeatherEntityId);
     }
     tracked.push(...this._cellVoltageIds);
     if (this._cachedMoonEntityId) tracked.push(this._cachedMoonEntityId);
