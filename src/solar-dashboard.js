@@ -2587,7 +2587,7 @@ class SolarDashboard extends HTMLElement {
     this._updateSolarEstimate();
   }
 
-  _applyWeatherBackdrop(condition, windSpeed = 0, cloudCoverage = null, windBearing = 180) {
+  _applyWeatherBackdrop(condition, windSpeed = 0, cloudCoverage = null, windBearing = 180, visibility = null) {
     const rootEl = this._els.dashRoot;
     if (!rootEl) return;
     if (condition !== undefined) {
