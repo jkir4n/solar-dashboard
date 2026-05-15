@@ -951,6 +951,18 @@ class SolarDashboard extends HTMLElement {
     this._meshCur    = [null, null, null];
     this._meshTarget = null;
     this._meshRafId  = null;
+    // Forecast data pipeline (architecture.md §8)
+    this._effective = null;            // Unified blended attribute object
+    this._effectiveW = 0;              // Blend weight (0 = pure current, 1 = pure forecast)
+    this._forecastNext = null;         // Next-hour forecast entry from weather.get_forecasts
+    this._forecastStableTarget = null; // Stable forecast condition (hysteresis)
+    this._forecastPendingTarget = null;// Pending forecast condition
+    this._forecastStabilityCount = 0;  // Consecutive pulls with same forecast
+    this._tensionPlateauMs = 0;        // Time spent at high tension without corroboration
+    this._tensionDecay = false;        // Whether blend weight is decaying
+    this._conditionCorroborated = false;// Whether actual data matches forecast
+    this._lastForecastFetch = 0;       // Timestamp of last forecast fetch
+    this._lastWeatherAttrs = null;     // Snapshot of last weather attrs for corroboration
     // 24/7 reliability: WebSocket disconnection detection
     this._connCheckInterval = null;
     this._lastHassUpdate = 0;
@@ -2537,6 +2549,22 @@ class SolarDashboard extends HTMLElement {
     this._weatherHeatIndex = auxSnap.heatIndex;
     this._weatherWindChill = auxSnap.windChill;
 
+    // Forecast data pipeline — fetch every 5 min, compute blend, assemble _effective
+    const now = Date.now();
+    if (now - this._lastForecastFetch > 300000) {
+      this._fetchForecast(); // async, fire-and-forget
+    }
+    // Compute blend weight from current forecast state (may be 0 if no forecast yet)
+    this._effectiveW = this._computeBlendWeight(attrs);
+    // Check corroboration: does actual cloud coverage match forecast?
+    if (this._forecastNext) {
+      const fcCov = this._forecastNext.cloud_coverage ?? attrs.cloud_coverage;
+      const actCov = attrs.cloud_coverage ?? 50;
+      this._conditionCorroborated = Math.abs(actCov - fcCov) < 15;
+    }
+    // Assemble unified _effective object (lerp actual + forecast by effectiveW)
+    this._assembleEffective(attrs);
+
     // Temperature for solar engine
     if (attrs.temperature != null) {
       this._weatherAmbientC = parseFloat(attrs.temperature);
@@ -2654,20 +2682,37 @@ class SolarDashboard extends HTMLElement {
     // Update weather FX particles — pass original HA condition, not the palette key,
     // because WeatherFX.start() does its own condition-to-particle mapping
     // B23: Skip full rebuild if core parameters haven't changed (prevents redundant fade loops)
+    // Forecast pipeline: prefer _effective.* blended values when available
     if (this._weatherFx) {
-      const visKm = (visibility != null && visibility < 5) ? Math.round(visibility * 2) / 2 : 99;
-      const precipIntensity = this._weatherPrecipIntensity ?? null;
-      const thunderstormProb = this._weatherThunderstormProb ?? null;
-      const heatIndex = this._weatherHeatIndex ?? null;
-      const windChill = this._weatherWindChill ?? null;
-      const fxKey = `${condition}|${isNight}|${windSpeed.toFixed(0)}|${moonBrightness.toFixed(2)}|${visKm}|${(precipIntensity ?? -1).toFixed(1)}|${(thunderstormProb ?? -1).toFixed(0)}`;
+      const eff = this._effective;
+      const effCloud = eff?.cloud_coverage ?? cloudCoverage;
+      const effWind = eff?.wind_speed ?? windSpeed;
+      const effGust = eff?.wind_gust_speed ?? null;
+      const effBearing = eff?.wind_bearing ?? windBearing;
+      const effVis = eff?.visibility ?? visibility;
+      const effPI = eff?.precipitation_intensity ?? this._weatherPrecipIntensity ?? null;
+      const effTS = eff?.thunderstorm_probability ?? this._weatherThunderstormProb ?? null;
+      const effHI = eff?.heat_index ?? this._weatherHeatIndex ?? null;
+      const effWC = eff?.wind_chill ?? this._weatherWindChill ?? null;
+
+      const visKm = (effVis != null && effVis < 5) ? Math.round(effVis * 2) / 2 : 99;
+      // Expanded fxKey with quantized _effective fields (architecture.md §6.8.2)
+      const fxKey = [
+        condition, isNight,
+        (effPI ?? -1).toFixed(1),
+        effWind.toFixed(0),
+        (effGust ?? -1).toFixed(0),
+        moonBrightness.toFixed(2),
+        (effCloud ?? 50).toFixed(0),
+        visKm.toFixed(0),
+      ].join('|');
       if (fxKey !== this._fxKey) {
         // Core params changed — full rebuild with fade transition
-        this._weatherFx.start(condition, isNight, theme, windSpeed, moonBrightness, moonElevation, moonAzimuth, sunElevation, sunAzimuth, cloudCoverage, windBearing, visibility, precipIntensity, thunderstormProb, heatIndex, windChill);
+        this._weatherFx.start(condition, isNight, theme, effWind, moonBrightness, moonElevation, moonAzimuth, sunElevation, sunAzimuth, effCloud, effBearing, effVis, effPI, effTS, effHI, effWC);
         this._fxKey = fxKey;
       } else {
         // Core params same but cloud/wind/sun/moon may have changed — update without rebuild
-        this._weatherFx.updateDynamic(cloudCoverage, windBearing, sunElevation, sunAzimuth, moonElevation, moonAzimuth, moonBrightness, visibility, precipIntensity, thunderstormProb, heatIndex, windChill);
+        this._weatherFx.updateDynamic(effCloud, effBearing, sunElevation, sunAzimuth, moonElevation, moonAzimuth, moonBrightness, effVis, effPI, effTS, effHI, effWC);
       }
     }
   }
@@ -2836,12 +2881,14 @@ class SolarDashboard extends HTMLElement {
   }
 
   _computeMeshModifiers(colors, sunElevation) {
-    const cov = this._lastCloudCoverage;
-    const temp = this._weatherAmbientC;
-    const hum = this._weatherHumidity ?? null;
-    const vis = this._lastVisibility;
-    const precipProb = this._weatherPrecipProb;
-    const tStorm = this._weatherThunderstormProb;
+    // Prefer _effective.* blended values when forecast pipeline is active
+    const eff = this._effective;
+    const cov = eff?.cloud_coverage ?? this._lastCloudCoverage;
+    const temp = eff?.temperature ?? this._weatherAmbientC;
+    const hum = eff?.humidity ?? this._weatherHumidity ?? null;
+    const vis = eff?.visibility ?? this._lastVisibility;
+    const precipProb = eff?.precipitation_probability ?? this._weatherPrecipProb;
+    const tStorm = eff?.thunderstorm_probability ?? this._weatherThunderstormProb;
 
     const wCloud    = cov != null        ? 1 / (1 + Math.exp((cov - 50) / 15)) : 0;
     const tempNorm  = temp != null       ? Math.max(-1, Math.min(1, (temp - 17.5) / 27.5)) : 0;
@@ -2874,6 +2921,138 @@ class SolarDashboard extends HTMLElement {
       if (wStorm > 0)    { r += (STORM_TINT.r - r) * wStorm;    g += (STORM_TINT.g - g) * wStorm;    b += (STORM_TINT.b - b) * wStorm; }
       return { r: Math.max(0, Math.min(255, r)), g: Math.max(0, Math.min(255, g)), b: Math.max(0, Math.min(255, b)), a: c.a };
     });
+  }
+
+  // ============ FORECAST DATA PIPELINE (architecture.md §8) ============
+
+  /** Fetch hourly forecast and pin to the next upcoming hour (~30-60 min ahead). */
+  async _fetchForecast() {
+    if (!this._weatherEntityId || !this._bridge._hass) return;
+    try {
+      const response = await this._bridge._hass.callWS({
+        type: 'weather/get_forecasts',
+        entity_id: this._weatherEntityId,
+      });
+      const entries = response?.[this._weatherEntityId]?.forecast || [];
+      if (!entries.length) return;
+
+      const now = Date.now();
+      // Pin to nearest upcoming hour (>30 min ahead)
+      this._forecastNext = entries.find(e => new Date(e.datetime).getTime() > now + 30 * 60 * 1000);
+      // Fallback: first entry within 60 min
+      if (!this._forecastNext) {
+        this._forecastNext = entries.find(e => {
+          const t = new Date(e.datetime).getTime();
+          return t > now && t <= now + 60 * 60 * 1000;
+        });
+      }
+      this._lastForecastFetch = now;
+
+      // Hysteresis: forecast target must be stable for 3 consecutive pulls (15 min)
+      const newTarget = this._forecastNext?.condition || null;
+      if (newTarget !== this._forecastStableTarget) {
+        if (newTarget !== this._forecastPendingTarget) {
+          this._forecastPendingTarget = newTarget;
+          this._forecastStabilityCount = 1;
+        } else {
+          this._forecastStabilityCount++;
+          if (this._forecastStabilityCount >= 3) {
+            this._forecastStableTarget = newTarget;
+            this._forecastPendingTarget = null;
+          }
+        }
+      } else {
+        this._forecastStabilityCount = 0;
+        this._forecastPendingTarget = null;
+      }
+    } catch (e) {
+      // Forecast fetch failure is non-critical — continue with current data only
+      console.warn('[Solar] Forecast fetch failed:', e);
+    }
+  }
+
+  /** Compute blend weight with 4 safety gates: corroboration cap, real veto, plateau timeout, hysteresis. */
+  _computeBlendWeight(attrs) {
+    if (!this._forecastNext) return 0;
+
+    const fc = this._forecastNext;
+    const fcTime = new Date(fc.datetime).getTime();
+    const minutesAhead = (fcTime - Date.now()) / 60000;
+    if (minutesAhead < 0 || minutesAhead > 90) return 0;
+
+    // Raw sigmoid blend: peaks at ~25 min ahead
+    const rawW = 1 / (1 + Math.exp(-(minutesAhead - 25) / 8));
+
+    // Gate 1: Corroboration cap — forecast only gets full influence when current data agrees
+    const fcCov = fc.cloud_coverage ?? attrs.cloud_coverage;
+    const actCov = attrs.cloud_coverage ?? 50;
+    const corroboration = 1 - Math.abs(actCov - fcCov) / 30;
+    let w = Math.min(rawW, Math.max(0, corroboration));
+
+    // Gate 2: Real weather veto — current rain/storm overrides forecast optimism
+    const actPI = this._weatherPrecipIntensity ?? 0;
+    const actTS = this._weatherThunderstormProb ?? 0;
+    const actCond = this._lastWeatherCondition || '';
+    if (actPI > 0.5 || actTS > 40) { w = 0; }
+    else if (actCond.includes('rain') || actCond.includes('lightning')) { w *= 0.2; }
+
+    // Gate 3: Plateau timeout — unwind after 20 min at high tension without corroboration
+    if (w > 0.70 && !this._conditionCorroborated) {
+      this._tensionPlateauMs += 300000; // 5 min per cycle
+      if (this._tensionPlateauMs > 20 * 60 * 1000) {
+        this._tensionDecay = true;
+      }
+    } else {
+      this._tensionPlateauMs = 0;
+      this._tensionDecay = false;
+    }
+    if (this._tensionDecay) {
+      w = Math.max(w - 0.01, 0.30); // Linear decay floor at 0.30
+    }
+
+    // Reset corroboration if rain actually arrives
+    if (actPI > 0.3) {
+      this._tensionPlateauMs = 0;
+      this._tensionDecay = false;
+      this._conditionCorroborated = true;
+    }
+
+    return Math.max(0, Math.min(1, w));
+  }
+
+  /** Assemble the unified _effective object — lerp(actual, forecast, effectiveW) for all 12 attributes. */
+  _assembleEffective(attrs) {
+    const w = this._effectiveW;
+    const fc = this._forecastNext || {};
+
+    const lerp = (a, b, t) => {
+      if (a == null && b == null) return null;
+      if (a == null) return b;
+      if (b == null) return a;
+      return a + (b - a) * t;
+    };
+
+    const auxSnap = this._bridge.getWeatherAuxSnap();
+
+    this._effective = {
+      cloud_coverage:          lerp(attrs.cloud_coverage ?? 50, fc.cloud_coverage ?? attrs.cloud_coverage ?? 50, w),
+      temperature:             lerp(attrs.temperature ?? null, fc.temperature ?? attrs.temperature ?? null, w),
+      apparent_temperature:    lerp(attrs.apparent_temperature ?? null, fc.apparent_temperature ?? attrs.apparent_temperature ?? null, w),
+      dew_point:               lerp(attrs.dew_point ?? null, fc.dew_point ?? attrs.dew_point ?? null, w),
+      humidity:                lerp(attrs.humidity ?? null, fc.humidity ?? attrs.humidity ?? null, w),
+      uv_index:                lerp(attrs.uv_index ?? null, fc.uv_index ?? attrs.uv_index ?? null, w),
+      pressure:                lerp(attrs.pressure ?? null, fc.pressure ?? attrs.pressure ?? null, w),
+      wind_speed:              lerp(attrs.wind_speed ?? 0, fc.wind_speed ?? attrs.wind_speed ?? 0, w),
+      wind_gust_speed:         lerp(attrs.wind_gust_speed ?? null, fc.wind_gust_speed ?? attrs.wind_gust_speed ?? null, w),
+      wind_bearing:            lerp(attrs.wind_bearing ?? 180, fc.wind_bearing ?? attrs.wind_bearing ?? 180, w),
+      visibility:              lerp(attrs.visibility ?? null, fc.visibility ?? attrs.visibility ?? null, w),
+      // These are current-only (not in forecast schema) → blend weight = 0
+      precipitation_intensity:  this._weatherPrecipIntensity ?? null,
+      precipitation_probability: lerp(this._weatherPrecipProb ?? null, fc.precipitation_probability ?? this._weatherPrecipProb ?? null, w),
+      thunderstorm_probability: this._weatherThunderstormProb ?? null,
+      heat_index:              this._weatherHeatIndex ?? attrs.apparent_temperature ?? null,
+      wind_chill:              this._weatherWindChill ?? attrs.temperature ?? null,
+    };
   }
 
   _parseRgba(str) {
