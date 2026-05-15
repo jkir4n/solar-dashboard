@@ -270,7 +270,7 @@ export class WeatherFX {
     }
   }
 
-  start(weatherCondition, isNight, theme = 'dark', windSpeed = 0, moonBrightness = 0, moonElevation = -90, moonAzimuth = 180, sunElevation = -90, sunAzimuth = 180, cloudCoverage = null, windBearing = 180) {
+  start(weatherCondition, isNight, theme = 'dark', windSpeed = 0, moonBrightness = 0, moonElevation = -90, moonAzimuth = 180, sunElevation = -90, sunAzimuth = 180, cloudCoverage = null, windBearing = 180, visibility = null) {
     this._theme = theme;
     this._isNight = isNight;
     this._windSpeed = windSpeed;
