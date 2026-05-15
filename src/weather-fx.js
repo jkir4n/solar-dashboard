@@ -229,6 +229,15 @@ export class WeatherFX {
     return dim * (MOD[condition] ?? 1.0);
   }
 
+  
+  _getLightningInterval() {
+    const prob = this._thunderstormProb ?? 50;
+    const t = Math.max(0, Math.min(1, prob / 100));
+    const minMs = 8000 - t * 7900;
+    const maxMs = 15000 - t * 14400;
+    return minMs + Math.random() * (maxMs - minMs);
+  }
+
   updateSunMoon(sunElevation, sunAzimuth, moonElevation, moonAzimuth, moonBrightness) {
     this._sunElevation   = sunElevation;
     this._sunAzimuth     = sunAzimuth;
@@ -243,9 +252,13 @@ export class WeatherFX {
 
   /** Update dynamic values (cloud, wind, positions) without rebuilding particles.
    *  Called when fxKey hasn't changed but subordinate values have shifted. */
-  updateDynamic(cloudCoverage, windBearing, sunElevation, sunAzimuth, moonElevation, moonAzimuth, moonBrightness, visibility = null) {
+  updateDynamic(cloudCoverage, windBearing, sunElevation, sunAzimuth, moonElevation, moonAzimuth, moonBrightness, visibility = null, precipIntensity = null, thunderstormProb = null, heatIndex = null, windChill = null) {
     this._cloudCoverage  = cloudCoverage;
     if (visibility != null) this._visibility = parseFloat(visibility);
+    if (precipIntensity != null) this._precipIntensity = precipIntensity;
+    if (thunderstormProb != null) this._thunderstormProb = thunderstormProb;
+    if (heatIndex != null) this._heatIndex = heatIndex;
+    if (windChill != null) this._windChill = windChill;
     this._windBearing    = Number.isFinite(windBearing) ? windBearing : 180;
     this._updateWindCache();
     this._sunElevation   = sunElevation;
@@ -257,8 +270,10 @@ export class WeatherFX {
     if (!this._animFrameId && this._shouldKeepRendering()) {
       this._startRenderLoop();
     }
+    this._ensureFogParticles();
   }
 
+  
   updateNightSky(planets, galCenterAz, galCenterEl, issPos) {
     this._planets    = planets   || [];
     this._galCenterAz = galCenterAz;
@@ -268,9 +283,10 @@ export class WeatherFX {
     if (!this._animFrameId && this._shouldKeepRendering()) {
       this._startRenderLoop();
     }
+    this._ensureFogParticles();
   }
 
-  start(weatherCondition, isNight, theme = 'dark', windSpeed = 0, moonBrightness = 0, moonElevation = -90, moonAzimuth = 180, sunElevation = -90, sunAzimuth = 180, cloudCoverage = null, windBearing = 180, visibility = null) {
+  start(weatherCondition, isNight, theme = 'dark', windSpeed = 0, moonBrightness = 0, moonElevation = -90, moonAzimuth = 180, sunElevation = -90, sunAzimuth = 180, cloudCoverage = null, windBearing = 180, visibility = null, precipIntensity = null, thunderstormProb = null, heatIndex = null, windChill = null) {
     this._theme = theme;
     this._isNight = isNight;
     this._windSpeed = windSpeed;
@@ -296,6 +312,10 @@ export class WeatherFX {
     }
     this._cloudCoverage  = cloudCoverage;
     if (visibility != null) this._visibility = parseFloat(visibility);
+    if (precipIntensity != null) this._precipIntensity = precipIntensity;
+    if (thunderstormProb != null) this._thunderstormProb = thunderstormProb;
+    if (heatIndex != null) this._heatIndex = heatIndex;
+    if (windChill != null) this._windChill = windChill;
     // _lastArchetypeCov is only updated in _startParticles() after threshold comparison (C7)
     // Determine particle type
     let particleType = CONDITION_PARTICLE_MAP[weatherCondition] || null;
@@ -358,6 +378,7 @@ export class WeatherFX {
     this._overlayTypeCur = this._overlayType;
 
     this._startParticles(particleType);
+    this._ensureFogParticles();
   }
 
   /** Stop all weather effects and clear canvas. */
@@ -460,6 +481,22 @@ export class WeatherFX {
     if (this._issPos && this._issElevCur > 0) return true;
     // Nothing to render — stop rAF until state changes
     return false;
+  }
+
+  _ensureFogParticles() {
+    const vis = this._visibility ?? 99;
+    const hasFog = !!(this._particlesByType && this._particlesByType.fogBlob && this._particlesByType.fogBlob.length);
+    if (vis < 5 && !hasFog) {
+      const fogParts = this._createParticles('fog', this.canvas);
+      if (fogParts.length) {
+        this._particles.push(...fogParts);
+        if (!this._particlesByType) this._particlesByType = {};
+        this._particlesByType.fogBlob = (this._particlesByType.fogBlob || []).concat(fogParts);
+      }
+    } else if (vis >= 5 && hasFog) {
+      this._particles = this._particles.filter(p => p.kind !== 'fogBlob');
+      delete this._particlesByType.fogBlob;
+    }
   }
 
   _startParticles(type) {
@@ -572,8 +609,8 @@ export class WeatherFX {
       }
     } else if (type === 'pouring') {
       // Heavy downpour — dense, long, fast streaks with strong wind
-      // Unified severity-driven drop spawn
-      const sev = RAIN_SEVERITY[type] ?? 0.55;
+      const mmh = this._precipIntensity ?? null;
+      const sev = mmh != null ? Math.max(0.1, Math.min(1.2, Math.pow(mmh / 25, 0.45))) : (RAIN_SEVERITY[type] ?? 0.55);
       const spawnWF = Math.min(1, (this._windSpeed || 0) / 54);
       const count = Math.round((80 + sev * 160) * (1 + spawnWF * 0.4));
       const lenBase = 8 + sev * 14, lenRange = 10 + sev * 12;
@@ -606,8 +643,8 @@ export class WeatherFX {
       }
     } else if (type === 'rainy' || type === 'storm') {
       // Streak rain with depth layers
-      // Unified severity-driven drop spawn
-      const sev = RAIN_SEVERITY[type] ?? 0.55;
+      const mmh = this._precipIntensity ?? null;
+      const sev = mmh != null ? Math.max(0.1, Math.min(1.2, Math.pow(mmh / 25, 0.45))) : (RAIN_SEVERITY[type] ?? 0.55);
       const spawnWF = Math.min(1, (this._windSpeed || 0) / 54);
       const count = Math.round((80 + sev * 160) * (1 + spawnWF * 0.4));
       const lenBase = 8 + sev * 14, lenRange = 10 + sev * 12;
@@ -641,14 +678,14 @@ export class WeatherFX {
       // Lightning bolt state for storms
       if (type === 'storm') {
         particles.push({
-          kind: 'lightning', timer: 0, interval: 300 + Math.random() * 600,
+          kind: 'lightning', timer: 0, interval: this._getLightningInterval(),
           bolt: null, flashAlpha: 0, flickerPhase: 0
         });
       }
     } else if (type === 'sleet') {
       // Rain streaks — denser, shorter, steeper than pure rain
-      // Unified severity-driven drop spawn
-      const sev = RAIN_SEVERITY[type] ?? 0.55;
+      const mmh = this._precipIntensity ?? null;
+      const sev = mmh != null ? Math.max(0.1, Math.min(1.2, Math.pow(mmh / 25, 0.45))) : (RAIN_SEVERITY[type] ?? 0.55);
       const spawnWF = Math.min(1, (this._windSpeed || 0) / 54);
       const count = Math.round((80 + sev * 160) * (1 + spawnWF * 0.4));
       const lenBase = 8 + sev * 14, lenRange = 10 + sev * 12;
@@ -1583,6 +1620,25 @@ export class WeatherFX {
       ctx.globalAlpha = state._alpha;
     }
 
+    if ((state._particlesByType.fogBlob || []).length && state._currentType !== 'fog') {
+      const fogColor = light
+        ? (night ? 'rgba(90,90,110,1)' : 'rgba(160,160,170,1)')
+        : (night ? 'rgba(120,120,140,1)' : 'rgba(200,200,210,1)');
+      const t = now * 0.001;
+      (state._particlesByType.fogBlob || []).forEach(p => {
+        p.x += p.vx;
+        if (p.x > w + p.rx) p.x = -p.rx;
+        if (p.x < -p.rx) p.x = w + p.rx;
+        const y = p.yBase + Math.sin(p.x * 0.04 + t * 0.025 + p.blobIndex) * p.amp;
+        ctx.globalAlpha = state._alpha * p.o;
+        ctx.fillStyle = fogColor;
+        ctx.beginPath();
+        ctx.ellipse(p.x, y, p.rx, p.ry, 0, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.globalAlpha = state._alpha;
+    }
+
     if (state._currentType === 'sunny') {
       // God rays
       const rayColor = light ? 'rgba(255,190,50,1)' : 'rgba(255,220,100,1)';
@@ -1708,7 +1764,7 @@ export class WeatherFX {
         }
         if (lp.timer > lp.interval) {
           lp.timer = 0;
-          lp.interval = 200 + Math.random() * 500;
+          lp.interval = state._getLightningInterval();
           const bx = w * (0.2 + Math.random() * 0.6);
           state._boltCache = state._generateBolt(bx, 0, bx + (Math.random() - 0.5) * w * 0.2, h * 0.6, 5);
           lp.bolt = state._boltCache;

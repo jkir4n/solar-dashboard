@@ -514,19 +514,21 @@ export class HABridge {
 
   _discoverWeatherAuxSensors(weatherEntityId) {
     const stem = weatherEntityId.split('.')[1];
-    const aux = { precipProb: null, thunderstormProb: null, precipIntensity: null };
+    const aux = { precipProb: null, thunderstormProb: null, precipIntensity: null, heatIndex: null, windChill: null };
     for (const eid of Object.keys(this._hass.states)) {
       if (!eid.startsWith('sensor.') || !eid.includes(stem)) continue;
       if (eid.includes('precipitation_probability')) aux.precipProb = eid;
       else if (eid.includes('thunderstorm_probability')) aux.thunderstormProb = eid;
       else if (eid.includes('precipitation_intensity')) aux.precipIntensity = eid;
+      else if (eid.includes('heat_index')) aux.heatIndex = eid;
+      else if (eid.includes('wind_chill')) aux.windChill = eid;
     }
     return aux;
   }
 
   getWeatherAuxSnap() {
     const ids = this._cachedWeatherAuxIds;
-    if (!ids) return { precipProb: null, thunderstormProb: null, precipIntensity: null };
+    if (!ids) return { precipProb: null, thunderstormProb: null, precipIntensity: null, heatIndex: null, windChill: null };
     const getVal = id => {
       if (!id) return null;
       const s = this._hass?.states[id];
@@ -537,6 +539,8 @@ export class HABridge {
       precipProb: getVal(ids.precipProb),
       thunderstormProb: getVal(ids.thunderstormProb),
       precipIntensity: getVal(ids.precipIntensity),
+      heatIndex: getVal(ids.heatIndex),
+      windChill: getVal(ids.windChill),
     };
   }
 
@@ -575,10 +579,12 @@ export class HABridge {
     tracked.push(...this._cellVoltageIds);
     if (this._cachedMoonEntityId) tracked.push(this._cachedMoonEntityId);
     if (this._cachedWeatherAuxIds) {
-      const { precipProb, thunderstormProb, precipIntensity } = this._cachedWeatherAuxIds;
+      const { precipProb, thunderstormProb, precipIntensity, heatIndex, windChill } = this._cachedWeatherAuxIds;
       if (precipProb) tracked.push(precipProb);
       if (thunderstormProb) tracked.push(thunderstormProb);
       if (precipIntensity) tracked.push(precipIntensity);
+      if (heatIndex) tracked.push(heatIndex);
+      if (windChill) tracked.push(windChill);
     }
     for (const eid of tracked) {
       const s = this._hass.states[eid];

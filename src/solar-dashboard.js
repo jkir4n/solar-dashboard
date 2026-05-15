@@ -2529,15 +2529,21 @@ class SolarDashboard extends HTMLElement {
     const visibility = attrs.visibility != null ? parseFloat(attrs.visibility) : null;
     this._applyWeatherBackdrop(state.state, windSpeed, cloudCoverage, windBearing, visibility);
 
-    // Aux weather sensors (precipitation intensity, thunderstorm probability, precipitation probability)
+    // Aux weather sensors (precipitation intensity, thunderstorm probability, precipitation probability, heat index, wind chill)
     const auxSnap = this._bridge.getWeatherAuxSnap();
     this._weatherPrecipIntensity = auxSnap.precipIntensity;
     this._weatherThunderstormProb = auxSnap.thunderstormProb;
     this._weatherPrecipProb = auxSnap.precipProb;
+    this._weatherHeatIndex = auxSnap.heatIndex;
+    this._weatherWindChill = auxSnap.windChill;
 
     // Temperature for solar engine
     if (attrs.temperature != null) {
       this._weatherAmbientC = parseFloat(attrs.temperature);
+    }
+
+    if (attrs.humidity != null) {
+      this._weatherHumidity = parseFloat(attrs.humidity);
     }
 
     // Update weather source indicator — dynamic, works with any integration
@@ -2623,7 +2629,8 @@ class SolarDashboard extends HTMLElement {
     const colors = palettes[key];
     if (!colors) return;
 
-    const newTargets = colors.map(c => this._parseRgba(c));
+    const baseTargets = colors.map(c => this._parseRgba(c));
+    const newTargets = this._computeMeshModifiers(baseTargets, sunElevation);
     if (!this._meshCur[0]) this._meshCur = newTargets.map(t => ({ ...t }));
     this._meshTarget = newTargets;
     // NB2: Restart mesh lerp if it was stopped after previous convergence
@@ -2649,14 +2656,18 @@ class SolarDashboard extends HTMLElement {
     // B23: Skip full rebuild if core parameters haven't changed (prevents redundant fade loops)
     if (this._weatherFx) {
       const visKm = (visibility != null && visibility < 5) ? Math.round(visibility * 2) / 2 : 99;
-      const fxKey = `${condition}|${isNight}|${windSpeed.toFixed(0)}|${moonBrightness.toFixed(2)}|${visKm}`;
+      const precipIntensity = this._weatherPrecipIntensity ?? null;
+      const thunderstormProb = this._weatherThunderstormProb ?? null;
+      const heatIndex = this._weatherHeatIndex ?? null;
+      const windChill = this._weatherWindChill ?? null;
+      const fxKey = `${condition}|${isNight}|${windSpeed.toFixed(0)}|${moonBrightness.toFixed(2)}|${visKm}|${(precipIntensity ?? -1).toFixed(1)}|${(thunderstormProb ?? -1).toFixed(0)}`;
       if (fxKey !== this._fxKey) {
         // Core params changed — full rebuild with fade transition
-        this._weatherFx.start(condition, isNight, theme, windSpeed, moonBrightness, moonElevation, moonAzimuth, sunElevation, sunAzimuth, cloudCoverage, windBearing, visibility);
+        this._weatherFx.start(condition, isNight, theme, windSpeed, moonBrightness, moonElevation, moonAzimuth, sunElevation, sunAzimuth, cloudCoverage, windBearing, visibility, precipIntensity, thunderstormProb, heatIndex, windChill);
         this._fxKey = fxKey;
       } else {
         // Core params same but cloud/wind/sun/moon may have changed — update without rebuild
-        this._weatherFx.updateDynamic(cloudCoverage, windBearing, sunElevation, sunAzimuth, moonElevation, moonAzimuth, moonBrightness, visibility);
+        this._weatherFx.updateDynamic(cloudCoverage, windBearing, sunElevation, sunAzimuth, moonElevation, moonAzimuth, moonBrightness, visibility, precipIntensity, thunderstormProb, heatIndex, windChill);
       }
     }
   }
@@ -2822,6 +2833,47 @@ class SolarDashboard extends HTMLElement {
   _getDateKeyInTZ(date = new Date()) {
     const tz = this._bridge.timezone;
     return new Intl.DateTimeFormat('sv', { timeZone: tz }).format(date);
+  }
+
+  _computeMeshModifiers(colors, sunElevation) {
+    const cov = this._lastCloudCoverage;
+    const temp = this._weatherAmbientC;
+    const hum = this._weatherHumidity ?? null;
+    const vis = this._lastVisibility;
+    const precipProb = this._weatherPrecipProb;
+    const tStorm = this._weatherThunderstormProb;
+
+    const wCloud    = cov != null        ? 1 / (1 + Math.exp((cov - 50) / 15)) : 0;
+    const tempNorm  = temp != null       ? Math.max(-1, Math.min(1, (temp - 17.5) / 27.5)) : 0;
+    const wTemp     = Math.abs(tempNorm);
+    const isWarm    = tempNorm > 0;
+    const wHumidity = hum != null        ? Math.max(0, Math.min(1, (hum - 30) / 70) * 0.3) : 0;
+    const wHaze     = vis != null        ? Math.max(0, Math.min(1, (1 - vis / 16) * 0.4)) : 0;
+    const wRain     = precipProb != null ? Math.max(0, Math.min(1, precipProb / 100 * 0.6)) : 0;
+    const wStorm    = tStorm != null     ? Math.max(0, Math.min(1, tStorm / 100)) : 0;
+    const wGolden   = (sunElevation > 0 && sunElevation < 6)
+                      ? Math.sin((1 - sunElevation / 6) * Math.PI / 2) * 0.5 : 0;
+
+    const CLOUD_WASH  = { r: 80, g: 85, b: 100 };
+    const WARM_SHIFT  = { r: 255, g: 140, b: 30 };
+    const COOL_SHIFT  = { r: 50, g: 80, b: 180 };
+    const HUMID_TINT  = { r: 200, g: 170, b: 100 };
+    const HAZE_WASH   = { r: 150, g: 155, b: 165 };
+    const RAIN_TINGE  = { r: 40, g: 50, b: 140 };
+    const STORM_TINT  = { r: 80, g: 20, b: 100 };
+    const GOLDEN_WARM = { r: 255, g: 160, b: 40 };
+
+    return colors.map(c => {
+      let r = c.r, g = c.g, b = c.b;
+      if (wCloud > 0)    { r += (CLOUD_WASH.r - r) * wCloud;  g += (CLOUD_WASH.g - g) * wCloud;  b += (CLOUD_WASH.b - b) * wCloud; }
+      if (wHaze > 0)     { r += (HAZE_WASH.r - r) * wHaze;    g += (HAZE_WASH.g - g) * wHaze;    b += (HAZE_WASH.b - b) * wHaze; }
+      if (wTemp > 0)     { const tgt = isWarm ? WARM_SHIFT : COOL_SHIFT; r += (tgt.r - r) * wTemp; g += (tgt.g - g) * wTemp; b += (tgt.b - b) * wTemp; }
+      if (wHumidity > 0) { r += (HUMID_TINT.r - r) * wHumidity; g += (HUMID_TINT.g - g) * wHumidity; b += (HUMID_TINT.b - b) * wHumidity; }
+      if (wRain > 0)     { r += (RAIN_TINGE.r - r) * wRain;    g += (RAIN_TINGE.g - g) * wRain;    b += (RAIN_TINGE.b - b) * wRain; }
+      if (wGolden > 0)   { r += (GOLDEN_WARM.r - r) * wGolden;  g += (GOLDEN_WARM.g - g) * wGolden;  b += (GOLDEN_WARM.b - b) * wGolden; }
+      if (wStorm > 0)    { r += (STORM_TINT.r - r) * wStorm;    g += (STORM_TINT.g - g) * wStorm;    b += (STORM_TINT.b - b) * wStorm; }
+      return { r: Math.max(0, Math.min(255, r)), g: Math.max(0, Math.min(255, g)), b: Math.max(0, Math.min(255, b)), a: c.a };
+    });
   }
 
   _parseRgba(str) {
