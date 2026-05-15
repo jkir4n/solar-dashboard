@@ -2652,11 +2652,11 @@ class SolarDashboard extends HTMLElement {
       const fxKey = `${condition}|${isNight}|${windSpeed.toFixed(0)}|${moonBrightness.toFixed(2)}|${visKm}`;
       if (fxKey !== this._fxKey) {
         // Core params changed — full rebuild with fade transition
-        this._weatherFx.start(condition, isNight, theme, windSpeed, moonBrightness, moonElevation, moonAzimuth, sunElevation, sunAzimuth, cloudCoverage, windBearing);
+        this._weatherFx.start(condition, isNight, theme, windSpeed, moonBrightness, moonElevation, moonAzimuth, sunElevation, sunAzimuth, cloudCoverage, windBearing, visibility);
         this._fxKey = fxKey;
       } else {
         // Core params same but cloud/wind/sun/moon may have changed — update without rebuild
-        this._weatherFx.updateDynamic(cloudCoverage, windBearing, sunElevation, sunAzimuth, moonElevation, moonAzimuth, moonBrightness);
+        this._weatherFx.updateDynamic(cloudCoverage, windBearing, sunElevation, sunAzimuth, moonElevation, moonAzimuth, moonBrightness, visibility);
       }
     }
   }
