@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.54.0 (2026-05-15)
+
+### Features
+- Forecast data pipeline with _effective blend, safety gates, and expanded fxKey
+
+
 ## v0.53.0 (2026-05-15)
 
 ### Features
