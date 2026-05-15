@@ -2648,7 +2648,8 @@ class SolarDashboard extends HTMLElement {
     // because WeatherFX.start() does its own condition-to-particle mapping
     // B23: Skip full rebuild if core parameters haven't changed (prevents redundant fade loops)
     if (this._weatherFx) {
-      const fxKey = `${condition}|${isNight}|${windSpeed.toFixed(0)}|${moonBrightness.toFixed(2)}`;
+      const visKm = (visibility != null && visibility < 5) ? Math.round(visibility * 2) / 2 : 99;
+      const fxKey = `${condition}|${isNight}|${windSpeed.toFixed(0)}|${moonBrightness.toFixed(2)}|${visKm}`;
       if (fxKey !== this._fxKey) {
         // Core params changed — full rebuild with fade transition
         this._weatherFx.start(condition, isNight, theme, windSpeed, moonBrightness, moonElevation, moonAzimuth, sunElevation, sunAzimuth, cloudCoverage, windBearing);
