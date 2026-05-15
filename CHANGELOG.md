@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.54.8 (2026-05-15)
+
+### Bug Fixes
+- Restore missing midY definition in aurora render
+
+
 ## v0.54.7 (2026-05-15)
 
 ### Bug Fixes
