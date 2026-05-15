@@ -512,6 +512,34 @@ export class HABridge {
     return new Date(2026, 2, 1);
   }
 
+  _discoverWeatherAuxSensors(weatherEntityId) {
+    const stem = weatherEntityId.split('.')[1];
+    const aux = { precipProb: null, thunderstormProb: null, precipIntensity: null };
+    for (const eid of Object.keys(this._hass.states)) {
+      if (!eid.startsWith('sensor.') || !eid.includes(stem)) continue;
+      if (eid.includes('precipitation_probability')) aux.precipProb = eid;
+      else if (eid.includes('thunderstorm_probability')) aux.thunderstormProb = eid;
+      else if (eid.includes('precipitation_intensity')) aux.precipIntensity = eid;
+    }
+    return aux;
+  }
+
+  getWeatherAuxSnap() {
+    const ids = this._cachedWeatherAuxIds;
+    if (!ids) return { precipProb: null, thunderstormProb: null, precipIntensity: null };
+    const getVal = id => {
+      if (!id) return null;
+      const s = this._hass?.states[id];
+      const v = parseFloat(s?.state);
+      return isNaN(v) ? null : v;
+    };
+    return {
+      precipProb: getVal(ids.precipProb),
+      thunderstormProb: getVal(ids.thunderstormProb),
+      precipIntensity: getVal(ids.precipIntensity),
+    };
+  }
+
   // Check which tracked entities changed since last update
   getChangedEntities() {
     if (!this._hass) return [];
