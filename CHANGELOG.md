@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.54.4 (2026-05-15)
+
+### Bug Fixes
+- Use REST API callApi for weather forecast instead of callWS
+
+
 ## v0.54.3 (2026-05-15)
 
 ### Bug Fixes
