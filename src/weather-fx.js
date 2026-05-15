@@ -243,8 +243,9 @@ export class WeatherFX {
 
   /** Update dynamic values (cloud, wind, positions) without rebuilding particles.
    *  Called when fxKey hasn't changed but subordinate values have shifted. */
-  updateDynamic(cloudCoverage, windBearing, sunElevation, sunAzimuth, moonElevation, moonAzimuth, moonBrightness) {
+  updateDynamic(cloudCoverage, windBearing, sunElevation, sunAzimuth, moonElevation, moonAzimuth, moonBrightness, visibility = null) {
     this._cloudCoverage  = cloudCoverage;
+    if (visibility != null) this._visibility = parseFloat(visibility);
     this._windBearing    = Number.isFinite(windBearing) ? windBearing : 180;
     this._updateWindCache();
     this._sunElevation   = sunElevation;
