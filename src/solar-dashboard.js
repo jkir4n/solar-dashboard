@@ -2932,7 +2932,7 @@ class SolarDashboard extends HTMLElement {
       const response = await this._bridge._hass.callService('weather', 'get_forecasts', {
         entity_id: this._weatherEntityId,
         type: 'hourly',
-      }, true); // return_response = true
+      }, undefined, true); // target=undefined, return_response=true
       const entries = response?.forecast || [];
       if (!entries.length) return;
 
