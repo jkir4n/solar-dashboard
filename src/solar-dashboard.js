@@ -2929,14 +2929,12 @@ class SolarDashboard extends HTMLElement {
   async _fetchForecast() {
     if (!this._weatherEntityId || !this._bridge._hass) return;
     try {
-      const response = await this._bridge._hass.callWS({
-        type: 'call_service',
-        domain: 'weather',
-        service: 'get_forecasts',
-        target: { entity_id: this._weatherEntityId },
-        return_response: true,
+      // Use REST API for forecast (more reliable than callWS call_service)
+      const result = await this._bridge._hass.callApi('GET', 'weather/forecast', {
+        entity_id: this._weatherEntityId,
+        type: 'hourly',
       });
-      const entries = response?.response?.[this._weatherEntityId]?.forecast || [];
+      const entries = result?.forecast || [];
       if (!entries.length) return;
 
       const now = Date.now();
@@ -2970,7 +2968,7 @@ class SolarDashboard extends HTMLElement {
       }
     } catch (e) {
       // Forecast fetch failure is non-critical — continue with current data only
-      console.warn('[Solar] Forecast fetch failed:', e);
+      console.warn('[Solar] Forecast fetch failed:', e?.message || e, e?.code || '');
     }
   }
 
