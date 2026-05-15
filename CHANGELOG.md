@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.54.1 (2026-05-15)
+
+### Bug Fixes
+- Use callService for weather.get_forecasts instead of callWS
+
+
 ## v0.54.0 (2026-05-15)
 
 ### Features
