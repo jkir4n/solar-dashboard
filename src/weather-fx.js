@@ -1995,6 +1995,26 @@ export class WeatherFX {
       ctx.globalAlpha = state._alpha;
     }
 
+    // Visibility fog overlay — renders over any condition when vis < 5km, not gated by condition string
+    if (state._currentType !== 'fog' && this._visibility != null && this._visibility < 5) {
+      const fogColor = light
+        ? (night ? 'rgba(90,90,110,1)' : 'rgba(160,160,170,1)')
+        : (night ? 'rgba(120,120,140,1)' : 'rgba(200,200,210,1)');
+      const t = now * 0.001;
+      (state._particlesByType.fogBlob || []).forEach(p => {
+        p.x += p.vx;
+        if (p.x > w + p.rx) p.x = -p.rx;
+        if (p.x < -p.rx) p.x = w + p.rx;
+        const y = p.yBase + Math.sin(p.x * 0.04 + t * 0.025 + p.blobIndex) * p.amp;
+        ctx.globalAlpha = state._alpha * p.o;
+        ctx.fillStyle = fogColor;
+        ctx.beginPath();
+        ctx.ellipse(p.x, y, p.rx, p.ry, 0, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.globalAlpha = state._alpha;
+    }
+
     if (state._flashAlpha > 0) {
       ctx.globalAlpha = state._flashAlpha;
       ctx.fillStyle = 'rgba(220,230,255,1)';
