@@ -2929,11 +2929,14 @@ class SolarDashboard extends HTMLElement {
   async _fetchForecast() {
     if (!this._weatherEntityId || !this._bridge._hass) return;
     try {
-      const response = await this._bridge._hass.callService('weather', 'get_forecasts', {
-        entity_id: this._weatherEntityId,
-        type: 'hourly',
-      }, undefined, true); // target=undefined, return_response=true
-      const entries = response?.forecast || [];
+      const response = await this._bridge._hass.callWS({
+        type: 'call_service',
+        domain: 'weather',
+        service: 'get_forecasts',
+        target: { entity_id: this._weatherEntityId },
+        return_response: true,
+      });
+      const entries = response?.response?.[this._weatherEntityId]?.forecast || [];
       if (!entries.length) return;
 
       const now = Date.now();
