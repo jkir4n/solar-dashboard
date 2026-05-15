@@ -99,6 +99,7 @@ export class HABridge {
     this._helperCreated = false;
     this._prefixBeforeChange = null;
     this._cachedWeatherEntityId = null;
+    this._cachedWeatherAuxIds = null;
     this._cellVoltageIds = null;
     this._cachedMoonEntityId = null;
     this._battSpec = { fullAh: 215, strings: 16, nomV: 51.2, voltsPerCell: 3.2, chemistry: 'LiFePO₄' };
