@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.54.3 (2026-05-15)
+
+### Bug Fixes
+- Use callWS with call_service type for get_forecasts response
+
+
 ## v0.54.2 (2026-05-15)
 
 ### Bug Fixes
