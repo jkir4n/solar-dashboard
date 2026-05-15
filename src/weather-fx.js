@@ -906,6 +906,32 @@ export class WeatherFX {
       }
     }
 
+    // Visibility fog overlay — append fog blobs for any non-fog condition when vis < 5km
+    if (type !== 'fog' && this._visibility != null && this._visibility < 5) {
+      const fogDensity = Math.max(0.15, 1 - this._visibility / 5);
+      const FOG_VIS_LAYERS = [
+        { yBase: 0.75, speed: 0.15, count: Math.round(5 * fogDensity), alphaMin: 0.14, alphaMax: 0.20, amp: 18 },
+        { yBase: 0.55, speed: 0.22, count: Math.round(4 * fogDensity), alphaMin: 0.09, alphaMax: 0.14, amp: 14 },
+        { yBase: 0.38, speed: 0.30, count: Math.round(3 * fogDensity), alphaMin: 0.05, alphaMax: 0.09, amp: 10 },
+        { yBase: 0.22, speed: 0.40, count: Math.round(2 * fogDensity), alphaMin: 0.03, alphaMax: 0.06, amp:  8 },
+      ];
+      FOG_VIS_LAYERS.forEach((layer, li) => {
+        for (let bi = 0; bi < layer.count; bi++) {
+          particles.push({
+            kind: 'fogBlob',
+            x: Math.random() * w,
+            yBase: h * layer.yBase,
+            layer: li, blobIndex: bi,
+            rx: 90 + Math.random() * 70,
+            ry: 24 + Math.random() * 16,
+            vx: (layer.speed * windDx + (Math.random() - 0.5) * 0.1) * (1 + windFactor * 0.3),
+            o: layer.alphaMin + Math.random() * (layer.alphaMax - layer.alphaMin),
+            amp: layer.amp,
+          });
+        }
+      });
+    }
+
     return particles;
   }
 
