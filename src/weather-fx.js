@@ -1177,7 +1177,7 @@ export class WeatherFX {
         pts.push({ x, y });
       }
         // Vertical curtain gradient: transparent top → core colour → cool/warm fringe at bottom
-        const isOvercast = ['rainy','pouring','storm','fog','snowy','hail','snowy-rainy','lightning','lightning-rainy'].includes(state._weatherCondition);
+        const isOvercast = ['rainy','pouring','storm','fog','snowy','hail','snowy-rainy','lightning','lightning-rainy'].includes(this._weatherCondition);
         const fringeHue = isOvercast ? 210 : 0;   // cool blue for rain, red for clear
         const fringeSat = isOvercast ? 50 : 80;
         const fringeLit = isOvercast ? 45 : 50;
