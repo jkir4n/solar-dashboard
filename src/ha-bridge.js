@@ -546,6 +546,12 @@ export class HABridge {
     }
     tracked.push(...this._cellVoltageIds);
     if (this._cachedMoonEntityId) tracked.push(this._cachedMoonEntityId);
+    if (this._cachedWeatherAuxIds) {
+      const { precipProb, thunderstormProb, precipIntensity } = this._cachedWeatherAuxIds;
+      if (precipProb) tracked.push(precipProb);
+      if (thunderstormProb) tracked.push(thunderstormProb);
+      if (precipIntensity) tracked.push(precipIntensity);
+    }
     for (const eid of tracked) {
       const s = this._hass.states[eid];
       const prev = this._prevStates[eid];
