@@ -730,13 +730,15 @@ export class WeatherFX {
     } else if (type === 'night') {
       // Twinkling stars with depth
       for (let i = 0; i < 80; i++) {
-        // Spectral colour: 40% white, 25% pale blue, 20% pale yellow, 10% pale orange, 5% red
-        // Brighter stars lean toward blue/white
+        // Spectral colour: overcast = cool blue/white only; clear = full spectrum with warm tones
+        const isOvercast = ['rainy','pouring','storm','fog','snowy','hail','snowy-rainy','lightning','lightning-rainy'].includes(this._weatherCondition || '');
         const brightness = 0.3 + Math.random() * 0.7;
         const rand = Math.random();
-        const starColor = brightness > 0.7
-          ? (rand < 0.55 ? '#ffffff' : rand < 0.85 ? '#aad4ff' : rand < 0.97 ? '#fff8d0' : '#ffd8a0')
-          : (rand < 0.40 ? '#ffffff' : rand < 0.65 ? '#aad4ff' : rand < 0.85 ? '#fff8d0' : rand < 0.95 ? '#ffd8a0' : '#ffb0a0');
+        const starColor = isOvercast
+          ? (rand < 0.50 ? '#ffffff' : rand < 0.80 ? '#c8d8f0' : '#a0b8e0')  // cool white/blue only
+          : (brightness > 0.7
+            ? (rand < 0.55 ? '#ffffff' : rand < 0.85 ? '#aad4ff' : rand < 0.97 ? '#fff8d0' : '#ffd8a0')
+            : (rand < 0.40 ? '#ffffff' : rand < 0.65 ? '#aad4ff' : rand < 0.85 ? '#fff8d0' : rand < 0.95 ? '#ffd8a0' : '#ffb0a0'));
         particles.push({
           kind: 'star', x: Math.random() * w, y: Math.random() * h * 0.75,
           r: 0.3 + Math.random() * 1.8, phase: Math.random() * Math.PI * 2,
@@ -1174,13 +1176,17 @@ export class WeatherFX {
           + Math.sin(x * p.freq * 2.3 + t * 1.7) * p.amplitude * 0.3;
         pts.push({ x, y });
       }
-      // Vertical curtain gradient: transparent top → core colour → red fringe at bottom
-      const midY = pts[Math.floor(pts.length / 2)].y;
-      const grad = ctx.createLinearGradient(0, midY - halfW, 0, midY + halfW);
-      grad.addColorStop(0,   `hsla(${p.hue}, 80%, 60%, 0)`);
-      grad.addColorStop(0.35, `hsla(${p.hue}, 85%, 60%, 1)`);
-      grad.addColorStop(0.7,  `hsla(${p.hue}, 80%, 55%, 0.8)`);
-      grad.addColorStop(1,    `hsla(0, 80%, 50%, 0.4)`); // red lower fringe
+        // Vertical curtain gradient: transparent top → core colour → cool/warm fringe at bottom
+        const isOvercast = ['rainy','pouring','storm','fog','snowy','hail','snowy-rainy','lightning','lightning-rainy'].includes(state._weatherCondition);
+        const fringeHue = isOvercast ? 210 : 0;   // cool blue for rain, red for clear
+        const fringeSat = isOvercast ? 50 : 80;
+        const fringeLit = isOvercast ? 45 : 50;
+        const fringeAlpha = isOvercast ? 0.25 : 0.4;
+        const grad = ctx.createLinearGradient(0, midY - halfW, 0, midY + halfW);
+        grad.addColorStop(0,   `hsla(${p.hue}, 80%, 60%, 0)`);
+        grad.addColorStop(0.35, `hsla(${p.hue}, 85%, 60%, 1)`);
+        grad.addColorStop(0.7,  `hsla(${p.hue}, 80%, 55%, 0.8)`);
+        grad.addColorStop(1,    `hsla(${fringeHue}, ${fringeSat}%, ${fringeLit}%, ${fringeAlpha})`);
       ctx.globalAlpha = scale * p.o * overlayAurDim;
       ctx.beginPath();
       ctx.moveTo(pts[0].x, pts[0].y);
@@ -1438,10 +1444,13 @@ export class WeatherFX {
         const glowR  = moonR * (2.5 + mb * 2) * (1 + (1 - cloudDim) * 1.5);
 
         // Diffuse glow — always shown when moon is up (even behind clouds)
+        // Rainy/storm/fog: cool blue-grey glow; clear/partlycloudy: warm yellow
+        const isOvercast = ['rainy','pouring','storm','fog','snowy','hail','snowy-rainy','lightning','lightning-rainy'].includes(state._weatherCondition);
+        const [mgR, mgG, mgB] = isOvercast ? [170, 185, 210] : [220, 220, 170];
         const glowAlpha = state._alpha * Math.max(totalBright * 0.25, cloudDim > 0 ? 0.04 : 0);
         const grd = ctx.createRadialGradient(moonX, moonY, moonR * 0.3, moonX, moonY, glowR);
-        grd.addColorStop(0, `rgba(220,220,170,${glowAlpha})`);
-        grd.addColorStop(1, 'rgba(220,220,170,0)');
+        grd.addColorStop(0, `rgba(${mgR},${mgG},${mgB},${glowAlpha})`);
+        grd.addColorStop(1, `rgba(${mgR},${mgG},${mgB},0)`);
         ctx.globalAlpha = 1;
         ctx.fillStyle = grd;
         ctx.beginPath();
@@ -1992,13 +2001,16 @@ export class WeatherFX {
         }
 
         // Moon/sun scatter highlight at cloud top (screen pass — runs on main canvas after blit)
+        // Overcast: cool blue highlight; Clear: warm white
+        const isOvercast = ['rainy','pouring','storm','fog','snowy','hail','snowy-rainy','lightning','lightning-rainy'].includes(state._weatherCondition);
+        const [hr, hg, hb] = isOvercast ? [180, 200, 230] : [255, 255, 240];
         ctx.save();
         ctx.globalCompositeOperation = 'screen';
-        const hx = p.x - p.r * 0.15, hy = p.y - p.r * 0.25, hr = p.r * 0.3;
-        const hgrd = ctx.createRadialGradient(hx, hy, 0, hx, hy, hr);
+        const hx = p.x - p.r * 0.15, hy = p.y - p.r * 0.25, hr2 = p.r * 0.3;
+        const hgrd = ctx.createRadialGradient(hx, hy, 0, hx, hy, hr2);
         const highlightAlpha = night ? state._alpha * 0.04 : state._alpha * 0.12;
-        hgrd.addColorStop(0, `rgba(255,255,240,${highlightAlpha})`);
-        hgrd.addColorStop(1, 'rgba(255,255,240,0)');
+        hgrd.addColorStop(0, `rgba(${hr},${hg},${hb},${highlightAlpha})`);
+        hgrd.addColorStop(1, `rgba(${hr},${hg},${hb},0)`);
         ctx.fillStyle = hgrd;
         ctx.beginPath();
         ctx.arc(hx, hy, hr, 0, Math.PI * 2);
