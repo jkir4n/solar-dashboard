@@ -2929,10 +2929,10 @@ class SolarDashboard extends HTMLElement {
   async _fetchForecast() {
     if (!this._weatherEntityId || !this._bridge._hass) return;
     try {
-      // Use REST API for forecast (more reliable than callWS call_service)
-      const result = await this._bridge._hass.callApi('GET', 'weather/forecast', {
+      // Use WebSocket API for forecast
+      const result = await this._bridge._hass.callWS({
+        type: 'weather/forecast',
         entity_id: this._weatherEntityId,
-        type: 'hourly',
       });
       const entries = result?.forecast || [];
       if (!entries.length) return;
