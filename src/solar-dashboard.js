@@ -2528,6 +2528,12 @@ class SolarDashboard extends HTMLElement {
     const windBearing = attrs.wind_bearing ?? 180;
     this._applyWeatherBackdrop(state.state, windSpeed, cloudCoverage, windBearing);
 
+    // Aux weather sensors (precipitation intensity, thunderstorm probability, precipitation probability)
+    const auxSnap = this._bridge.getWeatherAuxSnap();
+    this._weatherPrecipIntensity = auxSnap.precipIntensity;
+    this._weatherThunderstormProb = auxSnap.thunderstormProb;
+    this._weatherPrecipProb = auxSnap.precipProb;
+
     // Temperature for solar engine
     if (attrs.temperature != null) {
       this._weatherAmbientC = parseFloat(attrs.temperature);
