@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.51.0 (2026-05-15)
+
+### Features
+- Discover aux weather sensors for precipitation and thunderstorm data
+- Solar-dashboard.js
+- Ha-bridge.js
+- Ha-bridge.js
+- Ha-bridge.js
+- Ha-bridge.js
+- Add AGENTS.md to .gitignore
+
+
 ## v0.50.14 (2026-05-12)
 
 ### Bug Fixes
