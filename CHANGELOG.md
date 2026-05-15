@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.54.7 (2026-05-15)
+
+### Bug Fixes
+- Use this._weatherCondition in _renderOverlay (was state)
+
+
 ## v0.54.6 (2026-05-15)
 
 ### Bug Fixes
