@@ -2890,11 +2890,16 @@ class SolarDashboard extends HTMLElement {
     const precipProb = eff?.precipitation_probability ?? this._weatherPrecipProb;
     const tStorm = eff?.thunderstorm_probability ?? this._weatherThunderstormProb;
 
+    // Overcast/rainy conditions suppress warm modifiers — thick clouds block
+    // direct sun, so temperature/humidity warmth shouldn't tint the backdrop
+    const isOvercast = ['rainy','pouring','storm','fog','snowy','hail','snowy-rainy','lightning','lightning-rainy','cloudy'].includes(this._lastWeatherCondition || '');
+    const overcastSuppress = isOvercast ? 0.15 : 1.0;  // 85% suppression for overcast
+
     const wCloud    = cov != null        ? 1 / (1 + Math.exp((cov - 50) / 15)) : 0;
     const tempNorm  = temp != null       ? Math.max(-1, Math.min(1, (temp - 17.5) / 27.5)) : 0;
-    const wTemp     = Math.abs(tempNorm);
+    const wTemp     = Math.abs(tempNorm) * (isWarm ? overcastSuppress : 1.0);  // suppress warm, keep cool
     const isWarm    = tempNorm > 0;
-    const wHumidity = hum != null        ? Math.max(0, Math.min(1, (hum - 30) / 70) * 0.3) : 0;
+    const wHumidity = hum != null        ? Math.max(0, Math.min(1, (hum - 30) / 70) * 0.3) * overcastSuppress : 0;
     const wHaze     = vis != null        ? Math.max(0, Math.min(1, (1 - vis / 16) * 0.4)) : 0;
     const wRain     = precipProb != null ? Math.max(0, Math.min(1, precipProb / 100 * 0.6)) : 0;
     const wStorm    = tStorm != null     ? Math.max(0, Math.min(1, tStorm / 100)) : 0;
