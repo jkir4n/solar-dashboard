@@ -2889,22 +2889,28 @@ class SolarDashboard extends HTMLElement {
     const vis = eff?.visibility ?? this._lastVisibility;
     const precipProb = eff?.precipitation_probability ?? this._weatherPrecipProb;
     const tStorm = eff?.thunderstorm_probability ?? this._weatherThunderstormProb;
+    const condition = this._lastWeatherCondition || '';
 
-    // Overcast/rainy conditions suppress warm modifiers — thick clouds block
-    // direct sun, so temperature/humidity warmth shouldn't tint the backdrop
-    const isOvercast = ['rainy','pouring','storm','fog','snowy','hail','snowy-rainy','lightning','lightning-rainy','cloudy'].includes(this._lastWeatherCondition || '');
-    const overcastSuppress = isOvercast ? 0.15 : 1.0;  // 85% suppression for overcast
+    const isNight = sunElevation < 0;
+    const isBadWeather = ['rainy','pouring','storm','fog','snowy','hail','snowy-rainy','lightning','lightning-rainy'].includes(condition);
+    const isOvercast = isBadWeather || condition === 'cloudy';
+
+    // Warm modifiers (temp, humidity, golden hour) are sun-driven.
+    // At night, they should be suppressed. During day, bad weather reduces them.
+    const dayFactor = isNight ? 0 : 1;
+    const weatherFactor = isBadWeather ? 0.3 : isOvercast ? 0.6 : 1.0;
+    const warmGate = dayFactor * weatherFactor; // 0 at night, 0.3 day+rain, 0.6 day+cloudy, 1.0 day+clear
 
     const wCloud    = cov != null        ? 1 / (1 + Math.exp((cov - 50) / 15)) : 0;
     const tempNorm  = temp != null       ? Math.max(-1, Math.min(1, (temp - 17.5) / 27.5)) : 0;
-    const wTemp     = Math.abs(tempNorm) * (isWarm ? overcastSuppress : 1.0);  // suppress warm, keep cool
     const isWarm    = tempNorm > 0;
-    const wHumidity = hum != null        ? Math.max(0, Math.min(1, (hum - 30) / 70) * 0.3) * overcastSuppress : 0;
+    const wTemp     = Math.abs(tempNorm) * (isWarm ? warmGate : 1.0); // Cool shift always applies, warm shift gated
+    const wHumidity = hum != null        ? Math.max(0, Math.min(1, (hum - 30) / 70) * 0.3) * warmGate : 0;
     const wHaze     = vis != null        ? Math.max(0, Math.min(1, (1 - vis / 16) * 0.4)) : 0;
     const wRain     = precipProb != null ? Math.max(0, Math.min(1, precipProb / 100 * 0.6)) : 0;
     const wStorm    = tStorm != null     ? Math.max(0, Math.min(1, tStorm / 100)) : 0;
     const wGolden   = (sunElevation > 0 && sunElevation < 6)
-                      ? Math.sin((1 - sunElevation / 6) * Math.PI / 2) * 0.5 : 0;
+                      ? Math.sin((1 - sunElevation / 6) * Math.PI / 2) * 0.5 * weatherFactor : 0;
 
     const CLOUD_WASH  = { r: 80, g: 85, b: 100 };
     const WARM_SHIFT  = { r: 255, g: 140, b: 30 };
