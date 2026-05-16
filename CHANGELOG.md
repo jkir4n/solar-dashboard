@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.54.9 (2026-05-16)
+
+### Bug Fixes
+- Suppress warm mesh modifiers for overcast/rainy conditions
+
+
 ## v0.54.8 (2026-05-15)
 
 ### Bug Fixes
