@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.54.10 (2026-05-16)
+
+### Bug Fixes
+- Regenerate dist for v0.54.9
+- Make mesh warm modifiers context-aware (day/night + weather)
+
+
 ## v0.54.9 (2026-05-16)
 
 ### Bug Fixes
