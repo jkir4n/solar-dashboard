@@ -2946,6 +2946,7 @@ class SolarDashboard extends HTMLElement {
       if (wRain > 0)     { r += (RAIN_TINGE.r - r) * wRain;    g += (RAIN_TINGE.g - g) * wRain;    b += (RAIN_TINGE.b - b) * wRain; }
       if (wGolden > 0)   { r += (GOLDEN_WARM.r - r) * wGolden;  g += (GOLDEN_WARM.g - g) * wGolden;  b += (GOLDEN_WARM.b - b) * wGolden; }
       if (wStorm > 0)    { r += (STORM_TINT.r - r) * wStorm;    g += (STORM_TINT.g - g) * wStorm;    b += (STORM_TINT.b - b) * wStorm; }
+      if (wTwilight > 0) { r += (_twilightTarget.r - r) * wTwilight; g += (_twilightTarget.g - g) * wTwilight; b += (_twilightTarget.b - b) * wTwilight; }
       return { r: Math.max(0, Math.min(255, r)), g: Math.max(0, Math.min(255, g)), b: Math.max(0, Math.min(255, b)), a: c.a };
     });
   }
