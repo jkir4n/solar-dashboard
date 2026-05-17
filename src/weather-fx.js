@@ -1449,9 +1449,9 @@ export class WeatherFX {
             sunX - sunR * 0.30, sunY - sunR * 0.30, sunR * 0.05,
             sunX, sunY, sunR
           );
-          discGrd.addColorStop(0,   `rgba(255,255,245,${discAlpha})`);
-          discGrd.addColorStop(0.5, `rgba(${r},${Math.min(255, g + 5)},${b},${discAlpha})`);
-          discGrd.addColorStop(1,   `rgba(${Math.round(r * 0.92)},${Math.round(g * 0.85)},${Math.round(Math.max(0, b * 0.70))},${(discAlpha * 0.72).toFixed(3)})`);
+          discGrd.addColorStop(0,   `rgba(255,255,245,${discAlphaUV})`);
+          discGrd.addColorStop(0.5, `rgba(${r},${Math.min(255, g + 5)},${b},${discAlphaUV})`);
+          discGrd.addColorStop(1,   `rgba(${Math.round(r * 0.92)},${Math.round(g * 0.85)},${Math.round(Math.max(0, b * 0.70))},${(discAlphaUV * 0.72).toFixed(3)})`);
           ctx.fillStyle = discGrd;
           ctx.beginPath();
           ctx.arc(sunX, sunY, sunR, 0, Math.PI * 2);
