@@ -1214,11 +1214,20 @@ export class WeatherFX {
     ctx.restore();
     ctx.shadowBlur = 0;
 
+    // Twilight phase gating — stars invisible during full day, emerge gradually through twilight phases
+    const _tf = this._twilightFactor;
+    const twilightStarAlpha =
+      _tf < 0.25 ? 0 :
+      _tf < 0.50 ? (_tf - 0.25) / 0.25 * 0.10 :
+      _tf < 0.75 ? 0.10 + (_tf - 0.50) / 0.25 * 0.30 :
+      _tf < 1.00 ? 0.40 + (_tf - 0.75) / 0.25 * 0.40 :
+      1.0;
+
     // Twinkling stars — dimmed by moonlight
     (this._overlayParticlesByType.star || []).forEach(p => {
       p.phase += p.speed * 0.02;
       const twinkle = 0.2 + 0.8 * ((Math.sin(p.phase) + 1) / 2);
-      ctx.globalAlpha = scale * twinkle * p.brightness * 0.5 * overlayStarDim;
+      ctx.globalAlpha = scale * twinkle * p.brightness * 0.5 * overlayStarDim * twilightStarAlpha;
       ctx.fillStyle = p.color || '#fff';
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
