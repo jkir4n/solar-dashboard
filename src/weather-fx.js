@@ -144,6 +144,7 @@ export class WeatherFX {
     this._issElevCur = -90;
     this._issAzCur   = 180;
     this._milkyWayAlpha = 0;      // lerped opacity for Milky Way
+    this._twilightFactor = 0;
     this._updateWindCache();
   }
 
