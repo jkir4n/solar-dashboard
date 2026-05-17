@@ -2928,6 +2928,14 @@ class SolarDashboard extends HTMLElement {
     const RAIN_TINGE  = { r: 40, g: 50, b: 140 };
     const STORM_TINT  = { r: 80, g: 20, b: 100 };
     const GOLDEN_WARM = { r: 255, g: 160, b: 40 };
+    const CIVIL_AMBER   = { r: 255, g: 160, b:  80 };
+    const NAUTICAL_BLUE = { r:  30, g:  60, b: 140 };
+    const ASTRO_BLACK   = { r:  10, g:  12, b:  30 };
+    const _tf = computeTwilightTarget(sunElevation);
+    let wTwilight = 0, _twilightTarget = CIVIL_AMBER;
+    if (_tf >= 0.25 && _tf < 0.50)      { wTwilight = (_tf - 0.25) / 0.25 * 0.25;         _twilightTarget = CIVIL_AMBER; }
+    else if (_tf >= 0.50 && _tf < 0.75) { wTwilight = 0.25 + (_tf - 0.50) / 0.25 * 0.15;  _twilightTarget = NAUTICAL_BLUE; }
+    else if (_tf >= 0.75 && _tf < 1.00) { wTwilight = 0.40 + (_tf - 0.75) / 0.25 * 0.20;  _twilightTarget = ASTRO_BLACK; }
 
     return colors.map(c => {
       let r = c.r, g = c.g, b = c.b;
