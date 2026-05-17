@@ -1431,13 +1431,13 @@ export class WeatherFX {
           : cloudDim > 0 ? 0.10 + cloudDim * 0.25 : 0;
 
         // Atmospheric glow
-        const sunGrd = ctx.createRadialGradient(sunX, sunY, sunR * 0.4, sunX, sunY, glowR);
+        const sunGrd = ctx.createRadialGradient(sunX, sunY, sunR * 0.4, sunX, sunY, glowRVis);
         sunGrd.addColorStop(0, `rgba(${r},${g},${b},${glowAlpha})`);
         sunGrd.addColorStop(1, `rgba(${r},${g},${b},0)`);
         ctx.globalAlpha = state._alpha;
         ctx.fillStyle = sunGrd;
         ctx.beginPath();
-        ctx.arc(sunX, sunY, glowR, 0, Math.PI * 2);
+        ctx.arc(sunX, sunY, glowRVis, 0, Math.PI * 2);
         ctx.fill();
 
         // Disc — only when sky is clear enough
