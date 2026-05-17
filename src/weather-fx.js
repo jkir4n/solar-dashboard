@@ -1151,6 +1151,11 @@ export class WeatherFX {
 
         // Direction from sun toward canvas center — adapts as sun moves through the sky
         const baseDir = Math.atan2(h / 2 - sunY, w / 2 - sunX);
+        // T1.4: UV and visibility modulate ray alpha and reach
+        const _uvIdxRay = this._effective?.uv_index ?? 5;
+        const _visRay   = this._effective?.visibility ?? 10;
+        const _uvAlphaFactor  = lerp(0.05, 1.0, Math.min(_uvIdxRay / 8, 1));
+        const _visReachFactor = lerp(0.4, 1.0, Math.min(_visRay / 10, 1));
         (this._overlayParticlesByType.ray || []).forEach(p => {
           // Dual-oscillator flicker — independent shimmer per beam
           const flicker = 0.55
