@@ -1443,6 +1443,8 @@ export class WeatherFX {
         // Disc — only when sky is clear enough
         if (cloudDim >= 0.3) {
           const discAlpha = state._alpha * cloudDim;
+          // UV brightens disc — UV 0→60% brightness, UV 6+→100%
+          const discAlphaUV = discAlpha * lerp(0.6, 1.0, Math.min(_uvIdx / 6, 1));
           const discGrd = ctx.createRadialGradient(
             sunX - sunR * 0.30, sunY - sunR * 0.30, sunR * 0.05,
             sunX, sunY, sunR
