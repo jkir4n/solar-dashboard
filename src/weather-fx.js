@@ -165,6 +165,69 @@ export class WeatherFX {
    * @param {boolean} isNight - whether it is currently nighttime
    * @param {string} theme - 'dark' or 'light' (affects particle colors)
    */
+  _initStarField() {
+    this._starField = [];
+    const W = this.canvas.width, H = this.canvas.height;
+    for (let i = 0; i < 250; i++) {
+      const mag = Math.pow(Math.random(), 0.5) * 6;
+      const baseBrightness = Math.pow(2.512, -mag);
+      const r = mag < 2 ? 1.2 + Math.random() * 1.3 :
+                mag < 3 ? 0.8 + Math.random() * 0.4 :
+                          0.2 + Math.random() * 0.4;
+      const sx = Math.random() * W;
+      const sy = Math.random() * H;
+      this._starField.push({
+        x: sx,
+        y: sy,
+        r, mag, baseBrightness,
+        horizonProximity: sy / H,
+        twinkleSpeed: 0.2 + Math.random() * 0.8,
+        twinklePhase: Math.random() * Math.PI * 2,
+        colorTemp: mag < 2 ? 'blue' : mag < 4 ? 'white' : 'warm',
+      });
+    }
+  }
+
+  _renderStarField(ctx, now, twilightStarAlpha) {
+    if (!this._starField || !this._starField.length) return;
+    const cloudDim = this._calcCloudDim(this._effective?.cloud_coverage ?? 0, this._weatherCondition ?? '');
+    const moonWash = (this._moonBrightCur ?? 0) * 0.65;
+    const baseAlpha = twilightStarAlpha * cloudDim * (1 - moonWash);
+    if (baseAlpha <= 0.01) return;
+
+    const rgbMap = { blue: '180,200,255', white: '255,255,255', warm: '255,230,180' };
+
+    for (const s of this._starField) {
+      const horizBoost = 1 + 2 * s.horizonProximity;
+      const twinkle = s.baseBrightness * (0.7 + 0.3 * Math.sin(now * s.twinkleSpeed * 0.001 + s.twinklePhase) * horizBoost);
+      const alpha = Math.min(baseAlpha * twinkle, 1);
+      if (alpha <= 0.01) continue;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${rgbMap[s.colorTemp]},${alpha.toFixed(3)})`;
+      ctx.fill();
+    }
+
+    // Diffraction spikes for bright stars (mag < 2.5) — only when stars are bright enough
+    if (baseAlpha > 0.3) {
+      for (const s of this._starField) {
+        if (s.mag >= 2.5) continue;
+        const a = baseAlpha * s.baseBrightness * 0.6;
+        ctx.lineWidth = 0.5;
+        ctx.strokeStyle = `rgba(200,220,255,${(a * 0.4).toFixed(3)})`;
+        ctx.beginPath();
+        ctx.moveTo(s.x - s.r * 4, s.y); ctx.lineTo(s.x + s.r * 4, s.y);
+        ctx.moveTo(s.x, s.y - s.r * 4); ctx.lineTo(s.x, s.y + s.r * 4);
+        ctx.stroke();
+        ctx.strokeStyle = `rgba(220,230,255,${(a * 0.8).toFixed(3)})`;
+        ctx.beginPath();
+        ctx.moveTo(s.x - s.r * 2, s.y); ctx.lineTo(s.x + s.r * 2, s.y);
+        ctx.moveTo(s.x, s.y - s.r * 2); ctx.lineTo(s.x, s.y + s.r * 2);
+        ctx.stroke();
+      }
+    }
+  }
+
   // Pre-render a cloud particle to an off-screen canvas and store it on p.
   // Called once at spawn so the render loop can just blit p.off each frame.
   _renderCloudToOffscreen(p, isNight) {
