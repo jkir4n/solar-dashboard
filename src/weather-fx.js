@@ -1279,7 +1279,8 @@ export class WeatherFX {
     if (state._windFactorCur === undefined) state._windFactorCur = state._windFactor ?? 0;
     state._windFactorCur += ((state._windFactor ?? 0) - state._windFactorCur) * 0.02;
     state._moonBrightCur += (state._moonBrightness - state._moonBrightCur) * 0.01;
-    const _elevScaleDay   = Math.max(0, Math.min(1, state._sunElevCur / 10));
+    const _elevScaleDay   = Math.max(0, Math.min(1, (state._sunElevCur + 18) / 28));
+    state._twilightFactor = lerp(state._twilightFactor, computeTwilightTarget(state._sunElevCur), 0.015);
     const _elevScaleNight = Math.max(0, Math.min(1, -state._sunElevCur / 8));
     const _oaTarget = state._overlayType === 'night'
       ? state._overlayAlpha * _elevScaleNight
