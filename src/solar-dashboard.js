@@ -888,6 +888,14 @@ class FlowParticles {
   }
 }
 
+function computeTwilightTarget(sunElevation) {
+  if (sunElevation > 0)   return 0.0;
+  if (sunElevation > -6)  return 0.25;
+  if (sunElevation > -12) return 0.50;
+  if (sunElevation > -18) return 0.75;
+  return 1.0;
+}
+
 // ============ MAIN COMPONENT ============
 class SolarDashboard extends HTMLElement {
   constructor() {
