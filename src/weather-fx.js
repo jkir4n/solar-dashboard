@@ -803,24 +803,6 @@ export class WeatherFX {
         });
       }
     } else if (type === 'night') {
-      // Twinkling stars with depth
-      for (let i = 0; i < 80; i++) {
-        // Spectral colour: overcast = cool blue/white only; clear = full spectrum with warm tones
-        const isOvercast = ['rainy','pouring','storm','fog','snowy','hail','snowy-rainy','lightning','lightning-rainy'].includes(this._weatherCondition || '');
-        const brightness = 0.3 + Math.random() * 0.7;
-        const rand = Math.random();
-        const starColor = isOvercast
-          ? (rand < 0.50 ? '#ffffff' : rand < 0.80 ? '#c8d8f0' : '#a0b8e0')  // cool white/blue only
-          : (brightness > 0.7
-            ? (rand < 0.55 ? '#ffffff' : rand < 0.85 ? '#aad4ff' : rand < 0.97 ? '#fff8d0' : '#ffd8a0')
-            : (rand < 0.40 ? '#ffffff' : rand < 0.65 ? '#aad4ff' : rand < 0.85 ? '#fff8d0' : rand < 0.95 ? '#ffd8a0' : '#ffb0a0'));
-        particles.push({
-          kind: 'star', x: Math.random() * w, y: Math.random() * h * 0.75,
-          r: 0.3 + Math.random() * 1.8, phase: Math.random() * Math.PI * 2,
-          speed: 0.2 + Math.random() * 0.8, brightness,
-          color: starColor
-        });
-      }
       // Aurora bands — 4 sine waves across top
       const auroraCount = 4;
       for (let i = 0; i < auroraCount; i++) {
