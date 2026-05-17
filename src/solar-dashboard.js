@@ -3072,6 +3072,7 @@ class SolarDashboard extends HTMLElement {
       thunderstorm_probability: this._weatherThunderstormProb ?? null,
       heat_index:              this._weatherHeatIndex ?? attrs.apparent_temperature ?? null,
       wind_chill:              this._weatherWindChill ?? attrs.temperature ?? null,
+      twilightFactor:          computeTwilightTarget(sunElevation),
     };
   }
 
