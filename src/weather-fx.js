@@ -1385,6 +1385,11 @@ export class WeatherFX {
 
     ctx.globalAlpha = state._alpha;
 
+    // Golden hour warm overlay — daytime only, sun 0°–15°
+    if (!state._isNight && state._sunElevCur >= 0 && state._sunElevCur <= 15) {
+      state._renderGoldenHourOverlay(ctx, state._sunElevCur);
+    }
+
     // ---- Sun disc — rendered for all daytime conditions, dimmed by cloud cover ----
     if (state._sunElevCur > -2) {
       const sunHorizonFade = Math.max(0, Math.min(1, state._sunElevCur / 5));
