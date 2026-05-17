@@ -493,6 +493,7 @@ export class WeatherFX {
       this._overlayParticles = this._createParticles(this._overlayType, this.canvas);
       this._overlayParticlesByType = this._bucketize(this._overlayParticles);
     }
+    this._initStarField();
   }
 
   /** Full cleanup — call from disconnectedCallback. */
