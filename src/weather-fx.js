@@ -1338,6 +1338,18 @@ export class WeatherFX {
 
     // Draw ambient overlay (stars/aurora at night; sun rays/glow by day) behind weather particles
     const cloudDim = state._calcCloudDim(state._cloudCovCur, state._weatherCondition);
+
+    // Persistent star field — rendered before overlay (aurora sits in front of stars)
+    if (state._isNight && state._starField && state._starField.length) {
+      const _tsa =
+        state._twilightFactor < 0.25 ? 0 :
+        state._twilightFactor < 0.50 ? (state._twilightFactor - 0.25) / 0.25 * 0.10 :
+        state._twilightFactor < 0.75 ? 0.10 + (state._twilightFactor - 0.50) / 0.25 * 0.30 :
+        state._twilightFactor < 1.00 ? 0.40 + (state._twilightFactor - 0.75) / 0.25 * 0.40 :
+        1.0;
+      state._renderStarField(ctx, now, _tsa);
+    }
+
     // Cross-fade overlay types: render old overlay fading out, then new overlay fading in
     if (state._overlayTypePrev) {
       const prevAlpha = state._overlayAlphaPrevCur ?? 1;
