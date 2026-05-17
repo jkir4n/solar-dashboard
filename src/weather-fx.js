@@ -228,6 +228,15 @@ export class WeatherFX {
     }
   }
 
+  _renderGoldenHourOverlay(ctx, sunElevation) {
+    const ghFactor = Math.cos((sunElevation / 15) * Math.PI / 2);
+    const cloudDim = this._calcCloudDim(this._effective?.cloud_coverage ?? 0, this._weatherCondition ?? '');
+    const alpha = ghFactor * cloudDim * 0.06;
+    if (alpha < 0.005) return;
+    ctx.fillStyle = `rgba(255, 140, 40, ${alpha})`;
+    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+  }
+
   // Pre-render a cloud particle to an off-screen canvas and store it on p.
   // Called once at spawn so the render loop can just blit p.off each frame.
   _renderCloudToOffscreen(p, isNight) {
