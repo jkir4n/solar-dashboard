@@ -2175,6 +2175,49 @@ export class WeatherFX {
       state._flashAlpha = Math.max(0, state._flashAlpha - state._flashDecay);
     }
 
+    // T1.6: Scatter/anticipation drops — per-frame lifecycle managed here (not in _createParticles)
+    {
+      const precipProb = (state._effective?.precipitation_probability ?? 0);
+      const precipInt  = (state._effective?.precipitation_intensity  ?? 0);
+      const scatterActive = precipProb > 30 && precipInt < 0.1;
+
+      // Cull scatter particles when gate no longer holds
+      if (!scatterActive) {
+        for (let i = state._particles.length - 1; i >= 0; i--) {
+          if (state._particles[i].kind === 'scatter') state._particles.splice(i, 1);
+        }
+      }
+
+      // Spawn scatter up to target count when gate holds
+      if (scatterActive) {
+        const targetCount = Math.floor(5 + precipProb * 0.1);
+        const existing = state._particles.filter(p => p.kind === 'scatter').length;
+        const toSpawn = targetCount - existing;
+        for (let i = 0; i < toSpawn; i++) {
+          state._particles.push({
+            kind:  'scatter',
+            x:     Math.random() * w,
+            y:     Math.random() * h,
+            vx:    (Math.random() - 0.5) * 0.3,
+            vy:    0.2 + Math.random() * 0.4,
+            r:     1 + Math.random(),
+            alpha: 0.08 + Math.random() * 0.07,
+          });
+        }
+      }
+
+      // Render scatter particles
+      for (const p of state._particles.filter(p => p.kind === 'scatter')) {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(180, 200, 220, ${p.alpha})`;
+        ctx.fill();
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.y > h) { p.y = -5; p.x = Math.random() * w; }
+      }
+    }
+
     ctx.globalAlpha = 1;
   }
 
