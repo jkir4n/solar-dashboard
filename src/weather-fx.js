@@ -452,6 +452,7 @@ export class WeatherFX {
 
     this._startParticles(particleType);
     this._ensureFogParticles();
+    if (!this._starField || !this._starField.length) this._initStarField();
   }
 
   /** Stop all weather effects and clear canvas. */
