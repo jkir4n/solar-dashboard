@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.55.3 (2026-05-18)
+
+### Bug Fixes
+- Weather forecast callWS with return_response at top level
+- Solar-dashboard.js
+
+
 ## v0.55.2 (2026-05-18)
 
 ### Bug Fixes
