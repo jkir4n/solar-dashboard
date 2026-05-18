@@ -55,6 +55,8 @@ const MOON_CLOUD_DIM = {
   'lightning-rainy': 0.0,
 };
 
+function lerp(a, b, t) { return a + (b - a) * t; }
+
 function computeTwilightTarget(sunElevation) {
   if (sunElevation > 0)   return 0.0;
   if (sunElevation > -6)  return 0.25;
