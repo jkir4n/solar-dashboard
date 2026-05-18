@@ -248,6 +248,8 @@ export class HABridge {
       BAL_SWITCH:   `binary_sensor.${prefix}_balancing_switch`,
       CHG_SWITCH:   `switch.${prefix}_charging`,
       DISCHG_SWITCH:`switch.${prefix}_discharging`,
+      GRID_SWITCH:  `switch.${prefix}_grid_input`,
+      ABSORPTION_SWITCH: `switch.${prefix}_absorption_mode`,
       BATTERY_TYPE: `sensor.${prefix}_battery_type`,
     };
   }
@@ -334,12 +336,22 @@ export class HABridge {
       }
     }
 
-    // Phase 2: Keyword fallback (if no BMS device found or critical entities missing)
-    if (bmsDeviceIds.length === 0 || !discovered.POWER || !discovered.SOC) {
-      for (const [entityId, state] of Object.entries(states)) {
-        const domain = entityId.split('.')[0];
-        const searchable = `${entityId} ${(state.attributes?.friendly_name || '').toLowerCase()}`;
+    // Phase 2: Keyword fallback for non-BMS entities (always run — grid switches, etc. live on separate devices)
+    for (const [entityId, state] of Object.entries(states)) {
+      const domain = entityId.split('.')[0];
+      const searchable = `${entityId} ${(state.attributes?.friendly_name || '').toLowerCase()}`;
 
+      // Discover switches from all devices (grid switches aren't on the BMS device)
+      if (domain === 'switch') {
+        for (const [role, keywords] of Object.entries(SWITCH_KEYWORDS)) {
+          if (!discovered[role] && keywords.some(kw => searchable.includes(kw))) {
+            discovered[role] = entityId;
+          }
+        }
+      }
+
+      // Only run full sensor/binary_sensor fallback if BMS device lookup was incomplete
+      if (bmsDeviceIds.length === 0 || !discovered.POWER || !discovered.SOC) {
         if (domain === 'sensor') {
           for (const [role, keywords] of Object.entries(SENSOR_KEYWORDS)) {
             if (!discovered[role] && keywords.some(kw => searchable.includes(kw))) {
@@ -356,24 +368,17 @@ export class HABridge {
             }
           }
         }
-        if (domain === 'switch') {
-          for (const [role, keywords] of Object.entries(SWITCH_KEYWORDS)) {
-            if (!discovered[role] && keywords.some(kw => searchable.includes(kw))) {
-              discovered[role] = entityId;
-            }
-          }
-        }
-
       }
 
-      // Cell voltage fallback
-      for (const entityId of Object.keys(states)) {
-        const m = entityId.match(/cell_voltage_(\d+)/i);
-        if (m) {
-          const state = states[entityId];
-          if (state && state.state !== 'unknown' && state.state !== 'unavailable') {
-            discovered['CELL' + m[1]] = entityId;
-          }
+    }
+
+    // Cell voltage fallback
+    for (const entityId of Object.keys(states)) {
+      const m = entityId.match(/cell_voltage_(\d+)/i);
+      if (m) {
+        const state = states[entityId];
+        if (state && state.state !== 'unknown' && state.state !== 'unavailable') {
+          discovered['CELL' + m[1]] = entityId;
         }
       }
     }
