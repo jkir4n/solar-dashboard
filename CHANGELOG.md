@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.55.2 (2026-05-18)
+
+### Bug Fixes
+- Use callService for weather forecast (callWS weather/forecast removed in HA 2024.x)
+- Solar-dashboard.js
+
+
 ## v0.55.1 (2026-05-18)
 
 ### Bug Fixes
