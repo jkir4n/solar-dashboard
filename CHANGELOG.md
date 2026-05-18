@@ -2,6 +2,37 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.55.0 (2026-05-18)
+
+### Features
+- Tier 1 weather rendering enhancements (T1.1-T1.6)
+- Regenerate dist for Tier 1 weather rendering enhancements
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+
+
 ## v0.54.10 (2026-05-16)
 
 ### Bug Fixes
