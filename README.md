@@ -22,6 +22,10 @@ A real-time solar monitoring dashboard for Home Assistant, built as a HACS-compa
 - Day overlay: sun rays rendered behind all daytime conditions, alpha scaled by cloud cover
 - Night overlay: stars with spectral colour variance (O/B/F/G/K/M classes) and smooth aurora curtain with vertical gradient and red lower fringe, dimmed by moon brightness
 - Wind and bearing-reactive particles — rain streaks, snow drift, fog, and sleet all track live `wind_speed` and `wind_bearing` from weather entity; rain intensity is severity-driven (`RAIN_SEVERITY`: sleet 0.45 → rainy 0.55 → storm 0.80 → pouring 1.0), with counts ranging ~70–280 drops depending on severity and wind; streaks use gradient rendering (opaque head → transparent tail); wind affects spawn count, streak length, real-time angle, and per-frame gust wave sweeping
+- **Twilight phase transitions** — smooth civil → nautical → astronomical twilight with gradient mesh colour shifts (amber → deep blue → near-black)
+- **Golden hour overlay** — warm canvas wash during the 15° above-horizon window, cosine-eased
+- **UV-driven sun disc** — disc brightness and sunray reach scale with UV index; halo suppressed below 2 km visibility
+- **Physically-based star field** — 250 persistent stars with magnitude-based brightness, radius, and colour temperature; atmospheric scintillation near horizon; diffraction spikes on bright stars
 - Continuous cloud dimming via sigmoid formula on live `cloud_coverage` % combined with per-condition multipliers
 - Custom canvas charts with crosshair/tooltip (Live, Yesterday, 7D, 30D ranges)
 - Cross/hub powerflow card — Solar (top) → Home (centre) ← Battery (left) and Grid (right), with 3 direction-aware animated flow lines; grid line is import-only (amber), idle when no grid entity is found
