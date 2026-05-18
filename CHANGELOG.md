@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.55.4 (2026-05-18)
+
+### Bug Fixes
+- Discover grid switch outside BMS device
+- README.md
+
+
 ## v0.55.3 (2026-05-18)
 
 ### Bug Fixes
