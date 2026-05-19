@@ -374,7 +374,7 @@ export class WeatherFX {
     this._ensureFogParticles();
   }
 
-  start(weatherCondition, isNight, theme = 'dark', windSpeed = 0, moonBrightness = 0, moonElevation = -90, moonAzimuth = 180, sunElevation = -90, sunAzimuth = 180, cloudCoverage = null, windBearing = 180, visibility = null, precipIntensity = null, thunderstormProb = null, heatIndex = null, windChill = null, uvIndex = null, humidity = null, temperature = null) {
+  start(weatherCondition, isNight, theme = 'dark', windSpeed = 0, moonBrightness = 0, moonElevation = -90, moonAzimuth = 180, sunElevation = -90, sunAzimuth = 180, cloudCoverage = null, windBearing = 180, visibility = null, precipIntensity = null, thunderstormProb = null, heatIndex = null, windChill = null, uvIndex = null, humidity = null, temperature = null, precipProbability = null) {
     this._theme = theme;
     this._isNight = isNight;
     this._windSpeed = windSpeed;
