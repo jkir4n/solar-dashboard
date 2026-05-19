@@ -2702,6 +2702,9 @@ class SolarDashboard extends HTMLElement {
       const effTS = eff?.thunderstorm_probability ?? this._weatherThunderstormProb ?? null;
       const effHI = eff?.heat_index ?? this._weatherHeatIndex ?? null;
       const effWC = eff?.wind_chill ?? this._weatherWindChill ?? null;
+      const effUV = eff?.uv_index ?? null;
+      const effHum = eff?.humidity ?? null;
+      const effTemp = eff?.temperature ?? null;
 
       const visKm = (effVis != null && effVis < 5) ? Math.round(effVis * 2) / 2 : 99;
       // Expanded fxKey with quantized _effective fields (architecture.md §6.8.2)
