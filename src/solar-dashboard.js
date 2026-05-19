@@ -2705,6 +2705,7 @@ class SolarDashboard extends HTMLElement {
       const effUV = eff?.uv_index ?? null;
       const effHum = eff?.humidity ?? null;
       const effTemp = eff?.temperature ?? null;
+      const effPP = eff?.precipitation_probability ?? null;
 
       const visKm = (effVis != null && effVis < 5) ? Math.round(effVis * 2) / 2 : 99;
       // Expanded fxKey with quantized _effective fields (architecture.md §6.8.2)
