@@ -400,6 +400,9 @@ export class WeatherFX {
     if (thunderstormProb != null) this._thunderstormProb = thunderstormProb;
     if (heatIndex != null) this._heatIndex = heatIndex;
     if (windChill != null) this._windChill = windChill;
+        if (uvIndex != null) this._uvIdx = uvIndex;
+        if (humidity != null) this._humidity = humidity;
+        if (temperature != null) this._temperature = temperature;
     // _lastArchetypeCov is only updated in _startParticles() after threshold comparison (C7)
     // Determine particle type
     let particleType = CONDITION_PARTICLE_MAP[weatherCondition] || null;
