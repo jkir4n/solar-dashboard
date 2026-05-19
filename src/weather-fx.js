@@ -236,7 +236,7 @@ export class WeatherFX {
 
   _renderGoldenHourOverlay(ctx, sunElevation) {
     const ghFactor = Math.cos((sunElevation / 15) * Math.PI / 2);
-    const cloudDim = this._calcCloudDim(this._cloudCoverage ?? 0, this._weatherCondition ?? '');
+    const cloudDim = this._calcCloudDim(this._cloudCovCur ?? 0, this._weatherCondition ?? '');
     const alpha = ghFactor * cloudDim * 0.06;
     if (alpha < 0.005) return;
     ctx.fillStyle = `rgba(255, 140, 40, ${alpha})`;
