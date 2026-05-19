@@ -2717,6 +2717,7 @@ class SolarDashboard extends HTMLElement {
         moonBrightness.toFixed(2),
         (effCloud ?? 50).toFixed(0),
         visKm.toFixed(0),
+        (effPP ?? 0).toFixed(0),
       ].join('|');
       if (fxKey !== this._fxKey) {
         // Core params changed — full rebuild with fade transition
