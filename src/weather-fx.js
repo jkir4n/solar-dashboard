@@ -196,7 +196,7 @@ export class WeatherFX {
 
   _renderStarField(ctx, now, twilightStarAlpha) {
     if (!this._starField || !this._starField.length) return;
-    const cloudDim = this._calcCloudDim(this._cloudCoverage ?? 0, this._weatherCondition ?? '');
+    const cloudDim = this._calcCloudDim(this._cloudCovCur ?? 0, this._weatherCondition ?? '');
     const moonWash = (this._moonBrightCur ?? 0) * 0.65;
     const baseAlpha = twilightStarAlpha * cloudDim * (1 - moonWash);
     if (baseAlpha <= 0.01) return;
