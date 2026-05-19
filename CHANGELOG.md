@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.56.0 (2026-05-19)
+
+### Features
+- Humidity and temperature modifiers for sunray alpha (T1.4)
+- Weather-fx.js
+- Weather-fx.js
+
+
 ## v0.55.4 (2026-05-18)
 
 ### Bug Fixes
