@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.56.2 (2026-05-19)
+
+### Bug Fixes
+- Wire precipitation_probability and remaining state._effective refs to WeatherFX scalars
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+
+
 ## v0.56.1 (2026-05-19)
 
 ### Bug Fixes
