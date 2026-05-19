@@ -1170,7 +1170,7 @@ export class WeatherFX {
           // Variable reach simulates cloud gap opening/closing
           const reach = Math.max(0.3, p.reachBase + 0.3 * Math.sin(now * p.reachFreq + p.reachPhase));
           const effLen = rayLen * reach * _visReachFactor;
-          const effAlpha = scale * p.baseO * flicker * cloudGate * (light ? 0.55 : 1.0) * _uvAlphaFactor;
+          const effAlpha = scale * p.baseO * flicker * cloudGate * (light ? 0.55 : 1.0) * _uvAlphaFactor * _humidFactor * _tempFactor;
           if (effAlpha < 0.003) return;
 
           const angle = baseDir + p.angleOffset;
