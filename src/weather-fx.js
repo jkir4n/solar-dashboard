@@ -2191,8 +2191,8 @@ export class WeatherFX {
 
     // T1.6: Scatter/anticipation drops — per-frame lifecycle managed here (not in _createParticles)
     {
-      const precipProb = (state._effective?.precipitation_probability ?? 0);
-      const precipInt  = (state._effective?.precipitation_intensity  ?? 0);
+      const precipProb = (this._precipProbability ?? 0);
+      const precipInt  = (this._precipIntensity ?? 0);
       const scatterActive = precipProb > 30 && precipInt < 0.1;
 
       // Cull scatter particles when gate no longer holds
