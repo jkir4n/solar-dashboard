@@ -133,6 +133,9 @@ export class WeatherFX {
     this._haloStrengthCur = 0;
     this._cloudCoverage = null;
     this._visibility = null;        // km, null = unknown
+    this._uvIdx = null;
+    this._humidity = null;
+    this._temperature = null;
     this._particlesByType = {};        // keyed by particle.kind
     this._overlayParticlesByType = {}; // same for overlay particles
     this._flashAlpha = 0;              // reserved for Task 7
