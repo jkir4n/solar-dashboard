@@ -195,7 +195,7 @@ export class WeatherFX {
 
   _renderStarField(ctx, now, twilightStarAlpha) {
     if (!this._starField || !this._starField.length) return;
-    const cloudDim = this._calcCloudDim(this._effective?.cloud_coverage ?? 0, this._weatherCondition ?? '');
+    const cloudDim = this._calcCloudDim(this._cloudCoverage ?? 0, this._weatherCondition ?? '');
     const moonWash = (this._moonBrightCur ?? 0) * 0.65;
     const baseAlpha = twilightStarAlpha * cloudDim * (1 - moonWash);
     if (baseAlpha <= 0.01) return;
@@ -235,7 +235,7 @@ export class WeatherFX {
 
   _renderGoldenHourOverlay(ctx, sunElevation) {
     const ghFactor = Math.cos((sunElevation / 15) * Math.PI / 2);
-    const cloudDim = this._calcCloudDim(this._effective?.cloud_coverage ?? 0, this._weatherCondition ?? '');
+    const cloudDim = this._calcCloudDim(this._cloudCoverage ?? 0, this._weatherCondition ?? '');
     const alpha = ghFactor * cloudDim * 0.06;
     if (alpha < 0.005) return;
     ctx.fillStyle = `rgba(255, 140, 40, ${alpha})`;
