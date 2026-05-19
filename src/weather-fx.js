@@ -1440,8 +1440,8 @@ export class WeatherFX {
         const diffuseSpread = (cloudDim > 0 && cloudDim < 0.3) ? 1.8 : 1.0;
         const glowR = sunR * glowMult * diffuseSpread;
         // T1.4: UV/visibility modulate disc and glow — neutral fallbacks when not available
-        const _uvIdx = state._effective?.uv_index ?? 5;
-        const _vis   = state._effective?.visibility ?? 10;
+        const _uvIdx = this._uvIdx ?? 5;
+        const _vis   = this._visibility ?? 10;
         const glowRVis = _vis < 2 ? 0 : glowR * lerp(1.5, 1.0, Math.min(_vis / 5, 1));
         // Overcast: use a flat base + scaled component so the patch stays visible
         // Needs higher alpha to show through the semi-transparent mesh gradient backdrop
