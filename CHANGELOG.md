@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.56.3 (2026-05-19)
+
+### Bug Fixes
+- Use lerped _cloudCovCur in _renderStarField and _renderGoldenHourOverlay
+- Weather-fx.js
+- Weather-fx.js
+
+
 ## v0.56.2 (2026-05-19)
 
 ### Bug Fixes
