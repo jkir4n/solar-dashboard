@@ -407,6 +407,7 @@ export class WeatherFX {
         if (uvIndex != null) this._uvIdx = uvIndex;
         if (humidity != null) this._humidity = humidity;
         if (temperature != null) this._temperature = temperature;
+        if (precipProbability != null) this._precipProbability = precipProbability;
     // _lastArchetypeCov is only updated in _startParticles() after threshold comparison (C7)
     // Determine particle type
     let particleType = CONDITION_PARTICLE_MAP[weatherCondition] || null;
