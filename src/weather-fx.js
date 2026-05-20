@@ -137,6 +137,9 @@ export class WeatherFX {
     this._humidity = null;
     this._temperature = null;
     this._precipProbability = null;
+    this._windGustSpeed = 0;
+    this._dewPoint = null;
+    this._pressure = null;
     this._particlesByType = {};        // keyed by particle.kind
     this._overlayParticlesByType = {}; // same for overlay particles
     this._flashAlpha = 0;              // reserved for Task 7
