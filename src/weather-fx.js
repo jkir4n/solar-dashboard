@@ -2014,12 +2014,15 @@ export class WeatherFX {
       const flakeColor = light
         ? (night ? 'rgba(100,110,140,' : 'rgba(140,150,170,')
         : (night ? 'rgba(180,195,230,' : 'rgba(255,255,255,');
+      const gustRatio_snow = Math.min(Math.max(state._windGustSpeed / Math.max(state._windSpeed, 1), 1), 3.0);
+      const gustFactor_snow = 1 + (gustRatio_snow - 1) * 0.5 * Math.sin(now * 0.0007 + 5.1);
       (state._particlesByType.flake || []).forEach(p => {
         p.y += p.vy;
         p.sway += p.swaySpeed * 0.02;
         const wf = state._windFactorCur ?? 0;
         const wDx = Math.sin(((state._windBearing + 180) % 360) * Math.PI / 180);
-        p.x += Math.sin(p.sway) * p.swayAmp * (1 - wf * 0.7) + wDx * wf * 2.0 * p.depth;
+        const windDrift = wDx * wf * 2.0 * p.depth * gustFactor_snow;
+        p.x += Math.sin(p.sway) * p.swayAmp * (1 - wf * 0.7) + windDrift;
         p.angle += 0.008;
         if (p.y > h + 10) { p.y = -10; p.x = Math.random() * w; }
         if (p.x > w + 10) p.x = -10;
