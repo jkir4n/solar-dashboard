@@ -2107,9 +2107,13 @@ export class WeatherFX {
       const windDy     = state._windDyRender; // +1 = downward on canvas (negated vs spawn convention)
       // Sort by layer (far → near) for correct depth order
       const clouds = [...(state._particlesByType.cloud || [])].sort((a, b) => a.layer - b.layer);
+      const gustRatio_cloud = Math.min(Math.max(state._windGustSpeed / Math.max(state._windSpeed, 1), 1), 3.0);
       clouds.forEach(p => {
         // Advance position — baseSpeed always rightward, wind adds true directional component (spec §5)
-        p.x     += p.vx + windFactor * p.windMult * windDx;
+        // Gust phase offset differs by depth layer: far=1.2, near=2.5
+        const _cloudGustPhase = p.layer === 0 ? 1.2 : 2.5;
+        const gustFactor_cloud = 1 + (gustRatio_cloud - 1) * 0.5 * Math.sin(now * 0.0007 + _cloudGustPhase);
+        p.x     += (p.vx + windFactor * p.windMult * windDx) * gustFactor_cloud;
         p.yBase += windFactor * p.windMult * windDy * 0.15;
         // Y-bob — p.y derived from yBase so vertical error never accumulates (spec §6)
         p.y = p.yBase + Math.sin(now * p.bobSpeed + p.phase) * p.bobAmp;
