@@ -2204,8 +2204,10 @@ export class WeatherFX {
         ? (night ? 'rgba(90,90,110,1)' : 'rgba(160,160,170,1)')
         : (night ? 'rgba(120,120,140,1)' : 'rgba(200,200,210,1)');
       const t = now * 0.001;
+      const gustRatio_vis = Math.min(Math.max(state._windGustSpeed / Math.max(state._windSpeed, 1), 1), 3.0);
+      const gustFactor_vis = 1 + (gustRatio_vis - 1) * 0.5 * Math.sin(now * 0.0007 + 3.8);
       (state._particlesByType.fogBlob || []).forEach(p => {
-        p.x += p.vx;
+        p.x += p.vx * gustFactor_vis;
         if (p.x > w + p.rx) p.x = -p.rx;
         if (p.x < -p.rx) p.x = w + p.rx;
         const y = p.yBase + Math.sin(p.x * 0.04 + t * 0.025 + p.blobIndex) * p.amp;
