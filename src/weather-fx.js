@@ -1371,6 +1371,14 @@ export class WeatherFX {
     // Lerp wind factor for smooth acceleration/deceleration
     if (state._windFactorCur === undefined) state._windFactorCur = state._windFactor ?? 0;
     state._windFactorCur += ((state._windFactor ?? 0) - state._windFactorCur) * 0.02;
+    // Wind-feel tint — computed once per frame, shared by rain/fog/snow
+    const _windFeel = (state._temperature != null && state._windSpeed != null)
+      ? (state._temperature < 5 && state._windSpeed > 15 ? 'cold_bite'
+        : state._temperature > 30 && state._windSpeed > 10 ? 'hot_blast'
+        : 'neutral')
+      : 'neutral';
+    const _WIND_FEEL_TINT = { cold_bite: { r: -15, g: -10, b: 25 }, hot_blast: { r: 20, g: 8, b: -10 }, neutral: { r: 0, g: 0, b: 0 } };
+    const _wft = _WIND_FEEL_TINT[_windFeel];
     state._moonBrightCur += (state._moonBrightness - state._moonBrightCur) * 0.01;
     const _elevScaleDay   = Math.max(0, Math.min(1, (state._sunElevCur + 18) / 28));
     state._twilightFactor = lerp(state._twilightFactor, computeTwilightTarget(state._sunElevCur), 0.015);
