@@ -2095,9 +2095,11 @@ export class WeatherFX {
       ctx.globalAlpha = state._alpha;
 
     } else if (state._currentType === 'fog') {
-      const fogColor = light
-        ? (night ? 'rgba(90,90,110,1)' : 'rgba(160,160,170,1)')
-        : (night ? 'rgba(120,120,140,1)' : 'rgba(200,200,210,1)');
+      // Apply wind-feel tint to fog blob base colour
+      const _fogBase = light
+        ? (night ? [90,90,110] : [160,160,170])
+        : (night ? [120,120,140] : [200,200,210]);
+      const fogColor = `rgba(${Math.min(255,Math.max(0,_fogBase[0]+_wft.r))},${Math.min(255,Math.max(0,_fogBase[1]+_wft.g))},${Math.min(255,Math.max(0,_fogBase[2]+_wft.b))},1)`;
       const t = now * 0.001;
       const gustRatio_fog2 = Math.min(Math.max(state._windGustSpeed / Math.max(state._windSpeed, 1), 1), 3.0);
       const gustFactor_fog2 = 1 + (gustRatio_fog2 - 1) * 0.5 * Math.sin(now * 0.0007 + 3.8);
