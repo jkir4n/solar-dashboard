@@ -412,6 +412,9 @@ export class WeatherFX {
         if (humidity != null) this._humidity = humidity;
         if (temperature != null) this._temperature = temperature;
         if (precipProbability != null) this._precipProbability = precipProbability;
+        this._windGustSpeed = windGustSpeed ?? 0;
+        this._dewPoint = dewPoint ?? null;
+        this._pressure = pressure ?? null;
     // _lastArchetypeCov is only updated in _startParticles() after threshold comparison (C7)
     // Determine particle type
     let particleType = CONDITION_PARTICLE_MAP[weatherCondition] || null;
