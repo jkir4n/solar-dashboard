@@ -542,6 +542,7 @@ export class WeatherFX {
       if (ts - state._lastFrame >= 16) {
         state._lastFrame = ts;
         try {
+          if (!state.ctx || state._contextLost) { state._animFrameId = requestAnimationFrame(loop); return; }
           if (state._currentType) {
             state._render(ts);
           } else {
