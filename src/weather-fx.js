@@ -1094,11 +1094,28 @@ export class WeatherFX {
   }
 
   _renderDrops(ctx, particles, now, night, light, windFactor, windDx, alpha) {
-    const [rH, gH, bH] = night ? [140, 170, 220] : [200, 225, 255];
-    const gustFactor = windFactor * 0.4;
+    // Unified gust ratio: how much stronger gusts are than mean wind (1–3×)
+    const gustRatio = Math.min(Math.max(this._windGustSpeed / Math.max(this._windSpeed, 1), 1), 3.0);
+    // windFeel: temperature + wind chill / heat index tint applied to drop colour
+    const windFeel = this._temperature < 5 && this._windSpeed > 15 ? 'cold_bite'
+      : this._temperature > 30 && this._windSpeed > 10 ? 'hot_blast'
+      : 'neutral';
+    const WIND_FEEL_TINT = {
+      cold_bite: { r: -15, g: -10, b: 25 },
+      hot_blast:  { r: 20,  g: 8,   b: -10 },
+      neutral:    { r: 0,   g: 0,   b: 0 },
+    };
+    const tint = WIND_FEEL_TINT[windFeel];
+    const baseR = night ? 140 : 200;
+    const baseG = night ? 170 : 225;
+    const baseB = night ? 220 : 255;
+    const rH = Math.min(255, Math.max(0, baseR + tint.r));
+    const gH = Math.min(255, Math.max(0, baseG + tint.g));
+    const bH = Math.min(255, Math.max(0, baseB + tint.b));
     const w = this.canvas.width, h = this.canvas.height;
     particles.forEach(p => {
-      const effDx = p.windDx * (1 + gustFactor * Math.sin(now * 0.0007 + p.gustPhase));
+      const gustFactor = 1 + (gustRatio - 1) * 0.5 * Math.sin(now * 0.0007 + p.gustPhase);
+      const effDx = p.windDx * gustFactor;
       p.x += effDx;
       p.y += p.speed;
       if (p.y > h + 20) { p.y = -20; p.x = Math.random() * w; }
