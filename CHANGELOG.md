@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.56.5 (2026-05-20)
+
+### Bug Fixes
+- Guard WeatherFX render loop against null canvas context; throttle forecast fetch retries on failure
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Weather-fx.js
+
+
 ## v0.56.4 (2026-05-19)
 
 ### Bug Fixes
