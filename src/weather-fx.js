@@ -343,7 +343,7 @@ export class WeatherFX {
 
   /** Update dynamic values (cloud, wind, positions) without rebuilding particles.
    *  Called when fxKey hasn't changed but subordinate values have shifted. */
-  updateDynamic(cloudCoverage, windBearing, sunElevation, sunAzimuth, moonElevation, moonAzimuth, moonBrightness, visibility = null, precipIntensity = null, thunderstormProb = null, heatIndex = null, windChill = null, precipProbability = null) {
+  updateDynamic(cloudCoverage, windBearing, sunElevation, sunAzimuth, moonElevation, moonAzimuth, moonBrightness, visibility = null, precipIntensity = null, thunderstormProb = null, heatIndex = null, windChill = null, precipProbability = null, windGustSpeed = undefined, dewPoint = undefined, pressure = undefined) {
     this._cloudCoverage  = cloudCoverage;
     if (visibility != null) this._visibility = parseFloat(visibility);
     if (precipIntensity != null) this._precipIntensity = precipIntensity;
@@ -351,6 +351,9 @@ export class WeatherFX {
     if (heatIndex != null) this._heatIndex = heatIndex;
     if (windChill != null) this._windChill = windChill;
     if (precipProbability != null) this._precipProbability = precipProbability;
+    if (windGustSpeed !== undefined) this._windGustSpeed = windGustSpeed;
+    if (dewPoint !== undefined) this._dewPoint = dewPoint;
+    if (pressure !== undefined) this._pressure = pressure;
     this._windBearing    = Number.isFinite(windBearing) ? windBearing : 180;
     this._updateWindCache();
     this._sunElevation   = sunElevation;
