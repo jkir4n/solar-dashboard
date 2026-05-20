@@ -2961,6 +2961,8 @@ class SolarDashboard extends HTMLElement {
   /** Fetch hourly forecast and pin to the next upcoming hour (~30-60 min ahead). */
   async _fetchForecast() {
     if (!this._weatherEntityId || !this._bridge._hass) return;
+    const now = Date.now();
+    this._lastForecastFetch = now;
     try {
       // Use WebSocket API for forecast
       const result = await this._bridge._hass.callWS({
@@ -2973,7 +2975,6 @@ class SolarDashboard extends HTMLElement {
       const entries = result?.response?.[this._weatherEntityId]?.forecast || [];
       if (!entries.length) return;
 
-      const now = Date.now();
       // Pin to nearest upcoming hour (>30 min ahead)
       this._forecastNext = entries.find(e => new Date(e.datetime).getTime() > now + 30 * 60 * 1000);
       // Fallback: first entry within 60 min
@@ -2983,7 +2984,6 @@ class SolarDashboard extends HTMLElement {
           return t > now && t <= now + 60 * 60 * 1000;
         });
       }
-      this._lastForecastFetch = now;
 
       // Hysteresis: forecast target must be stable for 3 consecutive pulls (15 min)
       const newTarget = this._forecastNext?.condition || null;
