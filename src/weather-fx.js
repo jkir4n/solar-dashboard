@@ -1035,7 +1035,13 @@ export class WeatherFX {
           const r = layer.rMin + Math.random() * (layer.rMax - layer.rMin);
           const baseSpeed = layer.speedRange[0] + Math.random() * (layer.speedRange[1] - layer.speedRange[0]);
           const alpha     = layer.alphaRange[0] + Math.random() * (layer.alphaRange[1] - layer.alphaRange[0]);
-          const yBase     = h * (layer.yRange[0] + Math.random() * (layer.yRange[1] - layer.yRange[0]));
+          const yBaseRaw  = h * (layer.yRange[0] + Math.random() * (layer.yRange[1] - layer.yRange[0]));
+          // Dew-point cloud base height (T2.2): larger temp-dew spread = higher clouds
+          const _tdSpread = (this._temperature ?? 20) - (this._dewPoint ?? 10);
+          const _yBaseFactor = Math.min(Math.max((_tdSpread - 3) / 9, 0), 1);
+          const yBase = arch.name !== 'cirrus'
+            ? yBaseRaw + _yBaseFactor * (h * 0.3)
+            : yBaseRaw;
           // Procedural lobe generation (spec §2)
           const [loMin, loMax] = arch.lobeCount;
           const lobeCount = loMin + Math.floor(Math.random() * (loMax - loMin + 1));
