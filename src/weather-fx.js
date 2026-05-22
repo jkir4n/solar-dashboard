@@ -164,6 +164,7 @@ export class WeatherFX {
     this._flashDecay = 0;
     this._boltCache = null;
     this._rainbowFade = 0;             // reserved for Task 9
+    this._rainLayerAlpha = { far: 0, mid: 0, near: 0 };
     this._sheetLightningAlpha = 0;     // T2.4: distant-storm sheet lightning
     this._planets = [];           // [{name, elevation, azimuth, color:[r,g,b], radius}]
     this._galCenterEl = -90;
