@@ -1,5 +1,6 @@
 // weather-fx.js — Weather particle system
 // Ported from solar-v9.html lines 792-1230
+import { snFBM } from './noise.js';
 
 const CONDITION_PARTICLE_MAP = {
   'sunny': 'sunny', 'clear-night': 'night',
