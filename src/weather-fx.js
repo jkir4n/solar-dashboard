@@ -1906,30 +1906,115 @@ export class WeatherFX {
       // Lightning bolt + flash for storms
       const lp = (state._particlesByType.lightning || [])[0];
       if (lp) {
-        lp.timer++;
-        if (lp.flashAlpha > 0) {
-          lp.flickerPhase++;
-          if (lp.flickerPhase > 15) lp.flashAlpha = 0;
+        // Step 8: gate particle interval by condition + prob
+        state._particles.filter(p => p.kind === 'lightning').forEach(p => {
+          const conditionQualifies = (state._weatherCondition || '').includes('lightning');
+          const probQualifies = (state._thunderstormProb ?? 0) >= 25;
+          if (!conditionQualifies || !probQualifies) {
+            p.interval = Infinity;
+          }
+        });
+
+        lp.timer += dt; // dt in ms (now - lastFrame)
+
+        // Step 3: multi-stroke decay — if currently in a stroke, decay flashAlpha
+        if (lp.flashAlpha > 0 && now >= lp._strokePauseUntil) {
+          const strokeDef = LIGHTNING_STROKE_PAUSES[lp._strokeIndex] ?? LIGHTNING_STROKE_PAUSES[LIGHTNING_STROKE_PAUSES.length - 1];
+          lp.flashAlpha = Math.max(0, lp.flashAlpha - (strokeDef.decay / 1000) * dt);
+          if (lp.flashAlpha < 0.05) {
+            // This stroke is done — check if more strokes remain
+            const nextIndex = lp._strokeIndex + 1;
+            if (nextIndex < lp._strokeSequence) {
+              const pause = strokeDef.pauseMin + Math.random() * (strokeDef.pauseMax - strokeDef.pauseMin);
+              lp._strokePauseUntil = now + pause;
+              lp._strokeIndex = nextIndex;
+              const nextDef = LIGHTNING_STROKE_PAUSES[nextIndex] ?? LIGHTNING_STROKE_PAUSES[LIGHTNING_STROKE_PAUSES.length - 1];
+              lp.flashAlpha = nextDef.alpha;
+            } else {
+              lp.flashAlpha = 0;
+              lp._strokeIndex = 0;
+              lp._strokePauseUntil = 0;
+            }
+          }
         }
-        if (lp.bolt && lp.flashAlpha > 0) {
-          ctx.strokeStyle = light ? 'rgba(60,60,120,1)' : '#fff';
+
+        // Step 6: pressure-based bolt colour
+        const _pT = (state._pressure != null)
+          ? Math.min(Math.max((state._pressure - 1005) / 10, 0), 1)
+          : 0.5;
+        const _bR = Math.round(255 + (180 - 255) * _pT);
+        const _bG = 200;
+        const _bB = Math.round(80 + (255 - 80) * _pT);
+        const boltColor = light ? 'rgba(60,60,120,1)' : `rgb(${_bR},${_bG},${_bB})`;
+        const boltShadow = light ? 'rgba(60,60,120,0.6)' : `rgba(${_bR},${_bG},${_bB},0.8)`;
+
+        if (lp.bolt && lp.flashAlpha > 0 && now >= lp._strokePauseUntil) {
+          ctx.strokeStyle = boltColor;
           ctx.lineWidth = 2;
           ctx.shadowBlur = 15;
-          ctx.shadowColor = light ? 'rgba(60,60,120,0.6)' : 'rgba(180,180,255,0.8)';
+          ctx.shadowColor = boltShadow;
           state._drawBolt(ctx, lp.bolt, state._alpha * lp.flashAlpha * 0.7);
           ctx.shadowBlur = 0;
         }
-        if (lp.timer > lp.interval) {
+
+        if (lp.timer > lp.interval && lp.flashAlpha <= 0) {
           lp.timer = 0;
           lp.interval = state._getLightningInterval();
+          lp._strokeSequence = 2 + Math.floor(Math.random() * 3);
+          lp._strokeIndex = 0;
+          lp._strokePauseUntil = 0;
+
+          // Step 5: thunderstormProb-driven bolt depth + branch chance
+          const _prob = state._thunderstormProb ?? 50;
+          const boltDepth = 2 + Math.floor(_prob / 25); // 2–5
+          const branchChance = 0.1 + (_prob / 100) * 0.3; // 0.1–0.4 (stored for future use)
+
           const bx = w * (0.2 + Math.random() * 0.6);
-          state._boltCache = state._generateBolt(bx, 0, bx + (Math.random() - 0.5) * w * 0.2, h * 0.6, 5);
+          state._boltCache = state._generateBolt(bx, 0, bx + (Math.random() - 0.5) * w * 0.2, h * 0.6, boltDepth);
           lp.bolt = state._boltCache;
-          lp.flashAlpha = 1;
+          lp.flashAlpha = LIGHTNING_STROKE_PAUSES[0].alpha;
           lp.flickerPhase = 0;
-          const peakAlpha = state._weatherCondition === 'lightning' ? 0.45 : 0.35;
+
+          // Step 7: UV flash gating
+          let flashAlpha;
+          if (!state._isNight && (state._uvIdx ?? 0) >= 6) {
+            flashAlpha = lerp(0.25, 0.15, ((state._uvIdx ?? 6) - 6) / 6);
+          } else {
+            flashAlpha = lerp(0.8, 1.0, Math.random());
+          }
+          const peakAlpha = (state._weatherCondition === 'lightning' ? 0.45 : 0.35) * flashAlpha;
           state._flashAlpha = Math.max(state._flashAlpha, peakAlpha);
+          let glowRadius = w * 0.5;
+          if ((state._precipIntensity ?? 0) > 3) glowRadius *= 1.4;
           state._flashDecay = peakAlpha / 7.2; // ~120ms at 60fps
+
+          // Step 4: sheet lightning for distant storms
+          const sheetLightningActive = (state._precipIntensity ?? 0) < 1.0;
+          if (sheetLightningActive) {
+            state._sheetLightningAlpha = Math.min(state._sheetLightningAlpha + 0.015, 0.15);
+          }
+        }
+
+        // Step 4: decay sheet lightning continuously
+        const sheetLightningActive = (state._precipIntensity ?? 0) < 1.0;
+        if (!sheetLightningActive) {
+          state._sheetLightningAlpha = Math.max(state._sheetLightningAlpha - 0.003, 0);
+        }
+
+        // Step 4: render sheet lightning as diffuse radial gradient over cloud centroid
+        const sheetAlpha = state._sheetLightningAlpha * cloudDim;
+        if (sheetAlpha > 0.01) {
+          const cloudParticles = state._particles.filter(p => p.kind === 'cloud' || p.kind === 'cloudy');
+          if (cloudParticles.length > 0) {
+            const cx = cloudParticles.reduce((s, p) => s + p.x, 0) / cloudParticles.length;
+            const cy = cloudParticles.reduce((s, p) => s + p.y, 0) / cloudParticles.length;
+            const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, w * 0.5);
+            grad.addColorStop(0, `rgba(255, 255, 200, ${sheetAlpha})`);
+            grad.addColorStop(1, 'rgba(255, 255, 200, 0)');
+            ctx.globalAlpha = 1;
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, w, h);
+          }
         }
       }
       ctx.globalAlpha = state._alpha;
