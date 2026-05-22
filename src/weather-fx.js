@@ -1170,6 +1170,22 @@ export class WeatherFX {
           lobes.forEach(l => {
             l.shade = (maxDy === minDy) ? 0.5 : 1.0 - (l.dy - minDy) / (maxDy - minDy);
           });
+          // Pre-compute fixed offscreen origin with morph headroom (items 11)
+          // Bounds from all lobes + ±0.06 dx, ±0.04 dy, ±0.03 rs headroom
+          const _pad = r * 0.4;
+          let _bMinX = Infinity, _bMaxX = -Infinity, _bMinY = Infinity, _bMaxY = -Infinity;
+          for (const lb of lobes) {
+            const _lr = (lb.rs + 0.03) * r;
+            const _lx = (Math.abs(lb.dx) + 0.06) * r;
+            const _ly = (Math.abs(lb.dy) + 0.04) * r;
+            if (-_lx - _lr < _bMinX) _bMinX = -_lx - _lr;
+            if ( _lx + _lr > _bMaxX) _bMaxX =  _lx + _lr;
+            if (-_ly - _lr < _bMinY) _bMinY = -_ly - _lr;
+            if ( _ly + _lr > _bMaxY) _bMaxY =  _ly + _lr;
+          }
+          const _fixedOx = -_bMinX + _pad;
+          const _fixedOy = -_bMinY + _pad;
+
           const p = {
             kind: 'cloud',
             x: Math.random() * w,
@@ -1184,7 +1200,18 @@ export class WeatherFX {
             phase:    Math.random() * Math.PI * 2,
             bobSpeed: 0.0003 + Math.random() * 0.0002,
             bobAmp:   3 + Math.random() * 5,
+            // T2.3: morph state
+            _morphProgress: 0,
+            _morphFrom: lobes.map(l => ({ ...l })),
+            _morphTo: null, // set after _archetypes is populated
+            // T2.3: precip bucket for underside colour dirty-flag
+            _precipThresholdBucket: Math.floor((this._precipProbability ?? 0) / 25),
+            // T2.3: fixed offscreen origin with morph headroom
+            _fixedOx,
+            _fixedOy,
           };
+          // _morphTo needs _generateCloudLobes which needs this._archetypes — set now
+          p._morphTo = this._generateCloudLobes(archetype);
           this._renderCloudToOffscreen(p, this._isNight);
           particles.push(p);
         }
