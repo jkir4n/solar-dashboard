@@ -1959,8 +1959,8 @@ export class WeatherFX {
           ctx.shadowBlur = 0;
         }
 
-        if (lp.timer > lp.interval && lp.flashAlpha <= 0) {
-          lp.timer = 0;
+        if ((now - lp._lastBoltTime) > lp.interval && lp.flashAlpha <= 0) {
+          lp._lastBoltTime = now;
           lp.interval = state._getLightningInterval();
           lp._strokeSequence = 2 + Math.floor(Math.random() * 3);
           lp._strokeIndex = 0;
