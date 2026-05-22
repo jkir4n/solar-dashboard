@@ -1115,7 +1115,7 @@ export class WeatherFX {
           const _yBaseFactor = Math.min(Math.max((_tdSpread - 3) / 9, 0), 1);
           const yBase = archetype !== 'cirrus'
             ? yBaseRaw - _yBaseFactor * (h * 0.3)
-            : yBaseRaw;
+            : h * 0.15; // cirrus always fixed to upper 20% of canvas
           // Procedural lobe generation (spec §2)
           const [loMin, loMax] = arch.lobeCount;
           const lobeCount = loMin + Math.floor(Math.random() * (loMax - loMin + 1));
