@@ -791,7 +791,10 @@ export class WeatherFX {
       if (type === 'storm') {
         particles.push({
           kind: 'lightning', timer: 0, interval: this._getLightningInterval(),
-          bolt: null, flashAlpha: 0, flickerPhase: 0
+          bolt: null, flashAlpha: 0, flickerPhase: 0,
+          _strokeSequence: 2 + Math.floor(Math.random() * 3), // 2–4 strokes
+          _strokeIndex: 0,
+          _strokePauseUntil: 0,
         });
       }
     } else if (type === 'sleet') {
