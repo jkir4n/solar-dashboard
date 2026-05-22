@@ -1915,7 +1915,7 @@ export class WeatherFX {
           }
         });
 
-        if (!lp._lastBoltTime) lp._lastBoltTime = now - lp.interval; // initialise on first frame
+        if (!lp._lastBoltTime) lp._lastBoltTime = now - Math.min(lp.interval, 15000); // initialise on first frame
 
         // Step 3: multi-stroke decay — if currently in a stroke, decay flashAlpha
         if (lp.flashAlpha > 0 && now >= lp._strokePauseUntil) {
