@@ -272,20 +272,42 @@ export class WeatherFX {
   // Called once at spawn so the render loop can just blit p.off each frame.
   _renderCloudToOffscreen(p, isNight) {
     const cloudR = p.r;
-    // Compute tight bounds from actual lobe positions
-    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-    for (const lobe of p.lobes) {
-      const lx = lobe.dx * cloudR, ly = lobe.dy * cloudR, lr = lobe.rs * cloudR;
-      if (lx - lr < minX) minX = lx - lr;
-      if (lx + lr > maxX) maxX = lx + lr;
-      if (ly - lr < minY) minY = ly - lr;
-      if (ly + lr > maxY) maxY = ly + lr;
+    const DEG = Math.PI / 180;
+
+    // Use fixed origin with morph headroom if available, otherwise compute from current lobes
+    let ox, oy, offW, offH;
+    if (p._fixedOx != null && p._fixedOy != null) {
+      // Compute canvas size from fixed origin + worst-case lobe extent
+      let maxX = -Infinity, maxY = -Infinity;
+      let minX = Infinity, minY = Infinity;
+      for (const lobe of p.lobes) {
+        const lx = lobe.dx * cloudR, ly = lobe.dy * cloudR, lr = (lobe.rs + 0.03) * cloudR;
+        if (lx - lr < minX) minX = lx - lr;
+        if (lx + lr > maxX) maxX = lx + lr;
+        if (ly - lr < minY) minY = ly - lr;
+        if (ly + lr > maxY) maxY = ly + lr;
+      }
+      const pad = cloudR * 0.4;
+      offW = Math.ceil(maxX - minX + pad * 2 + cloudR * 0.12);
+      offH = Math.ceil(maxY - minY + pad * 2 + cloudR * 0.08);
+      ox = p._fixedOx;
+      oy = p._fixedOy;
+    } else {
+      // Fallback: compute tight bounds from actual lobe positions
+      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+      for (const lobe of p.lobes) {
+        const lx = lobe.dx * cloudR, ly = lobe.dy * cloudR, lr = lobe.rs * cloudR;
+        if (lx - lr < minX) minX = lx - lr;
+        if (lx + lr > maxX) maxX = lx + lr;
+        if (ly - lr < minY) minY = ly - lr;
+        if (ly + lr > maxY) maxY = ly + lr;
+      }
+      const pad = cloudR * 0.4;
+      offW = Math.ceil(maxX - minX + pad * 2);
+      offH = Math.ceil(maxY - minY + pad * 2);
+      ox = -minX + pad;
+      oy = -minY + pad;
     }
-    const pad = cloudR * 0.4;
-    const offW = Math.ceil(maxX - minX + pad * 2);
-    const offH = Math.ceil(maxY - minY + pad * 2);
-    const ox = -minX + pad;   // origin offset within offscreen canvas
-    const oy = -minY + pad;
 
     // C6: Per-cloud offscreen canvas — eliminates pool collision where same-dimension clouds share lobe shapes
     if (!p.off || p.off.width !== Math.max(offW, 1) || p.off.height !== Math.max(offH, 1)) {
@@ -295,6 +317,27 @@ export class WeatherFX {
     }
     const off = p.off;
     const octx = off.getContext('2d');
+    octx.clearRect(0, 0, off.width, off.height);
+
+    // T2.3 item 9: composite mode per archetype
+    octx.globalCompositeOperation = p._archetype === 'cirrus' ? 'lighter' : 'source-over';
+
+    // T2.3 item 7: atmospheric perspective for far-layer clouds when visibility < 10 km
+    const isFar = p.layer === 0;
+    const lowVis = (this._visibility != null && this._visibility < 10);
+
+    // T2.3 item 6: precipProbability-driven underside colour
+    // 0% → hsl(0,0%,90%) = rgb(230,230,230); 90% → hsl(220,20%,35%) = ~rgb(71,88,107)
+    const precip = Math.min(1, (this._precipProbability ?? 0) / 90);
+    const undersideR = Math.round(230 - precip * 159); // 230→71
+    const undersideG = Math.round(230 - precip * 142); // 230→88
+    const undersideB = Math.round(230 - precip * 123); // 230→107
+
+    // T2.3 item 8: directional lighting from sun azimuth
+    const sunAz = this._sunAzimuth;
+    const hasSunDir = sunAz != null && Number.isFinite(sunAz);
+    const sunDirX = hasSunDir ? Math.sin(sunAz * DEG) : 0;
+    const sunDirY = hasSunDir ? -Math.cos(sunAz * DEG) : 0;
 
     // Sort lobes bottom → top so top lobes are painted last (on top)
     const sorted = [...p.lobes].sort((a, b) => b.dy - a.dy);
@@ -302,29 +345,56 @@ export class WeatherFX {
       const lx = ox + lobe.dx * cloudR;
       const ly = oy + lobe.dy * cloudR;
       const lr = lobe.rs * cloudR;
-      const s  = lobe.shade;                 // 1 = topmost, 0 = bottommost
+      let s = lobe.shade;                 // 1 = topmost, 0 = bottommost
+
       // Highlight offset: top-left corner of lobe
       const hlX = lx - lr * 0.25, hlY = ly - lr * 0.30;
       const grd = octx.createRadialGradient(hlX, hlY, lr * 0.05, lx, ly, lr);
+
       if (isNight) {
         grd.addColorStop(0,    `rgba(85, 100, 140, ${(0.75 + s * 0.15).toFixed(2)})`);
         grd.addColorStop(0.55, `rgba(50,  60,  95, ${(0.70 + s * 0.10).toFixed(2)})`);
         grd.addColorStop(1,    `rgba(25,  30,  60, ${(0.20 + s * 0.10).toFixed(2)})`);
       } else {
-        // Top lobes (s≈1): bright white/pale; bottom lobes (s≈0): cool grey
+        // Top lobes (s≈1): bright white/pale; bottom lobes (s≈0): use precipProbability underside colour
         const hi = Math.round(230 + s * 25);   // highlight base: 230–255
         const md = Math.round(185 + s * 45);   // mid body:  185–230
-        const lo = Math.round(175 + s * 35);   // bottom:    175–210
+
+        // T2.3 item 8: directional lighting bias
+        let lobeR_adj = 0, lobeG_adj = 0;
+        if (hasSunDir) {
+          const lobeMag = Math.sqrt(lobe.dx * lobe.dx + lobe.dy * lobe.dy) || 1;
+          const dot = (lobe.dx / lobeMag) * sunDirX + (lobe.dy / lobeMag) * sunDirY;
+          if (dot > 0) { lobeR_adj = 10; lobeG_adj = 5; }
+        }
+
+        // T2.3 item 7: atmospheric perspective on far-layer clouds
+        let farBlueAdj = 0, farAlphaAdj = 0;
+        if (isFar && lowVis) { farBlueAdj = 15; farAlphaAdj = 0.15; }
+
+        const loR = Math.min(255, undersideR + lobeR_adj);
+        const loG = Math.min(255, undersideG + lobeG_adj);
+        const loB = Math.min(255, undersideB + farBlueAdj);
+        const loA = Math.max(0, 0.18 - farAlphaAdj);
+
         grd.addColorStop(0,    `rgba(255, 255, 255, 0.95)`);
-        grd.addColorStop(0.30, `rgba(${hi}, ${hi}, ${hi + 4}, 0.90)`);
-        grd.addColorStop(0.65, `rgba(${md}, ${md + 4}, ${md + 12}, 0.78)`);
-        grd.addColorStop(1,    `rgba(${lo}, ${lo + 5}, ${lo + 18}, 0.18)`);
+        grd.addColorStop(0.30, `rgba(${Math.min(255, hi + lobeR_adj)}, ${Math.min(255, hi + lobeG_adj)}, ${hi + 4}, 0.90)`);
+        grd.addColorStop(0.65, `rgba(${Math.min(255, (185 + s * 45) + lobeR_adj)}, ${Math.min(255, (185 + s * 45) + 4 + lobeG_adj)}, ${(185 + s * 45) + 12 + farBlueAdj}, 0.78)`);
+        grd.addColorStop(1,    `rgba(${loR}, ${loG}, ${loB}, ${loA.toFixed(2)})`);
       }
       octx.fillStyle = grd;
+      // T2.3 item 10: shadowBlur per lobe
+      octx.shadowBlur = lr * 0.35;
+      octx.shadowColor = isNight ? 'rgba(30,40,80,0.4)' : 'rgba(200,210,255,0.3)';
       octx.beginPath();
       octx.arc(lx, ly, lr, 0, Math.PI * 2);
       octx.fill();
+      octx.shadowBlur = 0; // reset immediately after fill
+      octx.shadowColor = 'transparent';
     });
+
+    // Reset composite op after drawing
+    octx.globalCompositeOperation = 'source-over';
 
     p.off = off;
     p.ox = ox;
