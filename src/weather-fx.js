@@ -19,6 +19,12 @@ const RAIN_SEVERITY = {
   sleet: 0.45,
 };
 
+const LIGHTNING_STROKE_PAUSES = [
+  { alpha: 1.0, decay: 8, pauseMin: 80,  pauseMax: 150 },
+  { alpha: 0.7, decay: 8, pauseMin: 50,  pauseMax: 100 },
+  { alpha: 0.4, decay: 8, pauseMin: 0,   pauseMax: 0   },
+];
+
 // How much the sun disc is visible through each condition (0=hidden, 1=full)
 // < 0.3 → diffuse glow only; >= 0.3 → disc + glow
 const SUN_CLOUD_DIM = {
