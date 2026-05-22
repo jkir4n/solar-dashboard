@@ -69,6 +69,12 @@ const MOON_CLOUD_DIM = {
 
 function lerp(a, b, t) { return a + (b - a) * t; }
 
+function intensityToSpawnCount(layerKey, intensity) {
+  const baseByDepth = { far: 0.3, mid: 0.45, near: 0.25 };
+  const total = 15 + Math.pow(intensity, 0.65) * 40;
+  return Math.round(total * baseByDepth[layerKey]);
+}
+
 function computeTwilightTarget(sunElevation) {
   if (sunElevation > 0)   return 0.0;
   if (sunElevation > -6)  return 0.25;
