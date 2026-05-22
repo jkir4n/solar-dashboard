@@ -320,7 +320,7 @@ export class WeatherFX {
     octx.clearRect(0, 0, off.width, off.height);
 
     // T2.3 item 9: composite mode per archetype
-    octx.globalCompositeOperation = p._archetype === 'cirrus' ? 'lighter' : 'source-over';
+    octx.globalCompositeOperation = p.archetype === 'cirrus' ? 'lighter' : 'source-over';
 
     // T2.3 item 7: atmospheric perspective for far-layer clouds when visibility < 10 km
     const isFar = p.layer === 0;
