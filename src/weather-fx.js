@@ -1941,12 +1941,15 @@ export class WeatherFX {
         }
 
         // Step 6: pressure-based bolt colour
-        const _pT = (state._pressure != null)
-          ? Math.min(Math.max((state._pressure - 1005) / 10, 0), 1)
-          : 0.5;
-        const _bR = Math.round(255 + (180 - 255) * _pT);
-        const _bG = 200;
-        const _bB = Math.round(80 + (255 - 80) * _pT);
+        let _bR, _bG, _bB;
+        if (state._pressure != null) {
+          const _pT = Math.min(Math.max((state._pressure - 1005) / 10, 0), 1);
+          _bR = Math.round(255 + (180 - 255) * _pT);
+          _bG = 200;
+          _bB = Math.round(80  + (255 - 80)  * _pT);
+        } else {
+          _bR = 180; _bG = 200; _bB = 255; // null pressure fallback
+        }
         const boltColor = light ? 'rgba(60,60,120,1)' : `rgb(${_bR},${_bG},${_bB})`;
         const boltShadow = light ? 'rgba(60,60,120,0.6)' : `rgba(${_bR},${_bG},${_bB},0.8)`;
 
