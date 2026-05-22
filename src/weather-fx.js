@@ -1040,7 +1040,7 @@ export class WeatherFX {
           const _tdSpread = (this._temperature ?? 20) - (this._dewPoint ?? 10);
           const _yBaseFactor = Math.min(Math.max((_tdSpread - 3) / 9, 0), 1);
           const yBase = archetype !== 'cirrus'
-            ? yBaseRaw + _yBaseFactor * (h * 0.3)
+            ? yBaseRaw - _yBaseFactor * (h * 0.3)
             : yBaseRaw;
           // Procedural lobe generation (spec §2)
           const [loMin, loMax] = arch.lobeCount;
