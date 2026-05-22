@@ -166,6 +166,7 @@ export class WeatherFX {
     this._rainbowFade = 0;             // reserved for Task 9
     this._rainLayerAlpha = { far: 0, mid: 0, near: 0 };
     this._sheetLightningAlpha = 0;     // T2.4: distant-storm sheet lightning
+    this._activeDendrites = 0;         // T2.5: cap concurrent dendrite snowflakes
     this._planets = [];           // [{name, elevation, azimuth, color:[r,g,b], radius}]
     this._galCenterEl = -90;
     this._galCenterAz = 180;
