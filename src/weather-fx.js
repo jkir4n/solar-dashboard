@@ -329,11 +329,7 @@ export class WeatherFX {
 
   
   _getLightningInterval() {
-    const prob = this._thunderstormProb ?? 50;
-    const t = Math.max(0, Math.min(1, prob / 100));
-    const minMs = 8000 - t * 7900;
-    const maxMs = 15000 - t * 14400;
-    return minMs + Math.random() * (maxMs - minMs);
+    return lerp(8000, 100, Math.min((this._thunderstormProb ?? 0) / 100, 1));
   }
 
   updateSunMoon(sunElevation, sunAzimuth, moonElevation, moonAzimuth, moonBrightness) {
