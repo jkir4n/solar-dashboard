@@ -904,27 +904,23 @@ export class WeatherFX {
       });
     } else if (type === 'snowy') {
       if (!this._weatherCondition.match(/snow|hail|sleet/i)) return particles;
+      this._activeDendrites = 0; // reset before spawning fresh batch
       // Layered snowflakes with turbulent wobble
       const snowDensity = Math.round(10 + Math.pow(Math.min(this._precipIntensity ?? 1, 10), 0.7) * 8);
       for (let i = 0; i < snowDensity; i++) {
         const depth = Math.random();
         const baseVy = (0.2 + Math.random() * 0.4) * (0.4 + depth * 0.6);
         const baseSwayAmp = (0.3 + depth * 0.7) * (1 - windFactor * 0.7);
-        // Step 1: depth-based shape selection
+        // Step 1: depth-based shape selection (no counter increment yet)
         let shape;
         if (depth < 0.4) {
           shape = 'circle';
         } else if (depth <= 0.7) {
           shape = 'hexplate';
         } else {
-          if ((this._activeDendrites ?? 0) < 8) {
-            shape = 'dendrite';
-            this._activeDendrites = (this._activeDendrites ?? 0) + 1;
-          } else {
-            shape = 'hexplate';
-          }
+          shape = (this._activeDendrites < 8) ? 'dendrite' : 'hexplate';
         }
-        // Step 2: temperature-based character
+        // Step 2: temperature-based character (may override shape)
         const temp = this._temperature;
         let swayAmpMod = baseSwayAmp;
         let opacityMod = (0.15 + Math.random() * 0.25) * (0.5 + depth * 0.5);
@@ -936,7 +932,7 @@ export class WeatherFX {
           swayAmpMod *= 0.3;
           opacityMod *= 0.9;
           vyMod *= 1.5;
-          shape = 'circle';
+          shape = 'circle'; // wet snow overrides to circle
         } else if (temp !== null && temp < -15) {
           // diamond dust
           swayAmpMod *= 2.0;
@@ -945,6 +941,10 @@ export class WeatherFX {
         } else {
           // medium dry — bokeh tag for deep particles
           if (depth > 0.7) bokehTag = true;
+        }
+        // Step 3: only count dendrites after temperature may have overridden shape
+        if (shape === 'dendrite') {
+          this._activeDendrites += 1;
         }
         particles.push({
           kind: 'flake', x: Math.random() * w, y: Math.random() * h,
