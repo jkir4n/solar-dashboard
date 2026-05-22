@@ -331,6 +331,73 @@ export class WeatherFX {
     p.oy = oy;
   }
 
+  /**
+   * Generate a fresh lobe array for a cloud archetype using noise-guided placement.
+   * Returns exactly the same lobe count structure as the spawn-time generator.
+   */
+  _generateCloudLobes(archetype) {
+    const ARCH = this._archetypes;
+    if (!ARCH || !ARCH[archetype]) return [];
+    const arch = ARCH[archetype];
+    const [loMin, loMax] = arch.lobeCount;
+    const lobeCount = loMin + Math.floor(Math.random() * (loMax - loMin + 1));
+    const [rsMin, rsMax] = arch.rsRange;
+    const lobes = [];
+    // Center lobe
+    lobes.push({ dx: 0, dy: 0, rs: 1.0, phase: Math.random() * Math.PI * 2 });
+    // Crown anchors (1–2 lobes near top)
+    const crownCount = 1 + Math.floor(Math.random() * 2);
+    for (let k = 0; k < crownCount; k++) {
+      lobes.push({
+        dx: (Math.random() - 0.5) * arch.spreadX * 0.6,
+        dy: arch.spreadY * (0.7 + Math.random() * 0.3),
+        rs: 0.7 + Math.random() * 0.2,
+        phase: Math.random() * Math.PI * 2,
+      });
+    }
+    // Fill lobes — noise-guided placement
+    const fillCount = lobeCount - 1 - crownCount;
+    const noiseSeed  = Math.random() * 1000;
+    const noiseScale = 1.5 + Math.random() * 1.5;
+    let placed = 0;
+    for (let gy = -3; gy <= 3; gy++) {
+      for (let gx = -3; gx <= 3 && placed < fillCount; gx++) {
+        const nx = gx / 3;
+        const ny = gy / 3;
+        const nVal = snFBM(noiseSeed + nx * noiseScale, noiseSeed + ny * noiseScale, 3);
+        const threshold = -0.2 + (arch.spreadY < -0.5 ? 0.15 : 0);
+        if (nVal > threshold) {
+          const dx = nx * arch.spreadX * (0.7 + nVal * 0.3);
+          const dy = ny * Math.abs(arch.spreadY) * (0.7 + nVal * 0.3);
+          const rs = rsMin + (rsMax - rsMin) * (0.5 + nVal * 0.5);
+          lobes.push({ dx, dy: -dy, rs: Math.max(0.25, Math.min(1.0, rs)), phase: Math.random() * Math.PI * 2 });
+          placed++;
+        }
+      }
+    }
+    // Fallback for any remaining lobes not placed by noise
+    while (placed < fillCount) {
+      lobes.push({
+        dx: (Math.random() - 0.5) * arch.spreadX,
+        dy: -(Math.random() * Math.abs(arch.spreadY)),
+        rs: rsMin + Math.random() * (rsMax - rsMin),
+        phase: Math.random() * Math.PI * 2,
+      });
+      placed++;
+    }
+    // Per-lobe shade from vertical position: 1.0 = topmost, 0.0 = bottommost
+    const dyVals = lobes.map(l => l.dy);
+    const minDy = Math.min(...dyVals), maxDy = Math.max(...dyVals);
+    lobes.forEach(l => {
+      l.shade = (maxDy === minDy) ? 0.5 : 1.0 - (l.dy - minDy) / (maxDy - minDy);
+    });
+    // Enforce exact fill count before returning (safety)
+    while (lobes.length < lobeCount) {
+      lobes.push({ dx: 0, dy: 0, rs: rsMin, phase: 0, shade: 0.5 });
+    }
+    return lobes;
+  }
+
   // Continuous cloud dimming from coverage % (0-100) + condition modifier
   // Sigmoid: gentle at extremes, steep mid-range — matches human perception
   _calcCloudDim(cloudCoverage, condition) {
