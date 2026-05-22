@@ -2227,38 +2227,75 @@ export class WeatherFX {
       const gustFactor_snow = 1 + (gustRatio_snow - 1) * 0.5 * Math.sin(now * 0.0007 + 5.1);
       (state._particlesByType.flake || []).forEach(p => {
         p.y += p.vy;
-        p.sway += p.swaySpeed * 0.02;
+        // Step 5: dual-frequency Kármán vortex sway (replaces single-frequency formula)
         const wf = state._windFactorCur ?? 0;
         const wDx = Math.sin(((state._windBearing + 180) % 360) * Math.PI / 180);
-        const windDrift = wDx * wf * 2.0 * p.depth * gustFactor_snow;
-        p.x += Math.sin(p.sway) * p.swayAmp * (1 - wf * 0.7) + windDrift;
+        const windDrift = wDx * wf * 2.0 * (p.depth ?? 0.5) * gustFactor_snow;
+        const f = 0.0008 + (p.depth ?? 0.5) * 0.0004;
+        const phase = p.phase ?? p.sway;
+        const sway = p.swayAmp * Math.sin(now * f + phase)
+                   + 0.4 * p.swayAmp * Math.sin(now * f * 1.7 + phase * 1.3);
+        p.x += sway + windDrift;
         p.angle += 0.008;
-        if (p.y > h + 10) { p.y = -10; p.x = Math.random() * w; }
+        if (p.y > h + 10) {
+          if (p.shape === 'dendrite') state._activeDendrites = Math.max(0, (state._activeDendrites ?? 1) - 1);
+          p.y = -10; p.x = Math.random() * w;
+        }
         if (p.x > w + 10) p.x = -10;
+
+        // Step 6: dew-point sparkle — compute effective fill colour
+        const pr = p.r, px = p.x, py = p.y;
+        let [fr, fg, fb] = [_flakeBase[0] + _wft.r, _flakeBase[1] + _wft.g, _flakeBase[2] + _wft.b];
+        if (state._temperature !== null && state._temperature < 0) {
+          const dewSpread = state._temperature - (state._dewPoint ?? state._temperature);
+          const sparkleIntensity = Math.min(Math.max(dewSpread / 8, 0), 1);
+          fr = Math.round(fr + (255 - fr) * sparkleIntensity);
+          fg = Math.round(fg + (255 - fg) * sparkleIntensity);
+          fb = Math.round(fb + (255 - fb) * sparkleIntensity);
+        }
+        const fillC = `rgba(${Math.min(255,Math.max(0,fr))},${Math.min(255,Math.max(0,fg))},${Math.min(255,Math.max(0,fb))},`;
+
         ctx.save();
-        ctx.translate(p.x, p.y);
+        ctx.translate(px, py);
         ctx.rotate(p.angle);
-        ctx.strokeStyle = flakeColor + p.o + ')';
-        ctx.lineWidth = 0.8;
+
+        // Step 7: shape-based rendering
+        const shape = p.shape || 'dendrite';
         ctx.beginPath();
-        for (let arm = 0; arm < 6; arm++) {
-          const ax = Math.cos(arm * Math.PI / 3) * p.r;
-          const ay = Math.sin(arm * Math.PI / 3) * p.r;
-          ctx.moveTo(0, 0);
-          ctx.lineTo(ax, ay);
-          if (p.r >= 3.5) {
-            for (const frac of [0.45, 0.65]) {
-              const bx = ax * frac, by = ay * frac;
-              const perp = arm * Math.PI / 3 + Math.PI / 2;
-              const bl = p.r * 0.28;
+        if (shape === 'circle') {
+          ctx.fillStyle = fillC + p.o + ')';
+          ctx.arc(0, 0, pr, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (shape === 'hexplate') {
+          ctx.fillStyle = fillC + p.o + ')';
+          ctx.moveTo(pr * Math.cos(0), pr * Math.sin(0));
+          for (let k = 1; k <= 6; k++) {
+            ctx.lineTo(pr * Math.cos(k * Math.PI / 3), pr * Math.sin(k * Math.PI / 3));
+          }
+          ctx.closePath();
+          ctx.fill();
+        } else {
+          // dendrite — 6 arms with 2 side branches each at 60°
+          ctx.strokeStyle = fillC + p.o + ')';
+          ctx.lineWidth = 0.8;
+          for (let arm = 0; arm < 6; arm++) {
+            const angle = arm * Math.PI / 3;
+            const ax = Math.cos(angle) * pr;
+            const ay = Math.sin(angle) * pr;
+            ctx.moveTo(0, 0);
+            ctx.lineTo(ax, ay);
+            const branch = pr * 0.35;
+            for (const frac of [0.35, 0.65]) {
+              const bx = Math.cos(angle) * pr * frac;
+              const by = Math.sin(angle) * pr * frac;
               ctx.moveTo(bx, by);
-              ctx.lineTo(bx + Math.cos(perp) * bl, by + Math.sin(perp) * bl);
+              ctx.lineTo(bx + Math.cos(angle + Math.PI / 3) * branch, by + Math.sin(angle + Math.PI / 3) * branch);
               ctx.moveTo(bx, by);
-              ctx.lineTo(bx - Math.cos(perp) * bl, by - Math.sin(perp) * bl);
+              ctx.lineTo(bx + Math.cos(angle - Math.PI / 3) * branch, by + Math.sin(angle - Math.PI / 3) * branch);
             }
           }
+          ctx.stroke();
         }
-        ctx.stroke();
         ctx.restore();
       });
       (state._particlesByType.bokeh || []).forEach(p => {
