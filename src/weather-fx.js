@@ -2575,6 +2575,42 @@ export class WeatherFX {
         if (p.x     < -p.r * 2)     { p.x =  w + p.r * 2;  p.yBase = Math.random() * h; }
         if (p.yBase >  h + p.r)     { p.yBase = -p.r;       p.x = Math.random() * w; }
         if (p.yBase < -p.r)         { p.yBase =  h + p.r;   p.x = Math.random() * w; }
+
+        // T2.3 item 5: per-frame morph update
+        if (p._morphProgress != null && p._morphFrom && p._morphTo) {
+          p._morphProgress += 0.001; // ~16s per cycle at 60fps
+          if (p._morphProgress >= 1.0) {
+            p._morphFrom = p._morphTo.map(l => ({ ...l }));
+            p._morphTo = state._generateCloudLobes(p.archetype);
+            p._morphProgress = 0;
+          }
+          const t = p._morphProgress;
+          const ease = t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2;
+          p.lobes.forEach((l, i) => {
+            const from = p._morphFrom[i];
+            const to   = p._morphTo[i];
+            if (!from || !to) return;
+            const wobble = Math.sin(t * Math.PI * 2 + i * 1.3 + p.x * 0.01) * 0.03 * (1 - t);
+            l.dx = from.dx + (to.dx - from.dx) * ease + wobble;
+            l.dy = from.dy + (to.dy - from.dy) * ease + wobble * 0.5;
+            l.rs = from.rs + (to.rs - from.rs) * ease;
+          });
+          p.offDirty = true; // lobes changed → regen offscreen
+        }
+
+        // T2.3 item 6: precipProbability bucket dirty-flag
+        const _curBucket = Math.floor((state._precipProbability ?? 0) / 25);
+        if (p._precipThresholdBucket !== _curBucket) {
+          p._precipThresholdBucket = _curBucket;
+          p.offDirty = true;
+        }
+
+        // Regen offscreen canvas if dirty (morph or colour change)
+        if (p.offDirty) {
+          state._renderCloudToOffscreen(p, state._isNight);
+          p.offDirty = false;
+        }
+
         const baseAlpha = state._alpha * p.alpha;
         // Blit pre-rendered off-screen canvas (created once at spawn in _renderCloudToOffscreen)
         if (p.off) {
