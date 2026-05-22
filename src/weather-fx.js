@@ -2222,7 +2222,6 @@ export class WeatherFX {
       const _flakeBase = light
         ? (night ? [100,110,140] : [140,150,170])
         : (night ? [180,195,230] : [255,255,255]);
-      const flakeColor = `rgba(${Math.min(255,Math.max(0,_flakeBase[0]+_wft.r))},${Math.min(255,Math.max(0,_flakeBase[1]+_wft.g))},${Math.min(255,Math.max(0,_flakeBase[2]+_wft.b))},`;
       const gustRatio_snow = Math.min(Math.max(state._windGustSpeed / Math.max(state._windSpeed, 1), 1), 3.0);
       const gustFactor_snow = 1 + (gustRatio_snow - 1) * 0.5 * Math.sin(now * 0.0007 + 5.1);
       (state._particlesByType.flake || []).forEach(p => {
