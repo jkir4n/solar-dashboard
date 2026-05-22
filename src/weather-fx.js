@@ -1420,6 +1420,17 @@ export class WeatherFX {
     // Lerp wind factor for smooth acceleration/deceleration
     if (state._windFactorCur === undefined) state._windFactorCur = state._windFactor ?? 0;
     state._windFactorCur += ((state._windFactor ?? 0) - state._windFactorCur) * 0.02;
+    // T2.1: Layer stagger alpha — far fades in first, near last; reversal order inverted
+    const _isRainingNow = ['rainy','pouring','storm','sleet'].includes(state._currentType);
+    if (_isRainingNow) {
+      state._rainLayerAlpha.far  = Math.min(state._rainLayerAlpha.far  + 0.03, 1.0);
+      if (state._rainLayerAlpha.far  >= 0.5) state._rainLayerAlpha.mid  = Math.min(state._rainLayerAlpha.mid  + 0.03, 1.0);
+      if (state._rainLayerAlpha.mid  >= 0.5) state._rainLayerAlpha.near = Math.min(state._rainLayerAlpha.near + 0.03, 1.0);
+    } else {
+      state._rainLayerAlpha.near = Math.max(state._rainLayerAlpha.near - 0.03, 0);
+      if (state._rainLayerAlpha.near <= 0.5) state._rainLayerAlpha.mid  = Math.max(state._rainLayerAlpha.mid  - 0.03, 0);
+      if (state._rainLayerAlpha.mid  <= 0.5) state._rainLayerAlpha.far  = Math.max(state._rainLayerAlpha.far  - 0.03, 0);
+    }
     // Wind-feel tint — computed once per frame, shared by rain/fog/snow
     const _windFeel = (state._temperature != null && state._windSpeed != null)
       ? (state._temperature < 5 && state._windSpeed > 15 ? 'cold_bite'
