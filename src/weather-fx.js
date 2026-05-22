@@ -1039,7 +1039,7 @@ export class WeatherFX {
           // Dew-point cloud base height (T2.2): larger temp-dew spread = higher clouds
           const _tdSpread = (this._temperature ?? 20) - (this._dewPoint ?? 10);
           const _yBaseFactor = Math.min(Math.max((_tdSpread - 3) / 9, 0), 1);
-          const yBase = arch.name !== 'cirrus'
+          const yBase = archetype !== 'cirrus'
             ? yBaseRaw + _yBaseFactor * (h * 0.3)
             : yBaseRaw;
           // Procedural lobe generation (spec §2)
