@@ -2,6 +2,78 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.57.0 (2026-05-22)
+
+### Features
+- T2.3 cloud morphing, cirrus archetype, precip colouring, atmospheric perspective
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- T2.2 invert yBase shift direction — high T-Td spread → clouds higher on canvas
+- Weather-fx.js
+- T2.2 simplex noise cloud lobe generation + dew-point cloud base height
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Noise.js
+- T2.5 activeDendrites counter race + decrement leak on condition change
+- Weather-fx.js
+- T2.5 snowflake shape variety, temperature character, dew-point sparkle, dual-freq sway
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- T2.1 multi-layer rain with parallax depth and stagger transitions
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- T2.4 pressure null fallback rgb(180,200,255); boltInterval single-value lerp
+- Weather-fx.js
+- Weather-fx.js
+- T2.4 lightning multi-stroke sequences, sheet lightning, pressure colour, UV gating
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- T2.6 apply windFeel tint to fog overlay; cloud/fog/snow gust phases confirmed
+- Weather-fx.js
+- T2.6 wind gust propagation to all particle types with windFeel per-particle tint
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- P0 wire windGustSpeed, dewPoint, pressure fields + fix field name discrepancies
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+- Weather-fx.js
+
+
 ## v0.56.5 (2026-05-20)
 
 ### Bug Fixes
