@@ -2583,6 +2583,11 @@ export class WeatherFX {
             p._morphFrom = p._morphTo.map(l => ({ ...l }));
             p._morphTo = state._generateCloudLobes(p.archetype);
             p._morphProgress = 0;
+            // Clamp both arrays to same length to prevent silent lobe freezing
+            const morphLen = Math.min(p._morphFrom.length, p._morphTo.length);
+            p._morphFrom = p._morphFrom.slice(0, morphLen);
+            p._morphTo = p._morphTo.slice(0, morphLen);
+            p.lobes = p.lobes.slice(0, morphLen);
           }
           const t = p._morphProgress;
           const ease = t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2;
