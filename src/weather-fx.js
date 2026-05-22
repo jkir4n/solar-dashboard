@@ -1012,9 +1012,13 @@ export class WeatherFX {
         archetype = 'stratocumulus';
       } else if (cov >= 40) {
         archetype = 'altocumulus';
+      } else if (cov <= 10) {
+        archetype = 'cirrus';
       } else {
         archetype = 'cumulus';
       }
+      // Step 2: thunderstorm probability override
+      if ((this._thunderstormProb ?? 0) > 40) archetype = 'cumulonimbus';
       // Per-archetype lobe constraints (spec §1–§2)
       const ARCH = {
         cumulus:       { lobeCount: [5, 8],  spreadX: 0.80, spreadY: -0.70, rsRange: [0.55, 0.90] },
