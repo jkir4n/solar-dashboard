@@ -1023,7 +1023,10 @@ export class WeatherFX {
         stratus:       { lobeCount: [8, 14], spreadX: 1.80, spreadY: -0.10, rsRange: [0.35, 0.60] },
         nimbostratus:  { lobeCount: [7, 12], spreadX: 1.50, spreadY: -0.15, rsRange: [0.40, 0.65] },
         cumulonimbus:  { lobeCount: [6, 10], spreadX: 0.90, spreadY: -1.00, rsRange: [0.55, 0.85] },
+        cirrus:        { lobeCount: [3, 5],  spreadX: 2.50, spreadY: -0.10, rsRange: [0.35, 0.60], alpha: [0.15, 0.25], layers: 2 },
       };
+      // Store archetypes on instance so _generateCloudLobes can reference them
+      this._archetypes = ARCH;
       const arch = ARCH[archetype];
       // 2 depth layers — aggressively differentiated (spec §4)
       const LAYERS = [
