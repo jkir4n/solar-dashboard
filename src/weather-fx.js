@@ -19,6 +19,12 @@ const RAIN_SEVERITY = {
   sleet: 0.45,
 };
 
+const RAIN_LAYERS = {
+  far:  { depth: 0.4, windMult: 0.5,  speedMult: 0.5,  alphaMult: 0.5  },
+  mid:  { depth: 0.7, windMult: 0.75, speedMult: 0.75, alphaMult: 0.75 },
+  near: { depth: 1.0, windMult: 1.0,  speedMult: 1.0,  alphaMult: 1.0  },
+};
+
 const LIGHTNING_STROKE_PAUSES = [
   { alpha: 1.0, decay: 8, pauseMin: 80,  pauseMax: 150 },
   { alpha: 0.7, decay: 8, pauseMin: 50,  pauseMax: 100 },
