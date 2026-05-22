@@ -1975,7 +1975,7 @@ export class WeatherFX {
           state._boltCache = state._generateBolt(bx, 0, bx + (Math.random() - 0.5) * w * 0.2, h * 0.6, boltDepth);
           lp.bolt = state._boltCache;
           lp.flashAlpha = LIGHTNING_STROKE_PAUSES[0].alpha;
-          lp.flickerPhase = 0;
+          lp._lastDecayTime = now;
 
           // Step 7: UV flash gating
           let flashAlpha;
