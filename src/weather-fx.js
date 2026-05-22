@@ -1915,12 +1915,14 @@ export class WeatherFX {
           }
         });
 
-        lp.timer += dt; // dt in ms (now - lastFrame)
+        if (!lp._lastBoltTime) lp._lastBoltTime = now - lp.interval; // initialise on first frame
 
         // Step 3: multi-stroke decay — if currently in a stroke, decay flashAlpha
         if (lp.flashAlpha > 0 && now >= lp._strokePauseUntil) {
           const strokeDef = LIGHTNING_STROKE_PAUSES[lp._strokeIndex] ?? LIGHTNING_STROKE_PAUSES[LIGHTNING_STROKE_PAUSES.length - 1];
-          lp.flashAlpha = Math.max(0, lp.flashAlpha - (strokeDef.decay / 1000) * dt);
+          const dtMs = Math.min(now - (lp._lastDecayTime ?? now), 100);
+          lp._lastDecayTime = now;
+          lp.flashAlpha = Math.max(0, lp.flashAlpha - (strokeDef.decay / 1000) * dtMs);
           if (lp.flashAlpha < 0.05) {
             // This stroke is done — check if more strokes remain
             const nextIndex = lp._strokeIndex + 1;
