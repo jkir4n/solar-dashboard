@@ -1173,7 +1173,8 @@ export class WeatherFX {
       const x0 = p.x, y0 = p.y;
       const x1 = p.x + p.len * effDx, y1 = p.y - p.len;
       const grad = ctx.createLinearGradient(x0, y0, x1, y1);
-      const ao = alpha * p.o;
+      const layerAlpha = p.layer ? (this._rainLayerAlpha[p.layer] ?? 1) : 1;
+      const ao = alpha * p.o * (p.alphaMult ?? 1) * layerAlpha;
       grad.addColorStop(0, `rgba(${rH},${gH},${bH},${ao})`);
       grad.addColorStop(1, `rgba(${rH},${gH},${bH},0)`);
       ctx.globalAlpha = 1;
