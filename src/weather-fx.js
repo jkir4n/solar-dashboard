@@ -903,19 +903,65 @@ export class WeatherFX {
         active: false, x: 0, y: 0, vx: 0, vy: 0, trail: [], life: 0
       });
     } else if (type === 'snowy') {
+      if (!this._weatherCondition.match(/snow|hail|sleet/i)) return particles;
       // Layered snowflakes with turbulent wobble
-      for (let i = 0; i < 35; i++) {
+      const snowDensity = Math.round(10 + Math.pow(Math.min(this._precipIntensity ?? 1, 10), 0.7) * 8);
+      for (let i = 0; i < snowDensity; i++) {
         const depth = Math.random();
+        const baseVy = (0.2 + Math.random() * 0.4) * (0.4 + depth * 0.6);
+        const baseSwayAmp = (0.3 + depth * 0.7) * (1 - windFactor * 0.7);
+        // Step 1: depth-based shape selection
+        let shape;
+        if (depth < 0.4) {
+          shape = 'circle';
+        } else if (depth <= 0.7) {
+          shape = 'hexplate';
+        } else {
+          if ((this._activeDendrites ?? 0) < 8) {
+            shape = 'dendrite';
+            this._activeDendrites = (this._activeDendrites ?? 0) + 1;
+          } else {
+            shape = 'hexplate';
+          }
+        }
+        // Step 2: temperature-based character
+        const temp = this._temperature;
+        let swayAmpMod = baseSwayAmp;
+        let opacityMod = (0.15 + Math.random() * 0.25) * (0.5 + depth * 0.5);
+        let vyMod = baseVy;
+        let sparkle = false;
+        let bokehTag = false;
+        if (temp !== null && temp > -1) {
+          // wet heavy snow
+          swayAmpMod *= 0.3;
+          opacityMod *= 0.9;
+          vyMod *= 1.5;
+          shape = 'circle';
+        } else if (temp !== null && temp < -15) {
+          // diamond dust
+          swayAmpMod *= 2.0;
+          sparkle = true;
+          vyMod *= 0.4;
+        } else {
+          // medium dry — bokeh tag for deep particles
+          if (depth > 0.7) bokehTag = true;
+        }
         particles.push({
           kind: 'flake', x: Math.random() * w, y: Math.random() * h,
           r: (1 + Math.random() * 2) * (0.5 + depth * 0.5),
-          vy: (0.2 + Math.random() * 0.4) * (0.4 + depth * 0.6),
-          sway: Math.random() * Math.PI * 2, swaySpeed: 0.3 + Math.random() * 0.5,
+          vy: vyMod,
+          sway: Math.random() * Math.PI * 2,
+          swaySpeed: 0.3 + Math.random() * 0.5,
+          phase: Math.random() * Math.PI * 2,
           // Strong wind reduces random sway and replaces with directional drift
-          swayAmp: (0.3 + depth * 0.7) * (1 - windFactor * 0.7),
+          swayAmp: swayAmpMod,
           windDrift: windDx * windFactor * 2.0 * (0.3 + depth * 0.7),
-          o: (0.15 + Math.random() * 0.25) * (0.5 + depth * 0.5),
-          angle: Math.random() * Math.PI * 2
+          o: opacityMod,
+          angle: Math.random() * Math.PI * 2,
+          depth,
+          shape,
+          sparkle,
+          bokeh: bokehTag,
         });
       }
       // Bokeh foreground flakes
