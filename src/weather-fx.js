@@ -2633,7 +2633,7 @@ export class WeatherFX {
         hgrd.addColorStop(1, `rgba(${hr},${hg},${hb},0)`);
         ctx.fillStyle = hgrd;
         ctx.beginPath();
-        ctx.arc(hx, hy, hr, 0, Math.PI * 2);
+        ctx.arc(hx, hy, hr2, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
       });
