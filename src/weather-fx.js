@@ -827,30 +827,40 @@ export class WeatherFX {
         });
       }
     } else if (type === 'sleet') {
-      // Rain streaks — denser, shorter, steeper than pure rain
+      // Rain streaks — denser, shorter, steeper than pure rain; parallax depth layers
+      if ((this._precipIntensity ?? 0) < 0.1) return particles;
       const mmh = this._precipIntensity ?? null;
       const sev = mmh != null ? Math.max(0.1, Math.min(1.2, Math.pow(mmh / 25, 0.45))) : (RAIN_SEVERITY[type] ?? 0.55);
       const spawnWF = Math.min(1, (this._windSpeed || 0) / 54);
-      const count = Math.round((80 + sev * 160) * (1 + spawnWF * 0.4));
       const lenBase = 8 + sev * 14, lenRange = 10 + sev * 12;
       const speedBase = 3 + sev * 8, speedRange = 3 + sev * 7;
       const oBase = 0.12 + sev * 0.20, oRange = 0.12 + sev * 0.18;
       const lwMin = 0.6 + sev * 0.5, lwRange = 0.8 + sev * 1.4;
       const windBase = 0.3 + sev * 0.2, windRangeW = 0.4 + sev * 0.4;
-      for (let i = 0; i < count; i++) {
-        const depth = Math.random();
-        const depthScale = 0.5 + depth * 0.5;
-        particles.push({
-          kind: 'drop',
-          x: Math.random() * w,
-          y: Math.random() * h,
-          len: (lenBase + Math.random() * lenRange) * depthScale * (1 + spawnWF * 0.5),
-          speed: (speedBase + Math.random() * speedRange) * depthScale,
-          o: (oBase + Math.random() * oRange) * (0.45 + depth * 0.55),
-          lw: lwMin + depth * lwRange,
-          gustPhase: Math.random() * Math.PI * 2,
-          windDx: windDx * (windBase + spawnWF * windRangeW),
-        });
+      const precipIntensity = this._precipIntensity ?? (RAIN_SEVERITY[type] * ((this._cloudCoverage ?? 80) / 100));
+      for (const [layerKey, layer] of Object.entries(RAIN_LAYERS)) {
+        let spawnCount = intensityToSpawnCount(layerKey, precipIntensity);
+        spawnCount = Math.round(spawnCount * (0.7 + (this._cloudCoverage ?? 80) / 300));
+        for (let i = 0; i < spawnCount; i++) {
+          const depth = layer.depth * (0.85 + Math.random() * 0.3);
+          const depthScale = 0.5 + depth * 0.5;
+          particles.push({
+            kind: 'drop',
+            x: Math.random() * w,
+            y: Math.random() * h,
+            len: (lenBase + Math.random() * lenRange) * depthScale * (1 + spawnWF * 0.5),
+            speed: (speedBase + Math.random() * speedRange) * depthScale * layer.speedMult,
+            o: (oBase + Math.random() * oRange) * (0.45 + depth * 0.55),
+            lw: (lwMin + depth * lwRange) * layer.depth,
+            gustPhase: Math.random() * Math.PI * 2,
+            windDx: windDx * (windBase + spawnWF * windRangeW) * layer.windMult,
+            layer: layerKey,
+            depth: layer.depth,
+            windMult: layer.windMult,
+            speedMult: layer.speedMult,
+            alphaMult: layer.alphaMult,
+          });
+        }
       }
       // Ice pellets — small solid circles with wind-driven horizontal drift
       for (let i = 0; i < 25; i++) {
