@@ -1053,15 +1053,36 @@ export class WeatherFX {
               phase: Math.random() * Math.PI * 2,
             });
           }
-          // Fill lobes
+          // Fill lobes — noise-guided placement (T2.2)
           const fillCount = lobeCount - 1 - crownCount;
-          for (let k = 0; k < fillCount; k++) {
+          const noiseSeed = Math.random() * 1000;
+          const noiseScale = 1.5 + Math.random() * 1.5;
+          let placed = 0;
+
+          for (let gy = -3; gy <= 3; gy++) {
+            for (let gx = -3; gx <= 3 && placed < fillCount; gx++) {
+              const nx = gx / 3;
+              const ny = gy / 3;
+              const nVal = snFBM(noiseSeed + nx * noiseScale, noiseSeed + ny * noiseScale, 3);
+              const threshold = -0.2 + (arch.spreadY < -0.5 ? 0.15 : 0);
+              if (nVal > threshold) {
+                const dx = nx * arch.spreadX * (0.7 + nVal * 0.3);
+                const dy = ny * Math.abs(arch.spreadY) * (0.7 + nVal * 0.3);
+                const rs = rsMin + (rsMax - rsMin) * (0.5 + nVal * 0.5);
+                lobes.push({ dx, dy: -dy, rs: Math.max(0.25, Math.min(1.0, rs)), phase: Math.random() * Math.PI * 2 });
+                placed++;
+              }
+            }
+          }
+          // Fallback for any remaining lobes not placed by noise:
+          while (placed < fillCount) {
             lobes.push({
-              dx: (Math.random() - 0.5) * arch.spreadX * 2,
-              dy: arch.spreadY * Math.random(),
+              dx: (Math.random() - 0.5) * arch.spreadX,
+              dy: -(Math.random() * Math.abs(arch.spreadY)),
               rs: rsMin + Math.random() * (rsMax - rsMin),
               phase: Math.random() * Math.PI * 2,
             });
+            placed++;
           }
           // Per-lobe shade from vertical position (spec §2): 1.0 = topmost, 0.0 = bottommost
           const dyVals = lobes.map(l => l.dy);
