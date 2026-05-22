@@ -1282,6 +1282,11 @@ export class WeatherFX {
           };
           // _morphTo needs _generateCloudLobes which needs this._archetypes — set now
           p._morphTo = this._generateCloudLobes(archetype);
+          // Clamp both arrays to same length to prevent silent lobe freezing
+          const morphLen = Math.min(p._morphFrom.length, p._morphTo.length);
+          p._morphFrom = p._morphFrom.slice(0, morphLen);
+          p._morphTo = p._morphTo.slice(0, morphLen);
+          p.lobes = p.lobes.slice(0, morphLen);
           this._renderCloudToOffscreen(p, this._isNight);
           particles.push(p);
         }
