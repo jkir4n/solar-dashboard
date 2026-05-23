@@ -2653,9 +2653,12 @@ export class WeatherFX {
         // Blit pre-rendered off-screen canvas (created once at spawn in _renderCloudToOffscreen)
         if (p.off) {
           const prevAlpha = ctx.globalAlpha;
+          const prevComp = ctx.globalCompositeOperation;
           ctx.globalAlpha = baseAlpha;
+          if (p.archetype === 'cirrus') ctx.globalCompositeOperation = 'lighter';
           ctx.drawImage(p.off, p.x - p.ox, p.y - p.oy);
           ctx.globalAlpha = prevAlpha;
+          ctx.globalCompositeOperation = prevComp;
         }
 
         // Moon/sun scatter highlight at cloud top (screen pass — runs on main canvas after blit)
