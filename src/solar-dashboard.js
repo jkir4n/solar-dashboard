@@ -2723,11 +2723,11 @@ class SolarDashboard extends HTMLElement {
       ].join('|');
       if (fxKey !== this._fxKey) {
         // Core params changed — full rebuild with fade transition
-        this._weatherFx.start(condition, isNight, theme, effWind, moonBrightness, moonElevation, moonAzimuth, sunElevation, sunAzimuth, effCloud, effBearing, effVis, effPI, effTS, effHI, effWC, effUV, effHum, effTemp, effPP);
+        this._weatherFx.start(condition, isNight, theme, effWind, moonBrightness, moonElevation, moonAzimuth, sunElevation, sunAzimuth, effCloud, effBearing, effVis, effPI, effTS, effHI, effWC, effUV, effHum, effTemp, effPP, effGust, effDew, effPressure);
         this._fxKey = fxKey;
       } else {
         // Core params same but cloud/wind/sun/moon may have changed — update without rebuild
-        this._weatherFx.updateDynamic(effCloud, effBearing, sunElevation, sunAzimuth, moonElevation, moonAzimuth, moonBrightness, effVis, effPI, effTS, effHI, effWC, effPP);
+        this._weatherFx.updateDynamic(effCloud, effBearing, sunElevation, sunAzimuth, moonElevation, moonAzimuth, moonBrightness, effVis, effPI, effTS, effHI, effWC, effPP, effGust, effDew, effPressure);
       }
     }
   }
