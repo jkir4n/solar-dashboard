@@ -339,62 +339,90 @@ export class WeatherFX {
     const sunDirX = hasSunDir ? Math.sin(sunAz * DEG) : 0;
     const sunDirY = hasSunDir ? -Math.cos(sunAz * DEG) : 0;
 
-    // Sort lobes bottom → top so top lobes are painted last (on top)
-    const sorted = [...p.lobes].sort((a, b) => b.dy - a.dy);
-    sorted.forEach(lobe => {
+    // --- Phase 1: compute gradient extents from lobe positions ---
+    let gradTop = Infinity, gradBot = -Infinity;
+    for (const lobe of p.lobes) {
+      const ly = oy + lobe.dy * cloudR;
+      const lr = lobe.rs * cloudR;
+      if (ly - lr < gradTop) gradTop = ly - lr;
+      if (ly + lr > gradBot) gradBot = ly + lr;
+    }
+    // Clamp to canvas bounds
+    gradTop = Math.max(0, gradTop);
+    gradBot = Math.min(off.height, gradBot);
+
+    // --- Phase 2: build silhouette path (union of all lobe circles) ---
+    octx.beginPath();
+    for (const lobe of p.lobes) {
       const lx = ox + lobe.dx * cloudR;
       const ly = oy + lobe.dy * cloudR;
       const lr = lobe.rs * cloudR;
-      let s = lobe.shade;                 // 1 = topmost, 0 = bottommost
-
-      // Highlight offset: top-left corner of lobe
-      const hlX = lx - lr * 0.25, hlY = ly - lr * 0.30;
-      const grd = octx.createRadialGradient(hlX, hlY, lr * 0.05, lx, ly, lr);
-
-      if (isNight) {
-        grd.addColorStop(0,    `rgba(85, 100, 140, ${(0.75 + s * 0.15).toFixed(2)})`);
-        grd.addColorStop(0.55, `rgba(50,  60,  95, ${(0.70 + s * 0.10).toFixed(2)})`);
-        grd.addColorStop(1,    `rgba(25,  30,  60, ${(0.20 + s * 0.10).toFixed(2)})`);
-      } else {
-        // Top lobes (s≈1): bright white/pale; bottom lobes (s≈0): use precipProbability underside colour
-        const hi = Math.round(230 + s * 25);   // highlight base: 230–255
-        const md = Math.round(185 + s * 45);   // mid body:  185–230
-
-        // T2.3 item 8: directional lighting bias
-        let lobeR_adj = 0, lobeG_adj = 0;
-        if (hasSunDir) {
-          const lobeMag = Math.sqrt(lobe.dx * lobe.dx + lobe.dy * lobe.dy) || 1;
-          const dot = (lobe.dx / lobeMag) * sunDirX + (lobe.dy / lobeMag) * sunDirY;
-          if (dot > 0) { lobeR_adj = 10; lobeG_adj = 5; }
-        }
-
-        // T2.3 item 7: atmospheric perspective on far-layer clouds
-        let farBlueAdj = 0, farAlphaAdj = 0;
-        if (isFar && lowVis) { farBlueAdj = 15; farAlphaAdj = 0.15; }
-
-        const loR = Math.min(255, undersideR + lobeR_adj);
-        const loG = Math.min(255, undersideG + lobeG_adj);
-        const loB = Math.min(255, undersideB + farBlueAdj);
-        const loA = Math.max(0, 0.18 - farAlphaAdj);
-
-        grd.addColorStop(0,    `rgba(255, 255, 255, 0.95)`);
-        grd.addColorStop(0.30, `rgba(${Math.min(255, hi + lobeR_adj)}, ${Math.min(255, hi + lobeG_adj)}, ${hi + 4}, 0.90)`);
-        grd.addColorStop(0.65, `rgba(${Math.min(255, (185 + s * 45) + lobeR_adj)}, ${Math.min(255, (185 + s * 45) + 4 + lobeG_adj)}, ${(185 + s * 45) + 12 + farBlueAdj}, 0.78)`);
-        grd.addColorStop(1,    `rgba(${loR}, ${loG}, ${loB}, ${loA.toFixed(2)})`);
-      }
-      octx.fillStyle = grd;
-      // T2.3 item 10: shadowBlur per lobe
-      octx.shadowBlur = lr * 0.35;
-      octx.shadowColor = isNight ? 'rgba(30,40,80,0.4)' : 'rgba(200,210,255,0.3)';
-      octx.beginPath();
+      octx.moveTo(lx + lr, ly);
       octx.arc(lx, ly, lr, 0, Math.PI * 2);
-      octx.fill();
-      octx.shadowBlur = 0; // reset immediately after fill
-      octx.shadowColor = 'transparent';
-    });
+    }
 
-    // Reset composite op after drawing
+    // --- Phase 3: clip to silhouette, fill with gradient ---
+    octx.save();
+    octx.clip();
+
+    const grd = octx.createLinearGradient(0, gradTop, 0, gradBot);
+    if (isNight) {
+      grd.addColorStop(0,    'rgba(95, 115, 160, 0.92)');
+      grd.addColorStop(0.45, 'rgba(58,  70, 108, 0.87)');
+      grd.addColorStop(1,    'rgba(28,  35,  68, 0.80)');
+    } else {
+      // Directional lighting: sun-side warmth via horizontal gradient blend
+      const sunBiasR = hasSunDir ? 12 : 0;
+      const sunBiasG = hasSunDir ? 6  : 0;
+      const hi = 245;
+      const mid = 210;
+      grd.addColorStop(0,    `rgba(255, 255, 255, 0.97)`);
+      grd.addColorStop(0.30, `rgba(${Math.min(255, hi + sunBiasR)}, ${Math.min(255, hi + sunBiasG)}, ${hi}, 0.92)`);
+      grd.addColorStop(0.65, `rgba(${Math.min(255, mid + sunBiasR)}, ${Math.min(255, mid + sunBiasG + 4)}, ${mid + 10}, 0.87)`);
+      grd.addColorStop(1,    `rgba(${undersideR}, ${undersideG}, ${undersideB}, 0.82)`);
+    }
+    octx.fillStyle = grd;
+    octx.fillRect(0, 0, off.width, off.height);
+
+    // Directional sun overlay inside clip (warm radial from sun side)
+    if (!isNight && hasSunDir) {
+      const lightX = ox + sunDirX * cloudR * 1.8;
+      const lightY = oy + sunDirY * cloudR * 1.8;
+      const lgrd = octx.createRadialGradient(lightX, lightY, 0, lightX, lightY, cloudR * 2.2);
+      lgrd.addColorStop(0, 'rgba(255, 248, 220, 0.14)');
+      lgrd.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      octx.fillStyle = lgrd;
+      octx.fillRect(0, 0, off.width, off.height);
+    }
+
+    // T2.3: atmospheric perspective on far-layer clouds (low visibility blue-shift inside clip)
+    if (isFar && lowVis) {
+      octx.fillStyle = 'rgba(160, 185, 220, 0.12)';
+      octx.fillRect(0, 0, off.width, off.height);
+    }
+
+    octx.restore(); // remove clip
+
+    // --- Phase 4: soft edge feathering (thin radial ring outside each lobe) ---
+    // Draws a faint halo just beyond the silhouette edge to avoid pixel-hard cuts
     octx.globalCompositeOperation = 'source-over';
+    for (const lobe of p.lobes) {
+      const lx = ox + lobe.dx * cloudR;
+      const ly = oy + lobe.dy * cloudR;
+      const lr = lobe.rs * cloudR;
+      const eGrd = octx.createRadialGradient(lx, ly, lr * 0.82, lx, ly, lr * 1.12);
+      eGrd.addColorStop(0, 'rgba(255,255,255,0)');
+      eGrd.addColorStop(1, isNight
+        ? 'rgba(60, 80, 130, 0.06)'
+        : 'rgba(255, 255, 255, 0.07)');
+      octx.fillStyle = eGrd;
+      octx.beginPath();
+      octx.arc(lx, ly, lr * 1.12, 0, Math.PI * 2);
+      octx.fill();
+    }
+
+    // Cirrus: additive composite for ethereal wispy look (applied at blit stage, not here)
+    octx.globalCompositeOperation = 'source-over'; // ensure reset
 
     p.off = off;
     p.ox = ox;
