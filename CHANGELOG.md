@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.58.0 (2026-05-23)
+
+### Features
+- Cloud clip-then-shade rendering — unique lobe silhouettes per cloud
+- Weather-fx.js
+- Weather-fx.js
+
+
 ## v0.57.0 (2026-05-22)
 
 ### Features
