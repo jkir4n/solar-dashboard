@@ -347,36 +347,20 @@ export class WeatherFX {
       if (ly - lr < gradTop) gradTop = ly - lr;
       if (ly + lr > gradBot) gradBot = ly + lr;
     }
-    // Clamp to canvas bounds
     gradTop = Math.max(0, gradTop);
-    gradBot = Math.min(off.height, gradBot);
+    gradBot = Math.min(off.height, Math.max(gradTop + 1, gradBot));
 
-    // --- Phase 2: build silhouette path (union of all lobe circles) ---
-    octx.beginPath();
-    for (const lobe of p.lobes) {
-      const lx = ox + lobe.dx * cloudR;
-      const ly = oy + lobe.dy * cloudR;
-      const lr = lobe.rs * cloudR;
-      octx.moveTo(lx + lr, ly);
-      octx.arc(lx, ly, lr, 0, Math.PI * 2);
-    }
-
-    // --- Phase 3: clip to silhouette, fill with gradient ---
-    octx.save();
-    octx.clip();
-
+    // --- Phase 2: fill gradient over full canvas ---
     const grd = octx.createLinearGradient(0, gradTop, 0, gradBot);
     if (isNight) {
       grd.addColorStop(0,    'rgba(95, 115, 160, 0.92)');
       grd.addColorStop(0.45, 'rgba(58,  70, 108, 0.87)');
       grd.addColorStop(1,    'rgba(28,  35,  68, 0.80)');
     } else {
-      // Directional lighting: sun-side warmth via horizontal gradient blend
       const sunBiasR = hasSunDir ? 12 : 0;
       const sunBiasG = hasSunDir ? 6  : 0;
-      const hi = 245;
-      const mid = 210;
-      grd.addColorStop(0,    `rgba(255, 255, 255, 0.97)`);
+      const hi = 245, mid = 210;
+      grd.addColorStop(0,    'rgba(255, 255, 255, 0.97)');
       grd.addColorStop(0.30, `rgba(${Math.min(255, hi + sunBiasR)}, ${Math.min(255, hi + sunBiasG)}, ${hi}, 0.92)`);
       grd.addColorStop(0.65, `rgba(${Math.min(255, mid + sunBiasR)}, ${Math.min(255, mid + sunBiasG + 4)}, ${mid + 10}, 0.87)`);
       grd.addColorStop(1,    `rgba(${undersideR}, ${undersideG}, ${undersideB}, 0.82)`);
@@ -384,7 +368,7 @@ export class WeatherFX {
     octx.fillStyle = grd;
     octx.fillRect(0, 0, off.width, off.height);
 
-    // Directional sun overlay inside clip (warm radial from sun side)
+    // Directional sun overlay (additive warmth from sun side)
     if (!isNight && hasSunDir) {
       const lightX = ox + sunDirX * cloudR * 1.8;
       const lightY = oy + sunDirY * cloudR * 1.8;
@@ -395,17 +379,28 @@ export class WeatherFX {
       octx.fillRect(0, 0, off.width, off.height);
     }
 
-    // T2.3: atmospheric perspective on far-layer clouds (low visibility blue-shift inside clip)
+    // Atmospheric perspective on far-layer clouds
     if (isFar && lowVis) {
       octx.fillStyle = 'rgba(160, 185, 220, 0.12)';
       octx.fillRect(0, 0, off.width, off.height);
     }
 
-    octx.restore(); // remove clip
-
-    // --- Phase 4: soft edge feathering (thin radial ring outside each lobe) ---
-    // Draws a faint halo just beyond the silhouette edge to avoid pixel-hard cuts
+    // --- Phase 3: mask gradient to lobe silhouette using destination-in ---
+    // destination-in keeps only the pixels where the mask (lobe circles) is opaque.
+    octx.globalCompositeOperation = 'destination-in';
+    octx.beginPath();
+    for (const lobe of p.lobes) {
+      const lx = ox + lobe.dx * cloudR;
+      const ly = oy + lobe.dy * cloudR;
+      const lr = lobe.rs * cloudR;
+      octx.moveTo(lx + lr, ly);
+      octx.arc(lx, ly, lr, 0, Math.PI * 2);
+    }
+    octx.fillStyle = 'rgba(0, 0, 0, 1)';
+    octx.fill();
     octx.globalCompositeOperation = 'source-over';
+
+    // --- Phase 4: soft edge feathering (faint halo beyond each lobe) ---
     for (const lobe of p.lobes) {
       const lx = ox + lobe.dx * cloudR;
       const ly = oy + lobe.dy * cloudR;
@@ -420,9 +415,6 @@ export class WeatherFX {
       octx.arc(lx, ly, lr * 1.12, 0, Math.PI * 2);
       octx.fill();
     }
-
-    // Cirrus: additive composite for ethereal wispy look (applied at blit stage, not here)
-    octx.globalCompositeOperation = 'source-over'; // ensure reset
 
     p.off = off;
     p.ox = ox;
