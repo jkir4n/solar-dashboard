@@ -889,7 +889,6 @@ export class WeatherFX {
       }
     } else if (type === 'pouring') {
       // Heavy downpour — dense, long, fast streaks with strong wind
-      if ((this._precipIntensity ?? 0) < 0.1) return particles;
       const mmh = this._precipIntensity ?? null;
       const sev = mmh != null ? Math.max(0.1, Math.min(1.2, Math.pow(mmh / 25, 0.45))) : (RAIN_SEVERITY[type] ?? 0.55);
       const spawnWF = Math.min(1, (this._windSpeed || 0) / 54);
