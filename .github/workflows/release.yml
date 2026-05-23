@@ -70,7 +70,7 @@ jobs:
           fi
           # Strip conventional commit prefixes and skip CI bump commits
           COMMITS=$(echo "$RAW_COMMITS" \
-            | grep -v "^chore: bump version" \
+            | grep -v "^chore:" \
             | sed 's/^[a-z]*([^)]*): //;s/^[a-z]*!*: //' \
             | sed 's/\b./\u&/' \
             | sed 's/^/- /')
