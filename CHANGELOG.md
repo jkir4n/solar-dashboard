@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.58.1 (2026-05-23)
+
+### Bug Fixes
+- Cloud rendering — destination-in masking replaces broken clip approach
+- Weather-fx.js
+
+
 ## v0.58.0 (2026-05-23)
 
 ### Features
