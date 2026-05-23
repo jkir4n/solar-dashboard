@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.58.3 (2026-05-23)
+
+### Bug Fixes
+- Remove precipIntensity hard guard; move cirrus lighter composite to offscreen source-over
+- Weather-fx.js
+- Weather-fx.js
+
+
 ## v0.58.2 (2026-05-23)
 
 ### Bug Fixes
