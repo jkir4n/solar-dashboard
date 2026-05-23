@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.58.2 (2026-05-23)
+
+### Bug Fixes
+- Rain/sleet particles always spawn when condition is rainy; wire windGustSpeed, dewPoint, pressure to WeatherFX
+- Weather-fx.js
+- Weather-fx.js
+- Solar-dashboard.js
+- Solar-dashboard.js
+- Weather-fx.js
+- Weather-fx.js
+
+
 ## v0.58.1 (2026-05-23)
 
 ### Bug Fixes
