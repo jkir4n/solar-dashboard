@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.58.4 (2026-05-24)
+
+### Bug Fixes
+- Mobile layout - stack Solar Panels and Controls vertically; fix condition text overflow
+
+
 ## v0.58.3 (2026-05-23)
 
 ### Bug Fixes
