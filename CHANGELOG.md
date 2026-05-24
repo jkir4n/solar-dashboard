@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.59.2 (2026-05-24)
+
+### Bug Fixes
+- Render clouds for precipitation conditions by decoupling cloud render block from else-if chain
+
+
 ## v0.59.1 (2026-05-24)
 
 ### Bug Fixes
