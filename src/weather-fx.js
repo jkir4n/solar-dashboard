@@ -2578,7 +2578,8 @@ export class WeatherFX {
       });
       ctx.globalAlpha = state._alpha;
 
-    } else if (state._currentType === 'cloudy') {
+    }
+    if (state._currentType === 'cloudy' || (state._particlesByType.cloud?.length ?? 0) > 0) {
       // Use lerped wind factor for smooth acceleration
       const windFactor = state._windFactorCur ?? 0;
       const windDx     = state._windDx;
