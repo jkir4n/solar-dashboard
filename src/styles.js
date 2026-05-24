@@ -116,6 +116,7 @@ export const STYLES = `
     .top-row, .mid-row, .chart-row, .cells-grid, .bottom-row { grid-template-columns: 1fr; }
     #pack2Card { border-left: none !important; padding-left: 0 !important; border-top: 1px solid var(--glass-border); padding-top: 16px; margin-top: 16px; }
     .stat-grid { grid-template-columns: repeat(2, 1fr); }
+    .info-row { grid-template-columns: repeat(2, 1fr) !important; }
     .container { padding: 10px; }
     .card { padding: 16px; border-radius: 16px; --shimmer-duration: 20s !important; }
     /* Battery hero */
