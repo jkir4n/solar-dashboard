@@ -1132,6 +1132,7 @@ export class WeatherFX {
           angle: Math.random() * Math.PI / 3
         });
       }
+      this._createParticles('cloudy', canvas).forEach(p => { if (p.kind === 'cloud') particles.push(p); });
     } else if (type === 'fog') {
       const FOG_LAYERS = [
         { yBase: 0.75, speed: 0.15, count: 5, alphaMin: 0.18, alphaMax: 0.24, amp: 18 },
