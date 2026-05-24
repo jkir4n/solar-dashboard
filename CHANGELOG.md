@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.58.6 (2026-05-24)
+
+### Bug Fixes
+- Pack info 4-col to 2-col on mobile (info-row)
+
+
 ## v0.58.5 (2026-05-24)
 
 ### Bug Fixes
