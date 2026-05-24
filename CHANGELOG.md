@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.59.0 (2026-05-24)
+
+### Features
+- Render nimbostratus/cumulonimbus clouds during precipitation conditions
+
+
 ## v0.58.6 (2026-05-24)
 
 ### Bug Fixes
