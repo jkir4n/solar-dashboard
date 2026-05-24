@@ -984,6 +984,7 @@ export class WeatherFX {
           _strokePauseUntil: 0,
         });
       }
+      this._createParticles('cloudy').forEach(p => { if (p.kind === 'cloud') particles.push(p); });
     } else if (type === 'sleet') {
       // Rain streaks — denser, shorter, steeper than pure rain; parallax depth layers
       const mmh = this._precipIntensity ?? null;
