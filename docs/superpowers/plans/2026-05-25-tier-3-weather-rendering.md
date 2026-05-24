@@ -353,10 +353,11 @@ T3.2's visibility gate logic applies only to Block A (Block B already has its ow
     const elongation = toDeg(D); // D is already the Moon–Sun elongation
 
     // Phase angle: 0° = new moon, 180° = full moon (Meeus eq. 48.4)
-    const phaseAngle = ((180 - elongation) % 360 + 360) % 360;
+    const phaseAngle = ((elongation % 360) + 360) % 360;   // 0°=new moon, 180°=full moon
 
-    // Illuminated fraction (Meeus eq. 48.1): k = (1 + cos(i)) / 2
-    const illumination = (1 + Math.cos(phaseAngle * Math.PI / 180)) / 2;
+    // Illuminated fraction (Meeus eq. 48.1): k = (1 - cos(i)) / 2
+    // At 0° (new moon) → illumination=0; at 180° (full moon) → illumination=1
+    const illumination = (1 - Math.cos(phaseAngle * Math.PI / 180)) / 2;
 
     return { phaseAngle, illumination };
   }
