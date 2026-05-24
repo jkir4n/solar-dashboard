@@ -2673,7 +2673,8 @@ export class WeatherFX {
       });
       ctx.globalAlpha = state._alpha;
 
-    } else if (state._currentType === 'sleet') {
+    }
+    if (state._currentType === 'sleet') {
       // Rain streaks
       const dropColor = light
         ? (night ? 'rgba(60,85,130,1)' : 'rgba(100,130,180,1)')
