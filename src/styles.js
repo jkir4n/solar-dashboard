@@ -325,7 +325,7 @@ export const STYLES = `
   .weather-hero-icon { font-size: 36px; line-height: 1; flex-shrink: 0; }
   .weather-hero-body { flex: 1; min-width: 0; }
   .weather-hero-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
-  .weather-hero-condition { font-size: 16px; font-weight: 700; color: var(--text); }
+  .weather-hero-condition { font-size: 16px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
   .weather-hero-temp { font-size: 22px; font-weight: 800; color: var(--text); white-space: nowrap; }
   .weather-hero-sub { display: flex; justify-content: space-between; align-items: baseline; font-size: 16px; color: var(--text); margin-top: 4px; }
   .weather-hero-source { font-size: 12px; opacity: 0.45; }
