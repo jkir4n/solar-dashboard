@@ -113,7 +113,7 @@ export const STYLES = `
     .header h1 { font-size: 22px !important; }
   }
   @media (max-width: 700px) {
-    .top-row, .chart-row, .cells-grid, .bottom-row { grid-template-columns: 1fr; }
+    .top-row, .mid-row, .chart-row, .cells-grid, .bottom-row { grid-template-columns: 1fr; }
     #pack2Card { border-left: none !important; padding-left: 0 !important; border-top: 1px solid var(--glass-border); padding-top: 16px; margin-top: 16px; }
     .container { padding: 10px; }
     .card { padding: 16px; border-radius: 16px; --shimmer-duration: 20s !important; }
