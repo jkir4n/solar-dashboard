@@ -930,7 +930,7 @@ export class WeatherFX {
           lifespan: 45 + Math.random() * 30
         });
       }
-      this._createParticles('cloudy').forEach(p => { if (p.kind === 'cloud') particles.push(p); });
+      this._createParticles('cloudy', canvas).forEach(p => { if (p.kind === 'cloud') particles.push(p); });
     } else if (type === 'rainy' || type === 'storm') {
       // Streak rain with parallax depth layers
       const mmh = this._precipIntensity ?? null;
