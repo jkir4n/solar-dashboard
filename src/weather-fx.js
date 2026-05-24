@@ -1039,7 +1039,7 @@ export class WeatherFX {
           lifespan: 50 + Math.random() * 30
         });
       }
-      this._createParticles('cloudy').forEach(p => { if (p.kind === 'cloud') particles.push(p); });
+      this._createParticles('cloudy', canvas).forEach(p => { if (p.kind === 'cloud') particles.push(p); });
     } else if (type === 'night') {
       // Aurora bands — 4 sine waves across top
       const auroraCount = 4;
