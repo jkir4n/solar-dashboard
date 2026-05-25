@@ -215,7 +215,11 @@ T3.2's visibility gate logic applies only to Block A (Block B already has its ow
 
   Note: `fogDensity` uses `let` (not `const`) because it is reassigned after the initial declaration.
 
-  **Architecture note — `this._visibility` value when condition is `'fog'`:** `_assembleEffective()` computes `_effective.visibility` as `lerp(actual, forecast, w)` (line 3087 of `solar-dashboard.js`) — it is always blended regardless of condition. However, when condition is `'fog'` the blend weight `w` is very low (condition corroboration suppresses it), so in practice `effVis` ≈ raw actual visibility. The hard guard (A8.8) is therefore satisfied by the existing architecture. No separate `_rawVisibility` field is needed.
+  **Architecture note (§8.8 hard guard):** The blend weight for fog visibility is always exactly 0 in
+  `_assembleEffective()` — not merely suppressed, but hard-coded to zero. This means
+  `effVis = lerp(actual, forecast, 0) = actual` always. The forecast value for visibility has no influence
+  when condition is fog. Implementors should verify this in `_assembleEffective()` around line 3063 of
+  `solar-dashboard.js` before relying on it.
 
 - [ ] **Step 2: Replace uniform x-placement with noise-driven placement in Block A**
 
