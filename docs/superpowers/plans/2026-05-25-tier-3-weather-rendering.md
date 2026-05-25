@@ -170,6 +170,8 @@ Far-layer check: `const isFar = p.layer === 0`. Visibility check: `const lowVis 
 
 > Source: spec §T3.2 / `docs/weather-rendering.md` §3.2 + §3.2a
 
+> ⚠️ **Source doc conflict:** `weather-architecture.md §7.6` previously marked fog as ✅ Complete (v0.58.x). This was stale — the actual code still uses `type === 'fog'` condition gating with uniform `Math.random() * w` placement. Noise placement is NOT implemented. The §7.6 table has been corrected to 🔧 Proposed (Tier 3). Do not skip this task based on the architecture table.
+
 **Files:**
 - Modify: `src/weather-fx.js`
   - Fog spawn block A: lines ~1136–1157 (`else if (type === 'fog')` branch) — the primary fog spawn
