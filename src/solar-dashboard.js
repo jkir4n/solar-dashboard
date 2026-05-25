@@ -3157,7 +3157,9 @@ class SolarDashboard extends HTMLElement {
       return;
     }
     const moonState = this._moonPhaseEntityId ? this._bridge._hass.states[this._moonPhaseEntityId] : null;
-    const moonBrightness = moonState ? (MOON_PHASE_BRIGHTNESS[moonState.state] ?? 0.5) : 0.5;
+    // T3.3: Continuous illumination from Meeus Ch.48 (falls back to discrete lookup if engine unavailable)
+    const moonBrightness = this._effective?.moon_illumination
+      ?? (moonState ? (MOON_PHASE_BRIGHTNESS[moonState.state] ?? 0.5) : 0.5);
     this._weatherFx.updateSunMoon(sp.elevation, sp.azimuth, mp.elevation, mp.azimuth, moonBrightness);
     const planets = this._engine.getPlanetPositions ? this._engine.getPlanetPositions(now) : [];
     const gc = this._engine.getGalacticCenterPos ? this._engine.getGalacticCenterPos(now) : { elevation: -90, azimuth: 180 };
