@@ -488,6 +488,12 @@ T3.2's visibility gate logic applies only to Block A (Block B already has its ow
   ctx.fill();
   ```
 
+  > **Intentional divergence from source spec:** Both source docs specify a single offset-circle formula
+  > (`phaseOffset = moonR * cos(θ)`). That formula is geometrically incorrect — at 90° the shadow is
+  > centred, erasing the entire disc; at 180° ~40% of the disc remains dark. The two-step algorithm
+  > (semi-circle clip + terminator ellipse) is mathematically correct and replaces it without changing
+  > the visible intent of the spec.
+
   ```javascript
   // Why two steps? The naive offset-circle formula phaseOffset = moonR * cos(θ) is geometrically
   // wrong: at new moon it leaves ~40% of disc visible; at first quarter it erases everything.
