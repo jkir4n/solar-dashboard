@@ -933,7 +933,7 @@ T3.2's visibility gate logic applies only to Block A (Block B already has its ow
   }
   ```
 
-  Also apply alpha reduction at the blit stage. Find where `_renderCloudToOffscreen` sets the particle's base alpha. Search for `p.alpha` or `p.o` assignment near end of the method. If the blit alpha is controlled by the caller (in the main render loop), add a note: the caller at line ~2647 uses `ctx.globalAlpha = p.alpha * ...`. Reduce the spawned cloud alpha:
+  Also apply alpha reduction at the blit stage. Cloud particles use `p.alpha` (confirmed from code research: line 2646 `const baseAlpha = state._alpha * p.alpha`). The blit at line 2651 is `ctx.globalAlpha = baseAlpha`. Reduce the spawned cloud alpha:
 
   ```javascript
   // ADD at end of _renderCloudToOffscreen, before return:
