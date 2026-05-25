@@ -267,7 +267,6 @@ T3.2's visibility gate logic applies only to Block A (Block B already has its ow
     _fogGrad.addColorStop(0.5, `rgba(200, 210, 220, ${(_fd * 0.15).toFixed(3)})`);
     _fogGrad.addColorStop(1,   `rgba(200, 210, 220, ${(_fd * 0.35).toFixed(3)})`);
     ctx.save();
-    ctx.globalAlpha = state._alpha;
     ctx.fillStyle = _fogGrad;
     ctx.fillRect(0, 0, w, h);
     ctx.restore();
