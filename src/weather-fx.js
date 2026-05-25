@@ -529,6 +529,7 @@ export class WeatherFX {
     if (windGustSpeed !== undefined) this._windGustSpeed = windGustSpeed;
     if (dewPoint !== undefined) this._dewPoint = dewPoint;
     if (pressure !== undefined) this._pressure = pressure;
+    this._moonPhaseAngle = moonPhaseAngle; // degrees 0–360; 0=new, 90=first-quarter, 180=full, 270=last-quarter
     this._windBearing    = Number.isFinite(windBearing) ? windBearing : 180;
     this._updateWindCache();
     this._sunElevation   = sunElevation;
