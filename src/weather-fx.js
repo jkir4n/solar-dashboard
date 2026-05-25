@@ -388,10 +388,14 @@ export class WeatherFX {
       octx.fillRect(0, 0, off.width, off.height);
     }
 
-    // Atmospheric perspective on far-layer clouds
-    if (isFar && lowVis) {
-      octx.fillStyle = 'rgba(160, 185, 220, 0.12)';
+    // T3.6: Blue-shift overlay for far clouds at low visibility (before silhouette clip)
+    if (perspectiveFactor > 0.01) {
+      octx.globalCompositeOperation = 'source-atop';
+      octx.globalAlpha = perspectiveFactor * 0.3;
+      octx.fillStyle = 'rgba(140, 170, 220, 1)';  // Rayleigh blue
       octx.fillRect(0, 0, off.width, off.height);
+      octx.globalCompositeOperation = 'source-over';
+      octx.globalAlpha = 1;
     }
 
     // --- Phase 3: mask gradient to lobe silhouette using destination-in ---
