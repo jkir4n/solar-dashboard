@@ -710,7 +710,11 @@ T3.2's visibility gate logic applies only to Block A (Block B already has its ow
 
   ```javascript
   // T3.4: Secondary bow — reversed colours, larger radius, 15% of primary alpha
-  const secondaryAlpha = baseAlpha * 0.15;  // cloudDim already in baseAlpha — do not apply twice
+  const secondaryAlpha = baseAlpha * 0.15;
+  // Deliberate departure from source doc: source specifies `primaryAlpha * 0.15 * cloudDim`,
+  // but cloudDim is already factored into baseAlpha (via cloudDimRainbow). Applying it twice
+  // would over-suppress the secondary bow under cloud cover. This plan intentionally omits
+  // the second cloudDim multiply.
   if (secondaryAlpha > 0.001) {
     const SEC_BANDS = [
       { r: 100, g:   0, b: 220, am: 0.75, dr: -2.5 }, // violet (innermost of secondary)
