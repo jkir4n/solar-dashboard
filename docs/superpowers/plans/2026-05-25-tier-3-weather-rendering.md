@@ -270,18 +270,15 @@ T3.2's visibility gate logic applies only to Block A (Block B already has its ow
 
   ```javascript
   // T3.2: Fog colour temperature — warm at sunrise/sunset, cold in overcast/night
-  // fogWarmth: 0.0 at night/zenith, 1.0 at horizon
   const _fogWarmth = Math.max(0, Math.sin(state._sunElevCur * Math.PI / 180));
-  // effectiveWarmth: modulated by cloudDim and tropical temperature boost
   const _cloudDimFog = state._calcCloudDim(state._cloudCovCur, state._weatherCondition);
   const _effectiveWarmth = _fogWarmth * _cloudDimFog * (state._temperature > 25 ? 1.2 : 1.0);
   // Per-blob colour lerp: warm=(240,220,180) sunrise orange, cold=(180,190,200) grey-blue
-  // Applied to each blob's fill colour in the forEach loop below:
-  //   const _r = Math.round(180 + _effectiveWarmth * (240 - 180));  // 180→240
-  //   const _g = Math.round(190 + _effectiveWarmth * (220 - 190));  // 190→220
-  //   const _b = Math.round(200 + _effectiveWarmth * (180 - 200));  // 200→180
-  //   p.warmColor = `rgba(${_r},${_g},${_b},${p.o * fogAlpha})`;    // stored on particle at spawn
-  // (blend replaces the default fill colour in the fogBlob render forEach)
+  // Store on particle at spawn, use as fill colour in the fogBlob render forEach:
+  //   const _r = Math.round(180 + _effectiveWarmth * 60);  // 180→240
+  //   const _g = Math.round(190 + _effectiveWarmth * 30);  // 190→220
+  //   const _b = Math.round(200 - _effectiveWarmth * 20);  // 200→180
+  //   fogBlobColor = `rgba(${_r},${_g},${_b},${p.o * fogAlpha})`;
   ```
 
 - [ ] **Step 4: Build**
