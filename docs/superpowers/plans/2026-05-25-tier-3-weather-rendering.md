@@ -741,7 +741,7 @@ T3.2's visibility gate logic applies only to Block A (Block B already has its ow
 - [ ] **Step 7: Commit**
   ```bash
   git add src/solar-engine.js src/solar-dashboard.js src/weather-fx.js dist/solar-dashboard.js
-  git commit -m "feat: moon phase-accurate disc via Meeus Ch.48, continuous cloud gating"
+  git commit -m "feat: moon phase-accurate disc via Meeus Ch.48, continuous cloud gating, celestial wash migration to _effective.moon_illumination"
   ```
 
 ---
