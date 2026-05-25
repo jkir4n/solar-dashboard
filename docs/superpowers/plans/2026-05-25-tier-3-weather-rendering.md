@@ -1018,6 +1018,13 @@ T3.2's visibility gate logic applies only to Block A (Block B already has its ow
 
 **Background:** `_renderCloudToOffscreen` already has `const isFar = p.layer === 0` and `const lowVis = (this._visibility != null && this._visibility < 10)` (both present from T2.3). The blue-shift/alpha reduction code to act on `isFar && lowVis` is the T3.6 addition. Applied once at spawn — zero per-frame cost.
 
+> **Known trade-off:** The atmospheric perspective (blue-shift + alpha reduction) is baked into the offscreen
+> cloud texture at spawn time. `_effective.visibility` updates every ~5 minutes via `_updateWeather()`, but
+> clouds only rebuild when condition or fxKey changes. If visibility drops from 10km to 3km between rebuilds,
+> far clouds will retain their spawned perspective values for several minutes. The effect is subtle (max
+> perspectiveFactor = 0.6) and acceptable as a trade-off against per-frame offscreen redraws. A future
+> improvement could dirty the cloud textures on significant visibility delta (e.g. > 2km change).
+
 - [ ] **Step 1: Add perspective effect to far-cloud offscreen render**
 
   In `src/weather-fx.js`, locate `_renderCloudToOffscreen` at line 273. Find the existing comment:
