@@ -296,6 +296,8 @@ T3.2's visibility gate logic applies only to Block A (Block B already has its ow
   // T3.2: Fog colour temperature — warm at sunrise/sunset, cold in overcast/night
   const _fogWarmth = Math.max(0, Math.sin(state._sunElevCur * Math.PI / 180));
   const _cloudDimFog = state._calcCloudDim(state._cloudCovCur, state._weatherCondition);
+  // state._temperature = this._temperature, set from effTemp in start()/updateDynamic()
+  // i.e. this IS _effective.temperature — no separate lookup needed
   const _fogWarmthEff = _fogWarmth * _cloudDimFog * (state._temperature > 25 ? 1.2 : 1.0);
   // Per-blob colour lerp: warm=(240,220,180) sunrise orange, cold=(180,190,200) grey-blue
   // Store on particle at spawn, use as fill colour in the fogBlob render forEach:
