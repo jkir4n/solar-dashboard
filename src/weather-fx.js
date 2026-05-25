@@ -1673,6 +1673,42 @@ export class WeatherFX {
       ctx.lineWidth = lineWidth;
       ctx.shadowBlur = 0;
       ctx.stroke();
+
+      // T3.5: Vertical curtain rays — per-ray alpha lerp for independent flicker
+      if (p._rays) {
+        p._rays.forEach((ray, ri) => {
+          if (Math.random() < 0.005) {
+            ray.alphaTarget = Math.random() > 0.4 ? 0.5 + Math.random() * 0.5 : 0;
+          }
+          ray.alphaCur += (ray.alphaTarget - ray.alphaCur) * 0.01;
+          if (ray.alphaCur < 0.02) return;
+
+          const rayX = w * ray.x;
+          const ptIdx = Math.min(Math.floor(ray.x * 10), 9);
+          const rayY = pts[ptIdx].y;
+          const rayHeight = lineWidth * (3 + Math.sin(ray.phase + t * 0.02) * 1.5);
+
+          const rayGrad = ctx.createLinearGradient(rayX, rayY - rayHeight, rayX, rayY + lineWidth * 0.5);
+          rayGrad.addColorStop(0, `hsla(${p.hue}, 80%, 70%, 0)`);
+          rayGrad.addColorStop(0.5, `hsla(${p.hue}, 90%, 65%, ${(ray.alphaCur * scale * overlayAurDim).toFixed(3)})`);
+          rayGrad.addColorStop(1, `hsla(${p.hue}, 80%, 60%, 0)`);
+
+          ctx.fillStyle = rayGrad;
+          ctx.fillRect(rayX - 1.5, rayY - rayHeight, 3, rayHeight + lineWidth * 0.5);
+        });
+      }
+
+      // T3.5: Nitrogen emission — purple/blue tint at band lower edge
+      const midY = pts.reduce((sum, pt) => sum + pt.y, 0) / pts.length;
+      const nitrogenY = midY + halfW;
+      const nitroGrad = ctx.createLinearGradient(0, nitrogenY, 0, nitrogenY + lineWidth);
+      nitroGrad.addColorStop(0, `rgba(120, 80, 220, ${(scale * overlayAurDim * 0.3).toFixed(3)})`);
+      nitroGrad.addColorStop(1, `rgba(60, 40, 180, 0)`);
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.fillStyle = nitroGrad;
+      ctx.fillRect(0, nitrogenY, w, lineWidth);
+      ctx.restore();
     });
     ctx.restore();
     ctx.shadowBlur = 0;
