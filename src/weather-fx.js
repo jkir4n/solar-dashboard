@@ -1380,17 +1380,24 @@ export class WeatherFX {
         { yBase: 0.38, speed: 0.30, count: Math.round(3 * fogDensity), alphaMin: 0.05, alphaMax: 0.09, amp: 10 },
         { yBase: 0.22, speed: 0.40, count: Math.round(2 * fogDensity), alphaMin: 0.03, alphaMax: 0.06, amp:  8 },
       ];
+      // T3.2a: Noise-driven fog placement (Block B)
+      const _noiseSeedVis = Math.random() * 1000;
       FOG_VIS_LAYERS.forEach((layer, li) => {
         for (let bi = 0; bi < layer.count; bi++) {
+          const _noiseVal = snFBM(_noiseSeedVis + bi * 0.3, li * 2.0, 3);
+          const _noiseX = ((bi / Math.max(layer.count, 1)) + _noiseVal * 0.15) * w;
+          const _noiseRx = 90 + 70 * (0.5 + _noiseVal * 0.5);
+          const _noiseAlpha = layer.alphaMin + (layer.alphaMax - layer.alphaMin) * (0.5 + _noiseVal * 0.5);
           particles.push({
             kind: 'fogBlob',
-            x: Math.random() * w,
+            x: _noiseX,
+            fogDensity,
             yBase: h * layer.yBase,
             layer: li, blobIndex: bi,
-            rx: 90 + Math.random() * 70,
+            rx: _noiseRx,
             ry: 24 + Math.random() * 16,
             vx: (layer.speed * windDx + (Math.random() - 0.5) * 0.1) * (1 + windFactor * 0.3),
-            o: layer.alphaMin + Math.random() * (layer.alphaMax - layer.alphaMin),
+            o: _noiseAlpha,
             amp: layer.amp,
           });
         }
