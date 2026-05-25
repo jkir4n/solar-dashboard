@@ -820,6 +820,8 @@ T3.2's visibility gate logic applies only to Block A (Block B already has its ow
     + Math.sin(x * p.freq + t) * p.amplitude
     + Math.sin(x * p.freq * 2.3 + t * 1.7) * p.amplitude * 0.3
     + Math.sin(x * p.freq * 0.7 + t * 0.5 + bandIndex) * p.amplitude * 0.15; // T3.5: third harmonic
+  // **Plan addition (not in source docs):** Source docs describe dual-frequency aurora only. The third
+  // harmonic is added here for visual richness. Remove it if strict source fidelity is required.
   ```
 
   After the existing band stroke (after `ctx.stroke()` for the band path, before the next band), add vertical ray rendering:
