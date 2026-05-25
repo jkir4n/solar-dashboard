@@ -8,6 +8,12 @@
 
 **Tech Stack:** Vanilla JS ES2020, Canvas 2D API, Simplex FBM noise (`src/noise.js`, `snFBM(x, y, octaves)`), Meeus astronomical algorithms, Rollup bundler (`npm run build`).
 
+> **Note on task ordering:** The source doc (`weather-rendering.md`) numbers enhancements as §3.1=Aurora,
+> §3.2=Fog, §3.3=Moon, §3.4=Rainbow, §3.5=Cloud Atmospheric Perspective, §3.6=Forecast-Aware. This plan
+> reorders them: T3.1=Forecast-Aware (first, because it is infrastructure that all subsequent tasks depend
+> on), T3.2–T3.6 follow the source section order otherwise. Each task header references its corresponding
+> source section.
+
 ---
 
 ## Key Source Facts (from code research)
