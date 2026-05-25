@@ -1056,7 +1056,13 @@ export class WeatherFX {
           hue: AURORA_HUES[Math.floor(Math.random() * AURORA_HUES.length)],
           amplitude: 15 + Math.random() * 25, freq: 0.002 + Math.random() * 0.002,
           phase: Math.random() * Math.PI * 2, speed: 0.003 + Math.random() * 0.003,
-          thickness: 30 + Math.random() * 40, o: 0.06 + Math.random() * 0.04
+          thickness: 30 + Math.random() * 40, o: 0.06 + Math.random() * 0.04,
+          _rays: Array.from({ length: 12 }, () => ({
+            x: Math.random(),
+            alphaCur: 0,
+            alphaTarget: Math.random() > 0.4 ? 0.6 + Math.random() * 0.4 : 0,
+            phase: Math.random() * Math.PI * 2,
+          }))
         });
       }
       // Shooting star state
