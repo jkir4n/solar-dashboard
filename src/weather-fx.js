@@ -1676,7 +1676,7 @@ export class WeatherFX {
 
       // T3.5: Vertical curtain rays — per-ray alpha lerp for independent flicker
       if (p._rays) {
-        p._rays.forEach((ray, ri) => {
+        p._rays.forEach((ray) => {
           if (Math.random() < 0.005) {
             ray.alphaTarget = Math.random() > 0.4 ? 0.5 + Math.random() * 0.5 : 0;
           }
@@ -1690,11 +1690,13 @@ export class WeatherFX {
 
           const rayGrad = ctx.createLinearGradient(rayX, rayY - rayHeight, rayX, rayY + lineWidth * 0.5);
           rayGrad.addColorStop(0, `hsla(${p.hue}, 80%, 70%, 0)`);
-          rayGrad.addColorStop(0.5, `hsla(${p.hue}, 90%, 65%, ${(ray.alphaCur * scale * overlayAurDim).toFixed(3)})`);
+          rayGrad.addColorStop(0.5, `hsla(${p.hue}, 90%, 65%, 0.8)`);
           rayGrad.addColorStop(1, `hsla(${p.hue}, 80%, 60%, 0)`);
 
+          ctx.globalAlpha = ray.alphaCur * scale * overlayAurDim;
           ctx.fillStyle = rayGrad;
           ctx.fillRect(rayX - 1.5, rayY - rayHeight, 3, rayHeight + lineWidth * 0.5);
+          ctx.globalAlpha = 1;
         });
       }
 
