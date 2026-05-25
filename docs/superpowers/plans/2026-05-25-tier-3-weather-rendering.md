@@ -111,6 +111,9 @@ Far-layer check: `const isFar = p.layer === 0`. Visibility check: `const lowVis 
 
   If any of these are missing (passing raw `attrs.*` instead), add the `eff?.` expression following the existing pattern.
 
+  > `_weatherCondition` is intentionally never blended — it is a categorical string value, not a numeric
+  > attribute, and must always pass through as-is. Do not add blending for it.
+
 - [ ] **Step 2: Verify `moonBrightness` is NOT changed**
 
   Confirm the `start()` call at line 2726 still passes raw `moonBrightness` (not `_effective.moon_illumination`) — T3.3 will replace this. Do not change it here.
