@@ -369,6 +369,12 @@ T3.2's visibility gate logic applies only to Block A (Block B already has its ow
 
     // Illuminated fraction (Meeus eq. 48.1): k = (1 - cos(i)) / 2
     // At 0° (new moon) → illumination=0; at 180° (full moon) → illumination=1
+    > **Intentional interpretation (source doc inconsistency):** The source doc's illumination formula
+    > writes `(1 - Math.cos(phaseAngle)) / 2` without a degree→radian conversion, implying phaseAngle
+    > is in radians. However, the same source doc's clipping formula uses `phaseAngle * Math.PI / 180`
+    > — treating phaseAngle as degrees. This plan resolves the inconsistency in favour of degrees
+    > (matching the clipping formula and Meeus output). The `* Math.PI / 180` conversion before
+    > `Math.cos()` is intentional and correct.
     const illumination = (1 - Math.cos(phaseAngle * Math.PI / 180)) / 2;
 
     return { phaseAngle, illumination };
