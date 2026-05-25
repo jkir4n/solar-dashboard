@@ -1134,10 +1134,11 @@ export class WeatherFX {
       }
       this._createParticles('cloudy', canvas).forEach(p => { if (p.kind === 'cloud') particles.push(p); });
     } else if (type === 'fog') {
-      // T3.2: Visibility gate — skip fog render if visibility is clear (≥5km) even with fog condition
-      if (this._visibility == null || this._visibility >= 5) return;
+      // T3.2: Visibility gate — default 2km when sensor absent (dense fog default)
+      const _vis = this._visibility ?? 2;
+      if (_vis >= 5) return;
 
-      let fogDensity = Math.max(0, Math.min(1, 1 - (this._visibility / 5)));
+      let fogDensity = Math.max(0, Math.min(1, 1 - (_vis / 5)));
       // Temperature–dew_point spread: narrow spread → persistent fog
       const _spread = (this._temperature ?? 15) - (this._dewPoint ?? 10);
       const _persistBoost = _spread < 2 ? 1.3 : _spread > 8 ? 0.5 : 1.0;
