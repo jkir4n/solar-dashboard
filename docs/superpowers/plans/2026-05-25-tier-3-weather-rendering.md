@@ -533,11 +533,15 @@ T3.2's visibility gate logic applies only to Block A (Block B already has its ow
   ctx.fill();
   ```
 
-  > **Intentional divergence from source spec:** Both source docs specify a single offset-circle formula
-  > (`phaseOffset = moonR * cos(θ)`). That formula is geometrically incorrect — at 90° the shadow is
-  > centred, erasing the entire disc; at 180° ~40% of the disc remains dark. The two-step algorithm
-  > (semi-circle clip + terminator ellipse) is mathematically correct and replaces it without changing
-  > the visible intent of the spec.
+  > **Intentional divergence from BOTH source docs:** The broken offset-circle formula
+  > (`phaseOffset = moonR * cos(θ)`) appears identically in two places:
+  > - `weather-architecture.md §7.11.3` (proposed migration code block)
+  > - `weather-rendering.md §3.3` (transition mechanism code block)
+  >
+  > The formula is geometrically incorrect in both — at 90° the shadow is centred, erasing the entire
+  > disc; at 180° ~40% of the disc remains dark. The implementor must diverge from **both** source docs,
+  > not just one. The two-step algorithm (semi-circle clip + terminator ellipse) is mathematically correct
+  > and replaces it without changing the visible intent of the spec.
 
   ```javascript
   // Why two steps? The naive offset-circle formula phaseOffset = moonR * cos(θ) is geometrically
