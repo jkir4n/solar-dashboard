@@ -1002,5 +1002,8 @@ Always run `npm run build` before committing. The distributable `dist/solar-dash
 ### No Force Push
 Do not push to remote. Pushing is done by the project owner after review.
 
-### Fog Hard Guard (T3.2) — RESOLVED
-Architecture A8.8 requires fog to read raw (unblended) visibility. Code review of `_assembleEffective()` (line 3087 of `solar-dashboard.js`) confirms `_effective.visibility` is computed as `lerp(actual, forecast, w)` — it is always blended regardless of condition. However, the blend weight `w` is suppressed when the current condition is `'fog'` (condition corroboration logic keeps `w` near 0 during active fog), so `effVis` ≈ raw actual visibility in practice. The hard guard is satisfied by the existing blend-weight architecture. No separate `_rawVisibility` field is needed. The `if (this._visibility == null || this._visibility >= 5) return particles;` gate in Block A reads `this._visibility`, which is set from `effVis` — effectively the raw value when fog is active.
+### Fog Hard Guard (T3.2)
+Architecture §8.8 mandates blend weight = 0 for fog visibility — a hard zero, not a soft
+suppression. `lerp(actual, forecast, 0) = actual`, so `_effective.visibility` IS the raw actual
+value when fog is active. `this._visibility` in the fog spawn block therefore always reads raw
+actual visibility. No separate `_rawVisibility` field is needed.
