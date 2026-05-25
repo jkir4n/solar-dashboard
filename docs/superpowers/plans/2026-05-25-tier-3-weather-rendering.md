@@ -483,6 +483,8 @@ T3.2's visibility gate logic applies only to Block A (Block B already has its ow
   // Why two steps? The naive offset-circle formula phaseOffset = moonR * cos(θ) is geometrically
   // wrong: at new moon it leaves ~40% of disc visible; at first quarter it erases everything.
   // Correct approach: always erase the dark semicircle, then adjust with a terminator ellipse.
+  // Waxing (0–180°): erases LEFT semicircle → RIGHT side lit (correct: waxing crescent lights the right)
+  // Waning (180–360°): erases RIGHT semicircle → LEFT side lit (correct: waning crescent lights the left)
 
   // T3.3: Correct moon phase shape — two-step: semi-circle + terminator ellipse
   const θ = state._moonPhaseAngle * Math.PI / 180; // phaseAngle: 0°=new, 180°=full
