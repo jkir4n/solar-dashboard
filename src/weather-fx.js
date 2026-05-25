@@ -429,6 +429,14 @@ export class WeatherFX {
       octx.fill();
     }
 
+    // T3.6: Store perspective alpha scale for blit stage
+    if (perspectiveFactor > 0 && isFar) {
+      p._perspectiveAlphaScale = 1 - perspectiveFactor * 0.4;
+      // e.g. visibility=5km → perspectiveFactor=0.5 → alpha × 0.80
+    } else {
+      p._perspectiveAlphaScale = 1.0;
+    }
+
     p.off = off;
     p.ox = ox;
     p.oy = oy;
