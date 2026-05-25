@@ -2675,9 +2675,10 @@ class SolarDashboard extends HTMLElement {
     // Moon phase brightness (0=new, 1=full) — auto-discovered entity
     if (!this._moonPhaseEntityId) this._moonPhaseEntityId = this._discoverMoonPhaseEntity();
     const moonState = this._moonPhaseEntityId ? this._bridge.getState(this._moonPhaseEntityId) : null;
-    const _mb = moonState ? MOON_PHASE_BRIGHTNESS[moonState.state] : undefined;
+    // T3.3: Use continuous Meeus Ch.48 illumination instead of discrete HA sensor lookup
+    const _mb = this._effective?.moon_illumination ?? (moonState ? MOON_PHASE_BRIGHTNESS[moonState.state] : undefined);
     if (_mb !== undefined) this._lastMoonBrightness = _mb;
-    const moonBrightness = this._lastMoonBrightness;
+    const moonBrightness = this._lastMoonBrightness ?? 0.5;
 
     // Moon position from Meeus algorithm
     let moonElevation = -90, moonAzimuth = 180;
