@@ -113,6 +113,9 @@ Far-layer check: `const isFar = p.layer === 0`. Visibility check: `const lowVis 
   - `effUV = eff?.uv_index ?? null` ✓
   - `effPI = eff?.precipitation_intensity ?? null` ✓ (`_effective.precipIntensity`)
   - `effWC = eff?.wind_chill ?? null` ✓ (`_effective.feelsLike` / wind_chill proxy)
+  - effTS = eff?.thunderstorm_probability ?? null ✓  (_effective.thunderstormProb)
+  - effHI = eff?.heat_index ?? null ✓  (_effective.heatIndex)
+  - effPP = eff?.precipitation_probability ?? null ✓  (_effective.precipProb)
 
   If any of these are missing (passing raw `attrs.*` instead), add the `eff?.` expression following the existing pattern.
 
