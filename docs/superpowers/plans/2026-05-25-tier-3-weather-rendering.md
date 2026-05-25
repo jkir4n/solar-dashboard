@@ -189,7 +189,7 @@ T3.2's visibility gate logic applies only to Block A (Block B already has its ow
     const _persistBoost = _spread < 2 ? 1.3 : _spread > 8 ? 0.5 : 1.0;
     fogDensity = Math.max(0, Math.min(1, fogDensity * _persistBoost));
     // Cloud coverage secondary amplifier
-    fogDensity *= (0.7 + (this._cloudCoverage ?? 50) / 300);
+    fogDensity *= (0.7 + (this._cloudCoverage ?? 0) / 300);
 
     const FOG_LAYERS = [
   ```
