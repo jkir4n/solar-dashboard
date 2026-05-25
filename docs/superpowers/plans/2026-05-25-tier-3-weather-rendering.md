@@ -657,6 +657,8 @@ T3.2's visibility gate logic applies only to Block A (Block B already has its ow
 
 - [ ] **Step 6: Migrate celestial wash consumers to `_effective.moon_illumination`**
 
+  _(Source: weather-architecture.md §7.11.1–§7.12 — all moon-brightness consumers must update together)_
+
   After Step 5, `_effective.moon_illumination` is populated (Step 2a) and `moonBrightCur` no
   longer drives the disc. This step migrates the three remaining wash consumers in
   `src/weather-fx.js` so all moon-brightness consumers read the same continuous Meeus value.
