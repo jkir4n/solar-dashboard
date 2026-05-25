@@ -521,8 +521,8 @@ T3.2's visibility gate logic applies only to Block A (Block B already has its ow
     const skyWash = 0.9 * Math.max(0, Math.sin(state._sunElevCur * Math.PI / 180));
     const mb = state._moonBrightCur * moonHorizonFade * (1 - skyWash);
     const moonAlpha = mb * cloudDim;
-    if (moonAlpha < 0.01 && cloudDim < 0.10) {
-      // Hidden — heavy overcast; skip disc and glow
+    if (moonAlpha < 0.01) {
+      // Hidden — moon effectively invisible; skip render
     } else {
   ```
 
