@@ -1644,7 +1644,8 @@ export class WeatherFX {
         const x = w * i / 9;
         const y = yBase
           + Math.sin(x * p.freq + t) * p.amplitude
-          + Math.sin(x * p.freq * 2.3 + t * 1.7) * p.amplitude * 0.3;
+          + Math.sin(x * p.freq * 2.3 + t * 1.7) * p.amplitude * 0.3
+          + Math.sin(x * p.freq * 0.7 + t * 0.5 + bandIndex) * p.amplitude * 0.15;
         pts.push({ x, y });
       }
       // Vertical curtain gradient: transparent top → core colour → cool/warm fringe at bottom
