@@ -2760,9 +2760,22 @@ export class WeatherFX {
 
     // Visibility fog overlay — renders over any condition when vis < 5km, not gated by condition string
     if (state._currentType !== 'fog' && this._visibility != null && this._visibility < 5) {
-      const fogColor = light
-        ? (night ? 'rgba(90,90,110,1)' : 'rgba(160,160,170,1)')
-        : (night ? 'rgba(120,120,140,1)' : 'rgba(200,200,210,1)');
+      // T3.2: Vertical density gradient for vis-overlay fog
+      if ((state._particlesByType.fogBlob || []).length > 0) {
+        const _fdVis = state._particlesByType.fogBlob[0].fogDensity ?? 0.5;
+        const _fogGradVis = ctx.createLinearGradient(0, h * 0.4, 0, h);
+        _fogGradVis.addColorStop(0,   `rgba(200, 210, 220, 0)`);
+        _fogGradVis.addColorStop(0.5, `rgba(200, 210, 220, ${(_fdVis * 0.15).toFixed(3)})`);
+        _fogGradVis.addColorStop(1,   `rgba(200, 210, 220, ${(_fdVis * 0.35).toFixed(3)})`);
+        ctx.save();
+        ctx.fillStyle = _fogGradVis;
+        ctx.fillRect(0, 0, w, h);
+        ctx.restore();
+      }
+      // T3.2: Fog colour temperature — warm at sunrise/sunset, cold in overcast/night
+      const _fogWarmthVis = Math.max(0, Math.sin(state._sunElevCur * Math.PI / 180));
+      const _cloudDimFogVis = state._calcCloudDim(state._cloudCovCur, state._weatherCondition);
+      const _fogWarmthEffVis = _fogWarmthVis * _cloudDimFogVis * (state._temperature > 25 ? 1.2 : 1.0);
       const t = now * 0.001;
       const gustRatio_vis = Math.min(Math.max(state._windGustSpeed / Math.max(state._windSpeed, 1), 1), 3.0);
       const gustFactor_vis = 1 + (gustRatio_vis - 1) * 0.5 * Math.sin(now * 0.0007 + 3.8);
@@ -2772,7 +2785,10 @@ export class WeatherFX {
         if (p.x < -p.rx) p.x = w + p.rx;
         const y = p.yBase + Math.sin(p.x * 0.04 + t * 0.025 + p.blobIndex) * p.amp;
         ctx.globalAlpha = state._alpha * p.o;
-        ctx.fillStyle = fogColor;
+        const _r = Math.round(180 + _fogWarmthEffVis * 60);
+        const _g = Math.round(190 + _fogWarmthEffVis * 30);
+        const _b = Math.round(200 - _fogWarmthEffVis * 20);
+        ctx.fillStyle = `rgba(${_r},${_g},${_b},${p.o})`;
         ctx.beginPath();
         ctx.ellipse(p.x, y, p.rx, p.ry, 0, 0, Math.PI * 2);
         ctx.fill();
