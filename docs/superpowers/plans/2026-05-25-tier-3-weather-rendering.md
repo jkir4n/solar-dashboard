@@ -630,6 +630,11 @@ T3.2's visibility gate logic applies only to Block A (Block B already has its ow
   git commit -m "feat: moon phase-accurate disc via Meeus Ch.48, continuous cloud gating"
   ```
 
+> **Out of scope for T3.3:** `arch.md §7.11.1` lists star wash, planet wash, and Milky Way wash
+> as additional consumers of `_effective.moon_illumination`. These are not migrated in T3.3 —
+> they continue reading `moonBrightCur` directly. Migration of these consumers is a separate
+> task not included in the Tier 3 plan.
+
 ---
 
 ## Task 4: Rainbow Enhancement (T3.4)
