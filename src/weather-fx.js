@@ -680,7 +680,7 @@ export class WeatherFX {
     this._overlayParticlesByType = {};
     this._overlayType = null;
     this._overlayAlpha = 0;
-    this._flashAlpha = 0; this._flashDecay = 0; this._rainbowFade = 0; this._boltCache = null; this._sheetLightningAlpha = 0;
+    this._flashAlpha = 0; this._flashDecay = 0; this._rainbowFade = 0; this._rainbowAfterglow = 0; this._boltCache = null; this._sheetLightningAlpha = 0;
     this._planets = []; this._issPos = null; this._milkyWayAlpha = 0;
     if (this.ctx && this.canvas) {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
