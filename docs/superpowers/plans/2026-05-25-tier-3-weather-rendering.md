@@ -993,6 +993,7 @@ T3.2's visibility gate logic applies only to Block A (Block B already has its ow
   // The aurora forEach runs INSIDE ctx.save()/ctx.restore() at lines 1597/1640.
   // ctx.restore() at end of forEach undoes any composite set during the band stroke.
   // Therefore the nitrogen pass must manage its own save/restore scope explicitly.
+  const midY = pts.reduce((sum, p) => sum + p.y, 0) / pts.length; // aurora band vertical midpoint (mean y of control points)
   const nitrogenY = midY + halfW;
   const nitroGrad = ctx.createLinearGradient(0, nitrogenY, 0, nitrogenY + lineWidth);
   nitroGrad.addColorStop(0, `rgba(120, 80, 220, ${(scale * overlayAurDim * 0.3).toFixed(3)})`);
