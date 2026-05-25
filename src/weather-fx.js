@@ -2826,7 +2826,7 @@ export class WeatherFX {
         if (p.off) {
           const prevAlpha = ctx.globalAlpha;
           const prevComp = ctx.globalCompositeOperation;
-          ctx.globalAlpha = baseAlpha;
+          ctx.globalAlpha = baseAlpha * (p._perspectiveAlphaScale ?? 1);
           if (p.archetype === 'cirrus') ctx.globalCompositeOperation = 'lighter';
           ctx.drawImage(p.off, p.x - p.ox, p.y - p.oy);
           ctx.globalAlpha = prevAlpha;
