@@ -959,11 +959,8 @@ The source doc §3.4 formula comment states `0.005/frame (~3.3s)` for rainbow af
 ### Source Doc Bug (T3.2)
 The source doc §3.2 writes `const fogDensity = ...` then reassigns it with amplifiers. This plan correctly uses `let fogDensity` to allow reassignment.
 
-### T3.3 Illumination Formula — Convention
-Source §3.3 uses: phaseAngle 0°=new moon, 180°=full moon; illumination = (1 - cos(phaseAngle)) / 2.
-This matches the canvas clipping: at new moon phaseOffset = moonR (shadow far right → disc dark);
-at full moon phaseOffset = -moonR (shadow far left → disc fully lit).
-The `phaseAngle` passed to WeatherFX is in degrees. Multiply by Math.PI/180 before Math.cos().
+### T3.3 Illumination Formula — Units
+Source §3.3 convention: phaseAngle 0°=new moon, 180°=full moon; illumination = (1 - cos(phaseAngle × π/180)) / 2. This aligns with the canvas clipping: at new moon phaseOffset = +moonR (shadow far right → disc dark); at full moon phaseOffset = -moonR (shadow far left → disc fully lit). phaseAngle is passed in degrees — multiply by Math.PI/180 before Math.cos().
 
 ### T3.3 `_effective` Timing
 `moon_illumination` is computed inside an IIFE within `_assembleEffective()`. This runs whenever `_updateWeather()` runs (every 5 minutes, or on HA state change). The computed illumination changes slowly (~0.5% per hour at quarter phases) — 5-minute refresh is sufficient resolution.
