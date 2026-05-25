@@ -150,9 +150,17 @@ Far-layer check: `const isFar = p.layer === 0`. Visibility check: `const lowVis 
 - [ ] **Step 6: Commit**
   ```bash
   git add src/solar-dashboard.js src/weather-fx.js dist/solar-dashboard.js
-  git commit -m "feat: wire _effective forecast-blended values to WeatherFX start/updateDynamic"
   ```
-  > If Step 1 found no gaps (all `eff.*` already wired), this commit may only touch `dist/solar-dashboard.js` from the build. That is acceptable — the task is to confirm and document the state.
+  > **Commit type depends on Step 1 outcome:**
+  > - If Step 1 found **no gaps** (all `eff.*` already wired) and the only change is the dist rebuild:
+  >   ```bash
+  >   git commit -m "chore: verify _effective wiring to WeatherFX"
+  >   ```
+  > - If Step 1 found **actual gaps** (one or more `eff.*` assignments added or corrected):
+  >   ```bash
+  >   git commit -m "feat: wire _effective forecast blending to WeatherFX"
+  >   ```
+  > Using `feat:` for a verification-only commit would misrepresent the change in the git log.
 
 ---
 
