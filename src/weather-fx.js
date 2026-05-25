@@ -1991,7 +1991,7 @@ export class WeatherFX {
             // Waning: dark side is right — erase right semicircle
             ctx.arc(moonX, moonY, moonR, -Math.PI / 2, Math.PI / 2, false);
           }
-          ctx.lineTo(moonX, moonY);
+          ctx.lineTo(moonX, moonY); // closes arc to centre, forming a half-disc (pie-wedge = correct filled semicircle)
           ctx.fill();
 
           // Step 2: terminator ellipse — crescent erases more, gibbous restores
