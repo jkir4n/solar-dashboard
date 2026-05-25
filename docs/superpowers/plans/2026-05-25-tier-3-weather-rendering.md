@@ -281,6 +281,17 @@ T3.2's visibility gate logic applies only to Block A (Block B already has its ow
   //   fogBlobColor = `rgba(${_r},${_g},${_b},${p.o * fogAlpha})`;
   ```
 
+  To integrate: inside the `fogBlob` render forEach (after the gradient pass), replace the existing `ctx.fillStyle` line for each blob with:
+
+  ```javascript
+  const _r = Math.round(180 + _fogWarmthEff * 60);
+  const _g = Math.round(190 + _fogWarmthEff * 30);
+  const _b = Math.round(200 - _fogWarmthEff * 20);
+  ctx.fillStyle = `rgba(${_r},${_g},${_b},${p.o})`;
+  ```
+
+  `_fogWarmthEff` is computed once per frame (above the forEach), then read per-blob. The existing fill colour (typically a fixed rgba string) is replaced by this dynamic warm/cold lerp.
+
 - [ ] **Step 4: Build**
   ```bash
   npm run build
