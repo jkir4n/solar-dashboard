@@ -137,6 +137,7 @@ export class WeatherFX {
     this._windDyRender = 0;      // cached: downwind Y component for render loop (+1=down, canvas convention)
     this._weatherCondition = null;
     this._moonBrightness = 0;    // 0=new moon, 1=full moon
+    this._moonPhaseAngle = 0;   // degrees 0–360; 0=new, 90=first-quarter, 180=full, 270=last-quarter
     this._moonElevation = -90;
     this._moonAzimuth = 180;
     this._sunElevation = -90;
