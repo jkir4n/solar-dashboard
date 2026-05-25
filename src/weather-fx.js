@@ -166,6 +166,7 @@ export class WeatherFX {
     this._flashDecay = 0;
     this._boltCache = null;
     this._rainbowFade = 0;             // reserved for Task 9
+    this._rainbowAfterglow = 0;        // T3.4: post-rain persistence, decays ~0.000417/frame (40s at 60fps)
     this._rainLayerAlpha = { far: 0, mid: 0, near: 0 };
     this._sheetLightningAlpha = 0;     // T2.4: distant-storm sheet lightning
     this._activeDendrites = 0;         // T2.5: cap concurrent dendrite snowflakes
