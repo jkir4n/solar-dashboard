@@ -360,7 +360,7 @@ T3.2's visibility gate logic applies only to Block A (Block B already has its ow
 > Source: spec §T3.3 / `docs/weather-rendering.md` §3.3 / `docs/weather-architecture.md` §7.11
 
 **Files:**
-- Modify: `src/solar-engine.js` — add `computeMoonPhaseAngle(jde)` after `getMoonPosition()` (line ~195)
+- Modify: `src/solar-engine.js` — add `computeMoonPhaseAngle(date)` after `getMoonPosition()` (line ~195)
 - Modify: `src/solar-dashboard.js` — replace `MOON_PHASE_BRIGHTNESS` lookup; add `moon_illumination` to `_effective`
 - Modify: `src/weather-fx.js` — canvas clipping for phase shape; cloud gating migration
 
