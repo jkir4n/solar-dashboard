@@ -1134,23 +1134,41 @@ export class WeatherFX {
       }
       this._createParticles('cloudy', canvas).forEach(p => { if (p.kind === 'cloud') particles.push(p); });
     } else if (type === 'fog') {
+      // T3.2: Visibility gate — skip fog render if visibility is clear (≥5km) even with fog condition
+      if (this._visibility == null || this._visibility >= 5) return;
+
+      let fogDensity = Math.max(0, Math.min(1, 1 - (this._visibility / 5)));
+      // Temperature–dew_point spread: narrow spread → persistent fog
+      const _spread = (this._temperature ?? 15) - (this._dewPoint ?? 10);
+      const _persistBoost = _spread < 2 ? 1.3 : _spread > 8 ? 0.5 : 1.0;
+      fogDensity = Math.max(0, Math.min(1, fogDensity * _persistBoost));
+      // Cloud coverage secondary amplifier
+      fogDensity *= (0.7 + (this._cloudCoverage ?? 0) / 300);
+
       const FOG_LAYERS = [
         { yBase: 0.75, speed: 0.15, count: 5, alphaMin: 0.18, alphaMax: 0.24, amp: 18 },
         { yBase: 0.55, speed: 0.22, count: 4, alphaMin: 0.12, alphaMax: 0.18, amp: 14 },
         { yBase: 0.38, speed: 0.30, count: 4, alphaMin: 0.08, alphaMax: 0.12, amp: 10 },
         { yBase: 0.22, speed: 0.40, count: 3, alphaMin: 0.04, alphaMax: 0.08, amp:  8 },
       ];
+      // T3.2a: Noise-driven fog placement
+      const _noiseSeed = Math.random() * 1000;
       FOG_LAYERS.forEach((layer, li) => {
         for (let bi = 0; bi < layer.count; bi++) {
+          const _noiseVal = snFBM(_noiseSeed + bi * 0.3, li * 2.0, 3); // 3 octaves
+          const _noiseX = ((bi / layer.count) + _noiseVal * 0.15) * w;
+          const _noiseRx = 90 + 70 * (0.5 + _noiseVal * 0.5);
+          const _noiseAlpha = layer.alphaMin + (layer.alphaMax - layer.alphaMin) * (0.5 + _noiseVal * 0.5);
           particles.push({
             kind: 'fogBlob',
-            x: Math.random() * w,
+            x: _noiseX,
+            fogDensity,
             yBase: h * layer.yBase,
             layer: li, blobIndex: bi,
-            rx: 90 + Math.random() * 70,
+            rx: _noiseRx,
             ry: 24 + Math.random() * 16,
             vx: (layer.speed * windDx + (Math.random() - 0.5) * 0.1) * (1 + windFactor * 0.3),
-            o: layer.alphaMin + Math.random() * (layer.alphaMax - layer.alphaMin),
+            o: _noiseAlpha,
             amp: layer.amp
           });
         }
