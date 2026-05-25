@@ -1699,8 +1699,8 @@ export class WeatherFX {
       }
 
       // T3.5: Nitrogen emission — purple/blue tint at band lower edge
-      const midY = pts.reduce((sum, pt) => sum + pt.y, 0) / pts.length;
-      const nitrogenY = midY + halfW;
+      const avgY = pts.reduce((sum, pt) => sum + pt.y, 0) / pts.length;
+      const nitrogenY = avgY + halfW;
       const nitroGrad = ctx.createLinearGradient(0, nitrogenY, 0, nitrogenY + lineWidth);
       nitroGrad.addColorStop(0, `rgba(120, 80, 220, ${(scale * overlayAurDim * 0.3).toFixed(3)})`);
       nitroGrad.addColorStop(1, `rgba(60, 40, 180, 0)`);
