@@ -480,23 +480,51 @@ T3.2's visibility gate logic applies only to Block A (Block B already has its ow
   ```
 
   ```javascript
-  // WITH: canvas clipping for crescent/gibbous phase shape using moonPhaseAngle directly
-  // phaseAngle: 0°=new moon (dark), 180°=full moon (fully lit)
-  // Shadow offset direction: 0–180° (waxing) → shadow offset RIGHT (right side dark, left side lit); 180–360° (waning) → shadow offset LEFT (left side dark, right side lit)
-  const _phaseOffset = moonR * Math.cos(state._moonPhaseAngle * Math.PI / 180);
-  // _phaseOffset > 0 at waxing (right side lit), < 0 at waning (left side lit)
+  // Why two steps? The naive offset-circle formula phaseOffset = moonR * cos(θ) is geometrically
+  // wrong: at new moon it leaves ~40% of disc visible; at first quarter it erases everything.
+  // Correct approach: always erase the dark semicircle, then adjust with a terminator ellipse.
+
+  // T3.3: Correct moon phase shape — two-step: semi-circle + terminator ellipse
+  const θ = state._moonPhaseAngle * Math.PI / 180; // phaseAngle: 0°=new, 180°=full
+  const k = (1 - Math.cos(θ)) / 2;                 // illumination: 0 at new, 1 at full
+  const isWaxing = state._moonPhaseAngle <= 180;
+
   ctx.save();
+  // Clip everything to the moon disc boundary
   ctx.beginPath();
-  ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2); // outer disc clip
+  ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
   ctx.clip();
+
+  // Fill the lit disc
   ctx.fillStyle = discGrd;
-  ctx.fillRect(moonX - moonR, moonY - moonR, moonR * 2, moonR * 2); // fill within clip
-  // Shadow side: dark circle offset by phaseOffset — moves left for waning, right for waxing
+  ctx.fillRect(moonX - moonR, moonY - moonR, moonR * 2, moonR * 2);
+
+  // Step 1: erase the dark semicircle (always exactly half the disc)
   ctx.globalCompositeOperation = 'destination-out';
   ctx.beginPath();
-  ctx.arc(moonX + _phaseOffset, moonY, moonR, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(0,0,0,1)';
+  if (isWaxing) {
+    // Waxing: dark side is left — erase left semicircle
+    ctx.arc(moonX, moonY, moonR, Math.PI / 2, -Math.PI / 2, false);
+  } else {
+    // Waning: dark side is right — erase right semicircle
+    ctx.arc(moonX, moonY, moonR, -Math.PI / 2, Math.PI / 2, false);
+  }
+  ctx.lineTo(moonX, moonY);
   ctx.fill();
+
+  // Step 2: terminator ellipse — crescent erases more, gibbous restores
+  const ellipseRx = Math.abs(moonR * Math.cos(θ)); // 0 at quarters, moonR at new/full
+  if (ellipseRx > 0.5) { // skip when negligible (near quarter phase)
+    ctx.beginPath();
+    ctx.ellipse(moonX, moonY, ellipseRx, moonR, 0, 0, Math.PI * 2);
+    if (k < 0.5) {
+      ctx.fill(); // crescent: erase more from lit side (destination-out still active)
+    } else {
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = discGrd;
+      ctx.fill(); // gibbous: restore lit area on dark side
+    }
+  }
   ctx.globalCompositeOperation = 'source-over';
   ctx.restore();
   ```
