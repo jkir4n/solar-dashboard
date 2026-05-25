@@ -1963,10 +1963,51 @@ export class WeatherFX {
           discGrd.addColorStop(0,   `rgba(255,255,245,${discAlpha})`);
           discGrd.addColorStop(0.7, `rgba(225,225,210,${discAlpha * 0.9})`);
           discGrd.addColorStop(1,   `rgba(190,190,175,${discAlpha * 0.75})`);
-          ctx.fillStyle = discGrd;
+
+          // T3.3: Correct moon phase shape — two-step: semi-circle + terminator ellipse
+          // Waxing (0–180°): right side lit; Waning (180–360°): left side lit
+          const θ = state._moonPhaseAngle * Math.PI / 180;
+          const k = (1 - Math.cos(θ)) / 2; // illumination fraction
+          const isWaxing = state._moonPhaseAngle <= 180;
+
+          ctx.save();
+          // Clip to moon disc boundary
           ctx.beginPath();
           ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
+          ctx.clip();
+
+          // Fill the full lit disc first
+          ctx.fillStyle = discGrd;
+          ctx.fillRect(moonX - moonR, moonY - moonR, moonR * 2, moonR * 2);
+
+          // Step 1: erase the dark semicircle (always exactly half the disc)
+          ctx.globalCompositeOperation = 'destination-out';
+          ctx.beginPath();
+          if (isWaxing) {
+            // Waxing: dark side is left — erase left semicircle
+            ctx.arc(moonX, moonY, moonR, Math.PI / 2, -Math.PI / 2, false);
+          } else {
+            // Waning: dark side is right — erase right semicircle
+            ctx.arc(moonX, moonY, moonR, -Math.PI / 2, Math.PI / 2, false);
+          }
+          ctx.lineTo(moonX, moonY);
           ctx.fill();
+
+          // Step 2: terminator ellipse — crescent erases more, gibbous restores
+          const ellipseRx = Math.abs(moonR * Math.cos(θ));
+          if (ellipseRx > 0.5) {
+            ctx.beginPath();
+            ctx.ellipse(moonX, moonY, ellipseRx, moonR, 0, 0, Math.PI * 2);
+            if (k < 0.5) {
+              ctx.fill(); // crescent: erase more (destination-out still active)
+            } else {
+              ctx.globalCompositeOperation = 'source-over';
+              ctx.fillStyle = discGrd;
+              ctx.fill(); // gibbous: restore lit area
+            }
+          }
+          ctx.globalCompositeOperation = 'source-over';
+          ctx.restore();
         }
         // Lunar halo — same radial-gradient ring technique, silvery tones
         const moonHaloStrength = Math.max(0, cloudDim - 0.45) / 0.55 * mb;
