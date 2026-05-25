@@ -2789,7 +2789,7 @@ export class WeatherFX {
         const _r = Math.round(180 + _fogWarmthEffVis * 60);
         const _g = Math.round(190 + _fogWarmthEffVis * 30);
         const _b = Math.round(200 - _fogWarmthEffVis * 20);
-        ctx.fillStyle = `rgba(${_r},${_g},${_b},${p.o})`;
+        ctx.fillStyle = `rgba(${_r},${_g},${_b},1)`;
         ctx.beginPath();
         ctx.ellipse(p.x, y, p.rx, p.ry, 0, 0, Math.PI * 2);
         ctx.fill();
