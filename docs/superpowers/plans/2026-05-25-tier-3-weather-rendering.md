@@ -181,7 +181,7 @@ T3.2's visibility gate logic applies only to Block A (Block B already has its ow
   } else if (type === 'fog') {
     // T3.2: Visibility gate — skip fog render if visibility is clear (≥5km) even with fog condition
     // Reads this._visibility directly (raw value from start()/updateDynamic()) — see Architecture note below
-    if (this._visibility == null || this._visibility >= 5) return particles;
+    if (this._visibility == null || this._visibility >= 5) return;
 
     let fogDensity = Math.max(0, Math.min(1, 1 - (this._visibility / 5)));
     // Temperature–dew_point spread: narrow spread → persistent fog
