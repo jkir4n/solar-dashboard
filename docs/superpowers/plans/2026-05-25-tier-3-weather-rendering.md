@@ -831,6 +831,8 @@ T3.2's visibility gate logic applies only to Block A (Block B already has its ow
 
       const rayGrad = ctx.createLinearGradient(rayX, rayY - rayHeight, rayX, rayY + lineWidth * 0.5);
       rayGrad.addColorStop(0, `hsla(${p.hue}, 80%, 70%, 0)`);
+      // overlayAurDim and scale are defined in the enclosing aurora render block
+      // (outer forEach scope at line ~1599) — available here without redeclaration
       rayGrad.addColorStop(0.5, `hsla(${p.hue}, 90%, 65%, ${(ray.alphaCur * scale * overlayAurDim).toFixed(3)})`);
       rayGrad.addColorStop(1, `hsla(${p.hue}, 80%, 60%, 0)`);
 
