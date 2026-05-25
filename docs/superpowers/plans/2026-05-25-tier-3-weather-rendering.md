@@ -635,16 +635,94 @@ T3.2's visibility gate logic applies only to Block A (Block B already has its ow
   // Should return { phaseAngle: Number, illumination: Number between 0 and 1 }
   ```
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 6: Migrate celestial wash consumers to `_effective.moon_illumination`**
+
+  After Step 5, `_effective.moon_illumination` is populated (Step 2a) and `moonBrightCur` no
+  longer drives the disc. This step migrates the three remaining wash consumers in
+  `src/weather-fx.js` so all moon-brightness consumers read the same continuous Meeus value.
+  `moonBrightCur` remains in place as a lerp target — do not remove it.
+
+  The WeatherFX internal value to use is `state._moonBrightCur` in the render loop.
+  `_moonBrightCur` lerps toward `this._moonBrightness`, which is set from the `moonBrightness`
+  parameter passed to `start()`/`updateDynamic()`. After Step 2b/2c, `moonBrightness` already
+  reads `_effective.moon_illumination` (with discrete fallback). Therefore `state._moonBrightCur`
+  is already the continuous value at render time — no additional field is needed.
+
+  - [ ] **Step 6a: Star field wash — `_renderStarField`**
+
+    In `src/weather-fx.js`, locate `_renderStarField` (search for `_renderStarField`). Find the
+    line that computes `moonWash` for stars — it reads `moonBrightCur` directly (not via
+    `state._moonBrightCur`). It looks like:
+    ```javascript
+    const moonWash = moonBrightCur * 0.65; // or similar factor
+    ```
+    or is embedded in the `baseAlpha` calculation as a `(1 - moonWash)` multiply.
+
+    Replace any bare `moonBrightCur` reference in `_renderStarField` with `state._moonBrightCur`:
+    ```javascript
+    // BEFORE:
+    const moonWash = moonBrightCur * 0.65;
+    // AFTER (continuous Meeus value via lerped _moonBrightCur):
+    const moonWash = state._moonBrightCur * 0.65;
+    ```
+    Rationale: `state._moonBrightCur` is the per-frame lerped value that tracks
+    `_effective.moon_illumination` after Steps 2b/2c. Stars dim continuously as the moon
+    brightens, not in 8 discrete jumps.
+
+  - [ ] **Step 6b: Planet wash**
+
+    In `src/weather-fx.js`, locate the planet render block (search for `moonWash` near the
+    planet render, ~line 2021). The line reads:
+    ```javascript
+    const moonWash = moonBrightCur * 0.55;
+    ```
+    Replace with:
+    ```javascript
+    // T3.3: continuous Meeus illumination via _moonBrightCur
+    const moonWash = state._moonBrightCur * 0.55;
+    ```
+    Rationale: planets (Venus, Mars, Jupiter, Saturn) are dimmed by the same moon-wash
+    physics as stars. Aligning to `_moonBrightCur` makes the dimming continuous and
+    consistent with the moon disc brightness at the same phase.
+
+  - [ ] **Step 6c: Milky Way wash**
+
+    Locate the Milky Way alpha lerp target computation (search for `_milkyWayAlpha`). The
+    lerp target includes a `moonBrightCur` factor:
+    ```javascript
+    // Example pattern (exact line may vary):
+    const mwTarget = cloudDim * (1 - moonBrightCur * 0.7) * 0.06;
+    state._milkyWayAlpha += (mwTarget - state._milkyWayAlpha) * 0.005;
+    ```
+    Replace the `moonBrightCur` reference:
+    ```javascript
+    // T3.3: continuous Meeus illumination
+    const mwTarget = cloudDim * (1 - state._moonBrightCur * 0.7) * 0.06;
+    state._milkyWayAlpha += (mwTarget - state._milkyWayAlpha) * 0.005;
+    ```
+    Rationale: the Milky Way is the most sensitive of the three — even a half-moon washes
+    out the galactic band. Continuous illumination prevents the band snapping visible/invisible
+    as the HA sensor crosses a phase boundary.
+
+  - [ ] **Step 6d: Verify consistency at phase boundaries**
+
+    After implementing Steps 6a–6c, confirm in browser devtools:
+    ```javascript
+    const fx = document.querySelector('solar-dashboard')._weatherFx;
+    // _moonBrightCur should match _effective.moon_illumination (within lerp lag)
+    console.log('moonBrightCur:', fx._moonBrightCur);
+    console.log('moon_illumination:', document.querySelector('solar-dashboard')._effective.moon_illumination);
+    ```
+    Visually verify: at new moon (`illumination ≈ 0`) stars should be fully bright, planets
+    fully visible, Milky Way at full alpha. At full moon (`illumination ≈ 1`) all three
+    should be noticeably dimmed, consistent with how the moon disc dims at the same phase.
+    No discontinuity should occur as `phaseAngle` crosses 0°/360° (new moon) or 180° (full moon).
+
+- [ ] **Step 7: Commit**
   ```bash
   git add src/solar-engine.js src/solar-dashboard.js src/weather-fx.js dist/solar-dashboard.js
   git commit -m "feat: moon phase-accurate disc via Meeus Ch.48, continuous cloud gating"
   ```
-
-> **Out of scope for T3.3:** `arch.md §7.11.1` lists star wash, planet wash, and Milky Way wash
-> as additional consumers of `_effective.moon_illumination`. These are not migrated in T3.3 —
-> they continue reading `moonBrightCur` directly. Migration of these consumers is a separate
-> task not included in the Tier 3 plan.
 
 ---
 
