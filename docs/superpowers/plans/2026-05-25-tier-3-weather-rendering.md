@@ -830,13 +830,15 @@ T3.2's visibility gate logic applies only to Block A (Block B already has its ow
   // would over-suppress the secondary bow under cloud cover. This plan intentionally omits
   // the second cloudDim multiply.
   if (secondaryAlpha > 0.001) {
+    // Secondary bow: color order reversed vs primary (red innermost, violet outermost)
+    // Physics: double internal reflection — red exits at ~50°, violet at ~54°
     const SEC_BANDS = [
-      { r: 100, g:   0, b: 220, am: 0.75, dr: -2.5 }, // violet (innermost of secondary)
-      { r:   0, g:  80, b: 255, am: 0.85, dr: -1.0 },
-      { r:   0, g: 200, b:  60, am: 0.80, dr:  0.5 },
-      { r: 255, g: 230, b:   0, am: 0.85, dr:  2.0 },
-      { r: 255, g: 120, b:   0, am: 0.90, dr:  3.5 },
-      { r: 255, g:  30, b:   0, am: 1.00, dr:  5.0 }, // red (outermost of secondary)
+      { r: 255, g:  30, b:   0, am: 1.00, dr: -2.5 }, // red   (innermost of secondary)
+      { r: 255, g: 120, b:   0, am: 0.95, dr: -1.0 }, // orange
+      { r: 255, g: 220, b:   0, am: 0.90, dr:  0.5 }, // yellow
+      { r:  80, g: 200, b:  40, am: 0.85, dr:  2.0 }, // green
+      { r:  30, g:  80, b: 255, am: 0.80, dr:  3.5 }, // blue
+      { r: 100, g:   0, b: 220, am: 0.75, dr:  5.0 }, // violet (outermost)
     ];
     const secRadius = arcRadius * 1.12; // secondary bow is ~12% larger radius
     ctx.lineWidth = 4;
