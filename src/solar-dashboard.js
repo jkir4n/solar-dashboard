@@ -3092,6 +3092,12 @@ class SolarDashboard extends HTMLElement {
       heat_index:              this._weatherHeatIndex ?? attrs.apparent_temperature ?? null,
       wind_chill:              this._weatherWindChill ?? attrs.temperature ?? null,
       twilightFactor:          computeTwilightTarget(this._sunElevCur),
+      // T3.3: Continuous Meeus Ch.48 moon illumination (0=new, 1=full)
+      moon_illumination: (() => {
+        if (!this._engine || this._bridge.latitude == null) return 0.5;
+        const { illumination } = this._engine.computeMoonPhaseAngle(new Date());
+        return illumination;
+      })(),
     };
   }
 
