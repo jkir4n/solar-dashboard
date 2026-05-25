@@ -955,7 +955,7 @@ T3.2's visibility gate logic applies only to Block A (Block B already has its ow
 
       const rayX = w * ray.x;
       // Find y at this x from pts (interpolate between nearest control points)
-      const ptIdx = Math.min(Math.floor(ray.x * 9), 8);
+      const ptIdx = Math.min(Math.floor(ray.x * 10), 9);
       const rayY = pts[ptIdx].y;
       const rayHeight = lineWidth * (3 + Math.sin(ray.phase + t * 0.02) * 1.5);
 
