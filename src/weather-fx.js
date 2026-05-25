@@ -328,6 +328,13 @@ export class WeatherFX {
     const isFar = p.layer === 0;
     const lowVis = (this._visibility != null && this._visibility < 10);
 
+    // T3.6: Rayleigh blue-shift and alpha reduction for far-layer clouds at low visibility
+    let perspectiveFactor = 0;
+    if (isFar && lowVis) {
+      perspectiveFactor = Math.max(0, Math.min(0.6, 1 - (this._visibility / 10)));
+      // 0 at ≥10km (no effect), 0.6 at 0km (maximum haze)
+    }
+
     // T2.3 item 6: precipProbability-driven underside colour
     // 0% → hsl(0,0%,90%) = rgb(230,230,230); 90% → hsl(220,20%,35%) = ~rgb(71,88,107)
     const precip = Math.min(1, (this._precipProbability ?? 0) / 90);
