@@ -2734,7 +2734,7 @@ class SolarDashboard extends HTMLElement {
         this._fxKey = fxKey;
       } else {
         // Core params same but cloud/wind/sun/moon may have changed — update without rebuild
-        this._weatherFx.updateDynamic(effCloud, effBearing, sunElevation, sunAzimuth, moonElevation, moonAzimuth, moonBrightness, effVis, effPI, effTS, effHI, effWC, effPP, effGust, effDew, effPressure);
+        this._weatherFx.updateDynamic(effCloud, effBearing, sunElevation, sunAzimuth, moonElevation, moonAzimuth, moonBrightness, effVis, effPI, effTS, effHI, effWC, effPP, effGust, effDew, effPressure, moonPhaseAngle);
       }
     }
   }
