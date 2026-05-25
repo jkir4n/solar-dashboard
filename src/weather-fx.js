@@ -593,6 +593,7 @@ export class WeatherFX {
         this._windGustSpeed = windGustSpeed ?? 0;
         this._dewPoint = dewPoint ?? null;
         this._pressure = pressure ?? null;
+        this._moonPhaseAngle = moonPhaseAngle; // degrees 0–360; 0=new, 90=first-quarter, 180=full, 270=last-quarter
     // _lastArchetypeCov is only updated in _startParticles() after threshold comparison (C7)
     // Determine particle type
     let particleType = CONDITION_PARTICLE_MAP[weatherCondition] || null;
