@@ -126,9 +126,18 @@ Far-layer check: `const isFar = p.layer === 0`. Visibility check: `const lowVis 
 
   Confirm the `start()` call at line 2726 still passes raw `moonBrightness` (not `_effective.moon_illumination`) — T3.3 will replace this. Do not change it here.
 
-- [ ] **Step 3: Verify celestial objects read `this._cloudCoverage` (forecast-blended after T3.1)**
+- [ ] **Step 3: Verify celestial objects read `state._cloudCovCur` (lerped) not `state._cloudCoverage` (raw)**
 
-  In `src/weather-fx.js`, search for planet render block (~line 2021), Milky Way block (~line 1983), and ISS block. Each computes `cloudDim` via `state._calcCloudDim(state._cloudCovCur, state._weatherCondition)`. Since `_cloudCovCur` lerps toward `this._cloudCoverage` (which is set from `effCloud` in `start()`/`updateDynamic()`), these already read the forecast-blended value. No code change needed.
+  In `src/weather-fx.js`, search for planet render block (~line 2021), Milky Way block (~line 1983), and ISS block. **Actively check** which value each block passes to `_calcCloudDim()`:
+
+  - `state._cloudCovCur` — the lerped value that smoothly tracks `this._cloudCoverage`; correct
+  - `state._cloudCoverage` — the raw value set directly from `effCloud` in `start()`/`updateDynamic()`; causes visible snapping when forecast blending updates
+
+  > **Hypothesis to verify (not confirmed fact):** It is expected that each celestial block calls
+  > `state._calcCloudDim(state._cloudCovCur, state._weatherCondition)`. If any block reads
+  > `state._cloudCoverage` directly instead, it would bypass the lerp and cause the celestial object's
+  > dimming to snap instantly rather than transition smoothly. This must be checked at the search step —
+  > do not assume it is already correct.
 
   If any celestial block reads `state._cloudCoverage` directly (not `state._cloudCovCur`), change it to `state._cloudCovCur`.
 
