@@ -2688,6 +2688,12 @@ class SolarDashboard extends HTMLElement {
       moonAzimuth   = mp.azimuth;
     }
 
+    // T3.3: Compute continuous phase angle for waxing/waning disc clipping
+    const _moonPhaseResult = (this._engine && this._bridge.latitude != null)
+      ? this._engine.computeMoonPhaseAngle(new Date())
+      : null;
+    const moonPhaseAngle = _moonPhaseResult?.phaseAngle ?? 0; // degrees 0–360
+
     // Update weather FX particles — pass original HA condition, not the palette key,
     // because WeatherFX.start() does its own condition-to-particle mapping
     // B23: Skip full rebuild if core parameters haven't changed (prevents redundant fade loops)
