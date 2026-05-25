@@ -2135,18 +2135,24 @@ export class WeatherFX {
 
     // ---- Rainbow arc — rainy/pouring daytime, sun above 5° ----
     const isRainyCond = state._weatherCondition === 'rainy' || state._weatherCondition === 'pouring';
+    const cloudDimRainbow = state._calcCloudDim(state._cloudCovCur, state._weatherCondition);
     if (isRainyCond && !night && state._sunElevCur > 5) {
       state._rainbowFade = Math.min(1, state._rainbowFade + 1 / 180); // fade in over ~3s at 60fps
+      state._rainbowAfterglow = 1.0;                                   // T3.4: prime afterglow
     } else {
       state._rainbowFade = Math.max(0, state._rainbowFade - 0.05);    // fade out quickly
+      // T3.4: afterglow persists ~40s after rain stops (0.000417/frame at 60fps)
+      state._rainbowAfterglow = Math.max(0, state._rainbowAfterglow - 0.000417);
     }
-    if (state._rainbowFade > 0 && isRainyCond && !night && state._sunElevCur > 5) {
+    const rainbowVisible = (isRainyCond || state._rainbowAfterglow > 0) && !night && state._sunElevCur > 5;
+    if (rainbowVisible) {
+      const effectiveAlpha = Math.max(state._rainbowFade, state._rainbowAfterglow);
       const antisolarAz = (state._sunAzCur + 180) % 360;
       const arcX = w * (antisolarAz / 360);
       const arcRadius = h * 0.55;
       const arcCenterY = h * (0.62 + (state._sunElevCur / 90) * 0.35);
       const baseAlpha = (state._weatherCondition === 'pouring' ? 0.28 : 0.22)
-        * state._rainbowFade * state._alpha;
+        * effectiveAlpha * cloudDimRainbow * state._alpha;
       // 6 spectral bands, inner (red) to outer (violet), each 5px wide
       const BANDS = [
         { r: 255, g:  30, b:   0, am: 1.00, dr: -2.5 },
@@ -2165,6 +2171,29 @@ export class WeatherFX {
         ctx.arc(arcX, arcCenterY, arcRadius + band.dr * 5, Math.PI, 0, true);
         ctx.stroke();
       });
+      // T3.4: Secondary bow — reversed colours, larger radius, 15% of primary alpha
+      // Physics: double internal reflection — red exits at ~50°, violet at ~54°
+      const secondaryAlpha = baseAlpha * 0.15;
+      // cloudDim already factored into baseAlpha via cloudDimRainbow — do not apply twice
+      if (secondaryAlpha > 0.001) {
+        const SEC_BANDS = [
+          { r: 255, g:  30, b:   0, am: 1.00, dr: -2.5 }, // red   (innermost of secondary)
+          { r: 255, g: 120, b:   0, am: 0.95, dr: -1.0 }, // orange
+          { r: 255, g: 220, b:   0, am: 0.90, dr:  0.5 }, // yellow
+          { r:  80, g: 200, b:  40, am: 0.85, dr:  2.0 }, // green
+          { r:  30, g:  80, b: 255, am: 0.80, dr:  3.5 }, // blue
+          { r: 100, g:   0, b: 220, am: 0.75, dr:  5.0 }, // violet (outermost)
+        ];
+        const secRadius = arcRadius * 1.12;
+        ctx.lineWidth = 4;
+        SEC_BANDS.forEach(band => {
+          ctx.globalAlpha = secondaryAlpha * band.am;
+          ctx.strokeStyle = `rgb(${band.r},${band.g},${band.b})`;
+          ctx.beginPath();
+          ctx.arc(arcX, arcCenterY, secRadius + band.dr * 5, Math.PI, 0, true);
+          ctx.stroke();
+        });
+      }
       ctx.globalAlpha = state._alpha;
     }
 
