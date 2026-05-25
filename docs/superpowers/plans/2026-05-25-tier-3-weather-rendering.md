@@ -597,7 +597,7 @@ T3.2's visibility gate logic applies only to Block A (Block B already has its ow
   Then inside the disc render gate, change `if (cloudDim >= 0.35)` to use the new thresholds:
   ```javascript
   // REPLACE:
-  if (cloudDim >= 0.35) {
+  if (cloudDim > 0.35) {
   ```
   ```javascript
   // WITH:
