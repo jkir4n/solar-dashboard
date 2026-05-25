@@ -268,6 +268,11 @@ T3.2's visibility gate logic applies only to Block A (Block B already has its ow
   }
   ```
 
+  > **Warning:** Do NOT set `ctx.globalAlpha = state._alpha` before the gradient `fillRect`.
+  > The fog gradient color stops already encode the density via `fogDensity` — applying `_alpha`
+  > here double-multiplies opacity and will make fog visibly dimmer than spec during WeatherFX
+  > fade-in. Leave `ctx.globalAlpha` at its default (1.0) for the gradient rect.
+
   This must be inserted before the `.forEach(p => { ... })` blob loop begins.
 
   **Step 3b: Per-blob warm/cold colour interpolation (fog colour temperature)**
