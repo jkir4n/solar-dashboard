@@ -305,7 +305,7 @@ T3.2's visibility gate logic applies only to Block A (Block B already has its ow
   - No fog blobs from Block A (visibility gate returns early) and no blobs from Block B (Block B's own gate fails: ≥5km).
 
   Test scenario D — Sunrise with fog: Set sun elevation to 5°.
-  - The fog blobs should appear with a warm orange tint (not just the background). This comes from `effectiveWarmth` driving a per-blob RGB lerp between warm `(240,220,180)` and cold `(180,190,200)`.
+  - Fog blobs should appear with a warm orange tint driven by `effectiveWarmth` — a per-blob RGB lerp between warm `(240,220,180)` and cold `(180,190,200)`. This is NOT the wind-feel tint system — it is a dedicated fog colour computation from §3.2.
 
 - [ ] **Step 6: Commit**
   ```bash
