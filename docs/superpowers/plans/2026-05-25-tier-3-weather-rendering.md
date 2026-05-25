@@ -349,10 +349,8 @@ T3.2's visibility gate logic applies only to Block A (Block B already has its ow
     const JD = date.getTime() / 86400000 + 2440587.5;
     const T  = (JD - 2451545.0) / 36525;
 
-    // Moon's mean longitude and mean anomaly (reuse Ch.47 arguments)
-    const L0 = (218.3164477 + 481267.88123421 * T) % 360;
-    const M  = toRad((134.9633964 + 477198.8675055 * T) % 360);
-    const Ms = toRad((357.5291092 +  35999.0502909 * T) % 360);
+    // D = Moon–Sun elongation (Meeus Ch.47, reused from getMoonPosition arguments)
+    // L0, M, Ms, F omitted — not needed for elongation-only phase angle calculation
     const D  = toRad((297.8501921 + 445267.1114034 * T) % 360);
 
     // Geocentric elongation of moon from sun (Meeus Ch.48, eq. 48.2)
