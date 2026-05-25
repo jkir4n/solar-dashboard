@@ -1143,8 +1143,8 @@ export class WeatherFX {
       const _spread = (this._temperature ?? 15) - (this._dewPoint ?? 10);
       const _persistBoost = _spread < 2 ? 1.3 : _spread > 8 ? 0.5 : 1.0;
       fogDensity = Math.max(0, Math.min(1, fogDensity * _persistBoost));
-      // Cloud coverage secondary amplifier
-      fogDensity *= (0.7 + (this._cloudCoverage ?? 0) / 300);
+      // Cloud coverage secondary amplifier (clamped to 1.0)
+      fogDensity = Math.min(1, fogDensity * (0.7 + (this._cloudCoverage ?? 0) / 300));
 
       const FOG_LAYERS = [
         { yBase: 0.75, speed: 0.15, count: 5, alphaMin: 0.18, alphaMax: 0.24, amp: 18 },
