@@ -364,6 +364,17 @@ T3.2's visibility gate logic applies only to Block A (Block B already has its ow
   git commit -m "feat: fog visibility-gate, noise-driven placement, density gradient"
   ```
 
+### Implementation Fix Notes (applied post-review)
+
+**Fix 1 — Double-opacity on fogBlob ellipses (IMPORTANT)**
+The fog render forEach set both `ctx.globalAlpha = state._alpha * p.o` AND `ctx.fillStyle = rgba(..., ${p.o})`, squaring the blob opacity. Fixed: changed fillStyle alpha to `1` so `globalAlpha` is the sole opacity driver, matching all other particle types.
+
+**Fix 2 — fogDensity cloud amplifier missing clamp (IMPORTANT)**
+`fogDensity *= (0.7 + cloudCoverage / 300)` could produce values above 1.0 (e.g. 1.033 at 100% coverage). Fixed: wrapped with `Math.min(1, ...)`.
+
+**Fix 3 — Null visibility gate suppressing all fog (IMPORTANT)**
+`if (this._visibility == null || this._visibility >= 5) return` silently suppressed all fog when the visibility sensor is absent — a behaviour change from pre-T3.2 code. Fixed: `const _vis = this._visibility ?? 2; if (_vis >= 5) return;` defaults to 2km (dense fog) when sensor is absent.
+
 ---
 
 ## Task 3: Moon Phase-Accurate Disc (T3.3)
