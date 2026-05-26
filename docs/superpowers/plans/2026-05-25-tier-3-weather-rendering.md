@@ -772,6 +772,17 @@ The fog render forEach set both `ctx.globalAlpha = state._alpha * p.o` AND `ctx.
   git commit -m "feat: moon phase-accurate disc via Meeus Ch.48, continuous cloud gating, celestial wash migration to _effective.moon_illumination"
   ```
 
+### Implementation Fix Notes (applied post-review)
+
+**Fix 1 — `_moonPhaseAngle` not initialised in constructor (CRITICAL)**
+`this._moonPhaseAngle` was never set in the WeatherFX constructor. If the render loop fired before `start()` was called (e.g. during the initial fade-in), `state._moonPhaseAngle` was `undefined`, causing `NaN` in the canvas `ellipse()` call and crashing the render loop for that frame. Fixed: added `this._moonPhaseAngle = 0` in the constructor alongside other `_moon*` initialisations.
+
+**Fix 2 — `_moonPhaseAngle` assignment scope in `start()` (IMPORTANT, no change needed)**
+Verified that `this._moonPhaseAngle = moonPhaseAngle` at line ~597 in `start()` is at the unconditional top level, not inside a cold-start guard. No change required.
+
+**Fix 3 — `lineTo(moonX, moonY)` intent documented (IMPORTANT)**
+Added inline comment explaining why closing the arc to the centre (pie-wedge) correctly produces a filled semicircle: `// closes arc to centre, forming a half-disc (pie-wedge = correct filled semicircle)`.
+
 ---
 
 ## Task 4: Rainbow Enhancement (T3.4)
