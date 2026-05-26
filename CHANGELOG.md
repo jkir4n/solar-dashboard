@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.60.4 (2026-05-26)
+
+### Bug Fixes
+- Remove _firstFrame reset from start() to prevent lerp snap on every HA state update
+
+
 ## v0.60.3 (2026-05-26)
 
 ### Bug Fixes
