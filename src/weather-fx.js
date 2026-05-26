@@ -2062,14 +2062,29 @@ export class WeatherFX {
           // Step 2: terminator ellipse — crescent erases more, gibbous restores
           const ellipseRx = Math.abs(moonR * Math.cos(θ));
           if (ellipseRx > 0.5) {
-            ctx.beginPath();
-            ctx.ellipse(moonX, moonY, ellipseRx, moonR, 0, 0, Math.PI * 2);
             if (k < 0.5) {
-              ctx.fill(); // crescent: erase more (destination-out still active)
+              // Crescent: erase more of the lit side (destination-out still active)
+              ctx.beginPath();
+              ctx.ellipse(moonX, moonY, ellipseRx, moonR, 0, 0, Math.PI * 2);
+              ctx.fill();
             } else {
+              // Gibbous: restore only the dark half — clip ellipse to dark side to
+              // avoid double-painting the already-lit semicircle (which brightens it
+              // unevenly and creates a visible oval blob artefact)
               ctx.globalCompositeOperation = 'source-over';
               ctx.fillStyle = discGrd;
-              ctx.fill(); // gibbous: restore lit area
+              ctx.save();
+              ctx.beginPath();
+              if (isWaxing) {
+                ctx.rect(moonX - moonR, moonY - moonR, moonR, moonR * 2);
+              } else {
+                ctx.rect(moonX, moonY - moonR, moonR, moonR * 2);
+              }
+              ctx.clip();
+              ctx.beginPath();
+              ctx.ellipse(moonX, moonY, ellipseRx, moonR, 0, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.restore();
             }
           }
           ctx.globalCompositeOperation = 'source-over';
