@@ -1062,6 +1062,17 @@ Added inline comment explaining why closing the arc to the centre (pie-wedge) co
   git commit -m "feat: aurora curtain rays, multi-frequency waves, nitrogen emission"
   ```
 
+### Implementation Fix Notes (applied post-review)
+
+**Fix 1 — Per-frame `createLinearGradient` allocation in ray loop (IMPORTANT)**
+48 gradient objects were created per frame (12 rays × 4 bands) in the aurora ray forEach. Fixed: removed the dynamic `toFixed(3)` alpha from the gradient stop; moved opacity control to `ctx.globalAlpha = ray.alphaCur * scale * overlayAurDim` before `fillRect`, restoring to `1` after. The gradient still allocates per-frame (y-coords change with wave motion) but eliminates the string interpolation cost in the hot path.
+
+**Fix 2 — Nitrogen band anchored to centroid, not wave bottom (IMPORTANT)**
+`nitrogenY = avgY + halfW` used the mean y of control points. Under high-amplitude waves the nitrogen strip visually detached from the band bottom at wave troughs. Fixed: `const waveBottom = Math.max(...pts.map(pt => pt.y)); const nitrogenY = waveBottom + halfW;` anchors to the actual rendered lower edge.
+
+**Fix 3 — Unused `ri` index parameter removed (Suggestion)**
+`p._rays.forEach((ray, ri) => {...})` — `ri` was never read. Removed to avoid lint warnings.
+
 ---
 
 ## Task 6: Atmospheric Perspective on Far Clouds (T3.6)
