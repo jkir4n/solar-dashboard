@@ -1222,4 +1222,145 @@ Do not push to remote. Pushing is done by the project owner after review.
 Architecture §8.8 mandates blend weight = 0 for fog visibility — a hard zero, not a soft
 suppression. `lerp(actual, forecast, 0) = actual`, so `_effective.visibility` IS the raw actual
 value when fog is active. `this._visibility` in the fog spawn block therefore always reads raw
+
+---
+
+## Post-Implementation Notes
+
+These fixes were identified during spec compliance and code quality review after each task was implemented. Each entry documents the root cause, the exact fix, and the runtime effect.
+
+### T3.2 — Double-opacity on fogBlob ellipses (fixed during code review)
+
+`_renderFog` set `ctx.globalAlpha = alpha * p.o` (where `p.o` is the per-particle opacity, 0.05–0.15) then also embedded `p.o` in the rgba fillStyle alpha channel. The two multiplied, squaring opacity and making every fog blob near-invisible.
+
+**Fix:**
+```js
+// before
+ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${p.o})`;
+// after
+ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 1)`;
+```
+
+**Effect:** Fog opacity is now driven solely by `globalAlpha`; blobs render at their intended density.
+
+---
+
+### T3.2 — fogDensity exceeding 1.0 without clamp (fixed during code review)
+
+The cloud-coverage amplifier `fogDensity *= (0.7 + cloudCoverage / 300)` could push `fogDensity` above 1.0 when cloud coverage was high. Downstream spawn counts and colour lerp weights expected a 0–1 value and produced oversaturated, over-dense fog.
+
+**Fix:**
+```js
+// before
+fogDensity *= (0.7 + cloudCoverage / 300);
+// after
+fogDensity = Math.min(1, fogDensity * (0.7 + cloudCoverage / 300));
+```
+
+**Effect:** `fogDensity` stays in [0, 1]; cloud-amplified fog no longer overflows spawn budgets.
+
+---
+
+### T3.2 — Null-visibility gate suppressing all fog when sensor absent (fixed during code review)
+
+The early-return guard `if (this._visibility == null) return;` fired when `_visibility` was `undefined` (sensor not yet populated), silently suppressing the entire fog effect for users without a visibility sensor.
+
+**Fix:**
+```js
+// before
+if (this._visibility == null) return;
+// after
+const _vis = this._visibility ?? 2;   // default 2 km — visible fog range
+if (_vis >= 5) return;
+```
+
+**Effect:** Fog renders correctly when `_visibility` is absent (defaults to 2 km), and only skips when visibility is clearly good (≥ 5 km).
+
+---
+
+### T3.3 — `_moonPhaseAngle` uninitialised in constructor (fixed during code review — CRITICAL)
+
+`this._moonPhaseAngle` was never set in the `WeatherFX` constructor. Before the first `start()` call the property was `undefined`. The moon-disc renderer passed it directly to `ctx.ellipse()` as the rotation angle, producing `NaN` geometry and a runtime crash on the first render frame.
+
+**Fix:**
+```js
+// in WeatherFX constructor — added:
+this._moonPhaseAngle = 0;
+```
+
+**Effect:** Moon disc renders correctly on the very first frame; no NaN crash on initial load.
+
+---
+
+### T3.3 — Undocumented pie-wedge geometry in moon-phase clip (fixed during code review)
+
+The two-step moon clipping algorithm used `ctx.lineTo(moonX, moonY)` after an arc to close a half-disc path. The comment only said `// close path`, making the code look like an accidental line-to rather than the intentional geometry that produces a correct filled semicircle.
+
+**Fix:**
+```js
+// before
+ctx.lineTo(moonX, moonY); // close path
+// after
+ctx.lineTo(moonX, moonY); // closes arc to centre → pie-wedge = correct filled semicircle
+```
+
+**Effect:** No runtime change; the clipping geometry is now self-documenting.
+
+---
+
+### T3.5 — Per-frame gradient allocation in aurora ray loop (fixed during code review)
+
+`_renderAurora` called `ctx.createLinearGradient()` inside the ray `forEach` with a variable alpha baked into the colour stop via `.toFixed(3)`. This created 12 new gradient objects per frame, causing measurable GC pressure at 60 fps.
+
+**Fix:**
+```js
+// before — variable alpha in colour stop
+grad.addColorStop(0.5, `rgba(${r},${g},${b},${(ray.alphaCur * scale * overlayAurDim).toFixed(3)})`);
+
+// after — fixed stop, opacity via globalAlpha
+grad.addColorStop(0.5, `rgba(${r},${g},${b},0.8)`);
+ctx.globalAlpha = ray.alphaCur * scale * overlayAurDim;
+```
+
+**Effect:** Variable alpha removed from gradient stop; opacity applied via `globalAlpha` instead — GC pressure reduced.
+
+---
+
+### T3.5 — Nitrogen emission band anchored to wave centroid instead of wave bottom (fixed during code review)
+
+The nitrogen emission stripe used `avgY + halfW` as its Y position, where `avgY` was the arithmetic mean of the wave `pts` array. For asymmetric wave shapes the mean sits near the middle of the band, placing the nitrogen stripe inside the band rather than below it.
+
+**Fix:**
+```js
+// before
+const nitrogenY = avgY + halfW;
+// after
+const waveBottom = Math.max(...pts.map(pt => pt.y));
+const nitrogenY = waveBottom + halfW;
+```
+
+**Effect:** Nitrogen emission stripe always sits just below the lowest point of the aurora wave, matching physical emission altitude separation.
+
+---
+
+### T3.6 — Guard condition asymmetry between blue-shift and alpha-scale (fixed during code review)
+
+Two guard conditions that should activate together had different thresholds: alpha-scale used `perspectiveFactor > 0` while blue-shift used `> 0.01`. In the range `(0, 0.01]` clouds would dim without turning blue, causing a visible pop-in at the transition boundary.
+
+**Fix:**
+```js
+// before — mismatched guards
+if (perspectiveFactor > 0) {
+  p._perspectiveAlphaScale = 1 - perspectiveFactor * 0.6;
+}
+if (perspectiveFactor > 0.01) { /* blue-shift ... */ }
+
+// after — unified at 0.01
+if (perspectiveFactor > 0.01) {
+  p._perspectiveAlphaScale = 1 - perspectiveFactor * 0.6;
+  /* blue-shift overlay ... */
+}
+```
+
+**Effect:** Alpha dimming and blue-shift activate simultaneously; no pop-in artefact at the perspective threshold boundary.
 actual visibility. No separate `_rawVisibility` field is needed.
