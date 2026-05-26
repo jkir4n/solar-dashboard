@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.60.2 (2026-05-26)
+
+### Bug Fixes
+- Moon gibbous phase renders as oval blob — ellipse restoration now clipped to dark side only
+
 ## v0.60.1 (2026-05-26)
 
 ### Bug Fixes
