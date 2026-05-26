@@ -178,6 +178,7 @@ export class WeatherFX {
     this._issAzCur   = 180;
     this._milkyWayAlpha = 0;      // lerped opacity for Milky Way
     this._twilightFactor = 0;
+    this._firstFrame = true;      // snap lerps on first render to avoid cold-start wash-out
     this._starField = [];
     this._updateWindCache();
   }
@@ -579,6 +580,7 @@ export class WeatherFX {
   }
 
   start(weatherCondition, isNight, theme = 'dark', windSpeed = 0, moonBrightness = 0, moonElevation = -90, moonAzimuth = 180, sunElevation = -90, sunAzimuth = 180, cloudCoverage = null, windBearing = 180, visibility = null, precipIntensity = null, thunderstormProb = null, heatIndex = null, windChill = null, uvIndex = null, humidity = null, temperature = null, precipProbability = null, windGustSpeed = 0, dewPoint = null, pressure = null, moonPhaseAngle = 0) {
+    this._firstFrame = true;      // snap lerps on next render frame
     this._theme = theme;
     this._isNight = isNight;
     this._windSpeed = windSpeed;
@@ -1823,6 +1825,34 @@ export class WeatherFX {
       state._issAzCur = (state._issAzCur + _dIA * _issL + 360) % 360;
     } else {
       state._issElevCur += (-90 - state._issElevCur) * 0.04; // fade below horizon
+    }
+
+    // Snap all lerp-based state to their targets on the very first frame to avoid
+    // the cold-start "washed out" look that occurs while values slowly converge from 0.
+    if (state._firstFrame) {
+      state._sunElevCur    = state._sunElevation;
+      state._sunAzCur      = state._sunAzimuth;
+      state._moonElevCur   = state._moonElevation;
+      state._moonAzCur     = state._moonAzimuth;
+      state._moonBrightCur = state._moonBrightness;
+      state._cloudCovCur   = state._cloudCoverage ?? 50;
+      state._windFactorCur = state._windFactor ?? 0;
+      state._twilightFactor = computeTwilightTarget(state._sunElevation);
+      const _elevScaleDaySnap   = Math.max(0, Math.min(1, (state._sunElevation + 18) / 28));
+      const _elevScaleNightSnap = Math.max(0, Math.min(1, -state._sunElevation / 8));
+      const _oaTargetSnap = state._overlayType === 'night'
+        ? state._overlayAlpha * _elevScaleNightSnap
+        : state._overlayAlpha * _elevScaleDaySnap;
+      state._overlayAlphaCur = _oaTargetSnap;
+      const _isRainingSnap = ['rainy', 'pouring', 'storm', 'sleet'].includes(state._currentType);
+      if (_isRainingSnap) {
+        state._rainLayerAlpha = { far: 1, mid: 1, near: 1 };
+      }
+      const _mwCloudDim = state._calcCloudDim(state._cloudCovCur, state._weatherCondition);
+      state._milkyWayAlpha = state._isNight
+        ? Math.max(0, Math.min(1, (state._galCenterEl + 20) / 40)) * _mwCloudDim * (1 - state._moonBrightCur * 0.7) * 0.06
+        : 0;
+      state._firstFrame = false;
     }
 
     ctx.clearRect(0, 0, w, h);
