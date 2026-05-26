@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.60.3 (2026-05-26)
+
+### Bug Fixes
+- Snap weather lerp values to targets on first frame to prevent cold-start dull appearance
+
+
 ## v0.60.2 (2026-05-26)
 
 ### Bug Fixes
