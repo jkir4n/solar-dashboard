@@ -2530,15 +2530,21 @@ export class WeatherFX {
           const x = w * i / 9;
           const y = yBase
             + Math.sin(x * p.freq + t) * p.amplitude
-            + Math.sin(x * p.freq * 2.3 + t * 1.7) * p.amplitude * 0.3;
+            + Math.sin(x * p.freq * 2.3 + t * 1.7) * p.amplitude * 0.3
+            + Math.sin(x * p.freq * 0.7 + t * 0.5 + bandIndex) * p.amplitude * 0.15;
           pts.push({ x, y });
         }
         const midY = pts[Math.floor(pts.length / 2)].y;
+        const isOvercast = ['rainy','pouring','storm','fog','snowy','hail','snowy-rainy','lightning','lightning-rainy'].includes(this._weatherCondition);
+        const fringeHue = isOvercast ? 210 : 0;
+        const fringeSat = isOvercast ? 50 : 80;
+        const fringeLit = isOvercast ? 45 : 50;
+        const fringeAlpha = isOvercast ? 0.25 : 0.4;
         const grad = ctx.createLinearGradient(0, midY - halfW, 0, midY + halfW);
         grad.addColorStop(0,    `hsla(${p.hue}, 80%, 60%, 0)`);
         grad.addColorStop(0.35, `hsla(${p.hue}, 85%, 60%, 1)`);
         grad.addColorStop(0.7,  `hsla(${p.hue}, 80%, 55%, 0.8)`);
-        grad.addColorStop(1,    `hsla(0, 80%, 50%, 0.4)`);
+        grad.addColorStop(1,    `hsla(${fringeHue}, ${fringeSat}%, ${fringeLit}%, ${fringeAlpha})`);
         ctx.globalAlpha = state._alpha * p.o * auroraDim;
         ctx.beginPath();
         ctx.moveTo(pts[0].x, pts[0].y);
@@ -2552,6 +2558,44 @@ export class WeatherFX {
         ctx.lineWidth = lineWidth;
         ctx.shadowBlur = 0;
         ctx.stroke();
+
+        // T3.5: Vertical curtain rays — per-ray alpha lerp for independent flicker
+        if (p._rays) {
+          p._rays.forEach((ray) => {
+            if (Math.random() < 0.005) {
+              ray.alphaTarget = Math.random() > 0.4 ? 0.5 + Math.random() * 0.5 : 0;
+            }
+            ray.alphaCur += (ray.alphaTarget - ray.alphaCur) * 0.01;
+            if (ray.alphaCur < 0.02) return;
+
+            const rayX = w * ray.x;
+            const ptIdx = Math.min(Math.floor(ray.x * 10), 9);
+            const rayY = pts[ptIdx].y;
+            const rayHeight = lineWidth * (3 + Math.sin(ray.phase + t * 0.02) * 1.5);
+
+            const rayGrad = ctx.createLinearGradient(rayX, rayY - rayHeight, rayX, rayY + lineWidth * 0.5);
+            rayGrad.addColorStop(0, `hsla(${p.hue}, 80%, 70%, 0)`);
+            rayGrad.addColorStop(0.5, `hsla(${p.hue}, 90%, 65%, 0.8)`);
+            rayGrad.addColorStop(1, `hsla(${p.hue}, 80%, 60%, 0)`);
+
+            ctx.globalAlpha = ray.alphaCur * state._alpha * auroraDim;
+            ctx.fillStyle = rayGrad;
+            ctx.fillRect(rayX - 1.5, rayY - rayHeight, 3, rayHeight + lineWidth * 0.5);
+            ctx.globalAlpha = 1;
+          });
+        }
+
+        // T3.5: Nitrogen emission — purple/blue tint at band lower edge
+        const waveBottom = Math.max(...pts.map(pt => pt.y));
+        const nitrogenY = waveBottom + halfW;
+        const nitroGrad = ctx.createLinearGradient(0, nitrogenY, 0, nitrogenY + lineWidth);
+        nitroGrad.addColorStop(0, `rgba(120, 80, 220, ${(state._alpha * auroraDim * 0.3).toFixed(3)})`);
+        nitroGrad.addColorStop(1, `rgba(60, 40, 180, 0)`);
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.fillStyle = nitroGrad;
+        ctx.fillRect(0, nitrogenY, w, lineWidth);
+        ctx.restore();
       });
       ctx.restore();
       ctx.shadowBlur = 0;
