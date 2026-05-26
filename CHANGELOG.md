@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.60.0 (2026-05-26)
+
+### Features
+- Align perspective alpha-scale guard to blue-shift threshold
+- Atmospheric perspective on far clouds via visibility-driven Rayleigh shift
+- Aurora ray gradient reuse and nitrogen band anchoring
+- Aurora curtain rays, multi-frequency waves, nitrogen emission
+- Rainbow post-rain afterglow and secondary bow
+- Moon phase constructor init and start() scope
+- Moon phase-accurate disc via Meeus Ch.48, continuous cloud gating, celestial wash migration to _effective.moon_illumination
+- Fog double-opacity, density clamp, null-visibility fallback
+- Fog visibility-gate, noise-driven placement, density gradient
+- Tier 3 weather rendering implementation plan
+- Tier 3 weather rendering design spec
+
+
 ## v0.59.3 (2026-05-24)
 
 ### Bug Fixes
