@@ -1185,6 +1185,11 @@ Added inline comment explaining why closing the arc to the centre (pie-wedge) co
   git commit -m "feat: atmospheric perspective on far clouds via visibility-driven Rayleigh shift"
   ```
 
+### Implementation Fix Notes (applied post-review)
+
+**Fix 1 — Guard condition asymmetry (IMPORTANT)**
+The blue-shift block gated on `perspectiveFactor > 0.01` but the `_perspectiveAlphaScale` assignment gated on `perspectiveFactor > 0`. At perspectives between 0 and 0.01 (visibility 9.83–10km), alpha was fractionally reduced while no blue-shift was applied. Fixed: aligned the alpha-scale guard to `perspectiveFactor > 0.01 && isFar`.
+
 ---
 
 ## Implementation Notes
