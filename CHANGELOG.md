@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.60.1 (2026-05-26)
+
+### Bug Fixes
+- T3.5 aurora main-particle render path missing curtain rays, third harmonic, and nitrogen emission
+
 ## v0.60.0 (2026-05-26)
 
 ### Features
