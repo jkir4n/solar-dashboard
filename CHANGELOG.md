@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.60.6 (2026-05-27)
+
+### Bug Fixes
+- Use opaque fill for moon phase destination-out erasure
+
+
 ## v0.60.5 (2026-05-27)
 
 ### Bug Fixes
