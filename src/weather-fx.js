@@ -2034,19 +2034,34 @@ export class WeatherFX {
         const moonR  = 20 + mb * 14;
         const glowR  = moonR * (2.5 + mb * 2) * (1 + (1 - cloudDim) * 1.5);
 
-        // Diffuse glow — always shown when moon is up (even behind clouds)
-        // Rainy/storm/fog: cool blue-grey glow; clear/partlycloudy: warm yellow
+        // Diffuse glow — phase-aware clip restricts glow to lit side only,
+        // preventing a full-circle outline on the dark crescent.
+        // Clip boundary is the terminator x-position (varies by phase + waxing/waning).
         const isOvercast = ['rainy','pouring','storm','fog','snowy','hail','snowy-rainy','lightning','lightning-rainy'].includes(state._weatherCondition);
         const [mgR, mgG, mgB] = isOvercast ? [170, 185, 210] : [220, 220, 170];
         const glowAlpha = state._alpha * Math.max(totalBright * 0.25, cloudDim > 0 ? 0.04 : 0);
         const grd = ctx.createRadialGradient(moonX, moonY, moonR * 0.3, moonX, moonY, glowR);
         grd.addColorStop(0, `rgba(${mgR},${mgG},${mgB},${glowAlpha})`);
         grd.addColorStop(1, `rgba(${mgR},${mgG},${mgB},0)`);
-        ctx.globalAlpha = 1;
-        ctx.fillStyle = grd;
-        ctx.beginPath();
-        ctx.arc(moonX, moonY, glowR, 0, Math.PI * 2);
-        ctx.fill();
+        {
+          const _θg  = state._moonPhaseAngle * Math.PI / 180;
+          const _kg  = (1 - Math.cos(_θg)) / 2;
+          const _eRxg = Math.abs(moonR * Math.cos(_θg));
+          const _waxg = state._moonPhaseAngle <= 180;
+          // Terminator x boundary — gibbous: inner side; crescent: outer side
+          const _gxStart = _waxg ? (_kg >= 0.5 ? moonX - _eRxg : moonX + _eRxg) : moonX - glowR;
+          const _gxEnd   = _waxg ? moonX + glowR : (_kg >= 0.5 ? moonX + _eRxg : moonX - _eRxg);
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(_gxStart - 1, moonY - glowR - 1, _gxEnd - _gxStart + 2, glowR * 2 + 2);
+          ctx.clip();
+          ctx.globalAlpha = 1;
+          ctx.fillStyle = grd;
+          ctx.beginPath();
+          ctx.arc(moonX, moonY, glowR, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
 
         // Sharp disc — rendered on an offscreen canvas so destination-out doesn't
         // punch transparent holes through sky/star content on the main canvas.
