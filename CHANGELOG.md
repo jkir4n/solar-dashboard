@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.60.7 (2026-05-27)
+
+### Bug Fixes
+- Clip moon glow to lit side to eliminate full-circle outline on dark crescent
+
+
 ## v0.60.6 (2026-05-27)
 
 ### Bug Fixes
