@@ -2096,7 +2096,9 @@ export class WeatherFX {
           octx.fillStyle = offGrd;
           octx.fillRect(0, 0, od, od);
 
-          // Step 1: erase dark semicircle
+          // Step 1: erase dark semicircle — must use opaque fill so destination-out
+          // fully erases (result_alpha = dst * (1 - src_alpha); src_alpha must be 1.0)
+          octx.fillStyle = 'rgba(0,0,0,1)';
           octx.globalCompositeOperation = 'destination-out';
           octx.beginPath();
           if (isWaxing) {
