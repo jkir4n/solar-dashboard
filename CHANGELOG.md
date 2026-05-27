@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.60.5 (2026-05-27)
+
+### Bug Fixes
+- Render moon disc on offscreen canvas to fix gibbous phase brightness asymmetry
+
+
 ## v0.60.4 (2026-05-26)
 
 ### Bug Fixes
