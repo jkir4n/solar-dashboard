@@ -2048,76 +2048,97 @@ export class WeatherFX {
         ctx.arc(moonX, moonY, glowR, 0, Math.PI * 2);
         ctx.fill();
 
-        // Sharp disc — only when cloud transmittance is high enough to see it
+        // Sharp disc — rendered on an offscreen canvas so destination-out doesn't
+        // punch transparent holes through sky/star content on the main canvas.
+        // Without this, the gibbous-restored left side paints over transparent pixels
+        // while the right side paints over existing sky, making them appear unequally
+        // bright even with the same gradient (visual symptom: gibbous looks like half-moon).
         if (cloudDim >= 0.35) {
           const discAlpha = state._alpha * (0.35 + mb * 0.65) * cloudDim;
-          const discGrd = ctx.createRadialGradient(
-            moonX - moonR * 0.3, moonY - moonR * 0.3, moonR * 0.1,
-            moonX, moonY, moonR
-          );
-          discGrd.addColorStop(0,   `rgba(255,255,245,${discAlpha})`);
-          discGrd.addColorStop(0.7, `rgba(225,225,210,${discAlpha * 0.9})`);
-          discGrd.addColorStop(1,   `rgba(190,190,175,${discAlpha * 0.75})`);
 
           // T3.3: Correct moon phase shape — two-step: semi-circle + terminator ellipse
           // Waxing (0–180°): right side lit; Waning (180–360°): left side lit
           const θ = state._moonPhaseAngle * Math.PI / 180;
           const k = (1 - Math.cos(θ)) / 2; // illumination fraction
           const isWaxing = state._moonPhaseAngle <= 180;
+          const ellipseRx = Math.abs(moonR * Math.cos(θ));
 
-          ctx.save();
-          // Clip to moon disc boundary
-          ctx.beginPath();
-          ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
-          ctx.clip();
-
-          // Fill the full lit disc first
-          ctx.fillStyle = discGrd;
-          ctx.fillRect(moonX - moonR, moonY - moonR, moonR * 2, moonR * 2);
-
-          // Step 1: erase the dark semicircle (always exactly half the disc)
-          ctx.globalCompositeOperation = 'destination-out';
-          ctx.beginPath();
-          if (isWaxing) {
-            // Waxing: dark side is left — erase left semicircle
-            ctx.arc(moonX, moonY, moonR, Math.PI / 2, -Math.PI / 2, false);
-          } else {
-            // Waning: dark side is right — erase right semicircle
-            ctx.arc(moonX, moonY, moonR, -Math.PI / 2, Math.PI / 2, false);
+          // Offscreen canvas: all compositing on transparent background, then blit
+          const pad = 2;
+          const od = Math.ceil(moonR * 2) + pad * 2;
+          if (!this._moonOffCanvas || this._moonOffCanvas.width !== od) {
+            this._moonOffCanvas = document.createElement('canvas');
+            this._moonOffCanvas.width = od;
+            this._moonOffCanvas.height = od;
           }
-          ctx.lineTo(moonX, moonY); // closes arc to centre, forming a half-disc (pie-wedge = correct filled semicircle)
-          ctx.fill();
+          const oc = this._moonOffCanvas;
+          const octx = oc.getContext('2d');
+          const ox = Math.ceil(moonR) + pad;
+          const oy = Math.ceil(moonR) + pad;
+
+          octx.clearRect(0, 0, od, od);
+
+          const offGrd = octx.createRadialGradient(
+            ox - moonR * 0.3, oy - moonR * 0.3, moonR * 0.1,
+            ox, oy, moonR
+          );
+          offGrd.addColorStop(0,   `rgba(255,255,245,${discAlpha})`);
+          offGrd.addColorStop(0.7, `rgba(225,225,210,${discAlpha * 0.9})`);
+          offGrd.addColorStop(1,   `rgba(190,190,175,${discAlpha * 0.75})`);
+
+          octx.save();
+          // Clip to disc boundary
+          octx.beginPath();
+          octx.arc(ox, oy, moonR, 0, Math.PI * 2);
+          octx.clip();
+
+          // Fill lit disc
+          octx.fillStyle = offGrd;
+          octx.fillRect(0, 0, od, od);
+
+          // Step 1: erase dark semicircle
+          octx.globalCompositeOperation = 'destination-out';
+          octx.beginPath();
+          if (isWaxing) {
+            octx.arc(ox, oy, moonR, Math.PI / 2, -Math.PI / 2, false);
+          } else {
+            octx.arc(ox, oy, moonR, -Math.PI / 2, Math.PI / 2, false);
+          }
+          octx.lineTo(ox, oy);
+          octx.fill();
 
           // Step 2: terminator ellipse — crescent erases more, gibbous restores
-          const ellipseRx = Math.abs(moonR * Math.cos(θ));
           if (ellipseRx > 0.5) {
             if (k < 0.5) {
-              // Crescent: erase more of the lit side (destination-out still active)
-              ctx.beginPath();
-              ctx.ellipse(moonX, moonY, ellipseRx, moonR, 0, 0, Math.PI * 2);
-              ctx.fill();
+              // Crescent: erase more of the lit side
+              octx.beginPath();
+              octx.ellipse(ox, oy, ellipseRx, moonR, 0, 0, Math.PI * 2);
+              octx.fill();
             } else {
-              // Gibbous: restore only the dark half — clip ellipse to dark side to
-              // avoid double-painting the already-lit semicircle (which brightens it
-              // unevenly and creates a visible oval blob artefact)
-              ctx.globalCompositeOperation = 'source-over';
-              ctx.fillStyle = discGrd;
-              ctx.save();
-              ctx.beginPath();
+              // Gibbous: restore dark side near terminator, clipped to dark side only
+              octx.globalCompositeOperation = 'source-over';
+              octx.fillStyle = offGrd;
+              octx.save();
+              octx.beginPath();
               if (isWaxing) {
-                ctx.rect(moonX - moonR, moonY - moonR, moonR, moonR * 2);
+                octx.rect(0, oy - moonR, ox, moonR * 2);
               } else {
-                ctx.rect(moonX, moonY - moonR, moonR, moonR * 2);
+                octx.rect(ox, oy - moonR, moonR + pad, moonR * 2);
               }
-              ctx.clip();
-              ctx.beginPath();
-              ctx.ellipse(moonX, moonY, ellipseRx, moonR, 0, 0, Math.PI * 2);
-              ctx.fill();
-              ctx.restore();
+              octx.clip();
+              octx.beginPath();
+              octx.ellipse(ox, oy, ellipseRx, moonR, 0, 0, Math.PI * 2);
+              octx.fill();
+              octx.restore();
             }
           }
-          ctx.globalCompositeOperation = 'source-over';
-          ctx.restore();
+
+          octx.globalCompositeOperation = 'source-over';
+          octx.restore();
+
+          // Blit offscreen disc onto main canvas — transparent pixels don't affect sky
+          ctx.globalAlpha = 1;
+          ctx.drawImage(oc, moonX - ox, moonY - oy);
         }
         // Lunar halo — same radial-gradient ring technique, silvery tones
         const moonHaloStrength = Math.max(0, cloudDim - 0.45) / 0.55 * mb;
