@@ -2040,26 +2040,42 @@ export class WeatherFX {
         const isOvercast = ['rainy','pouring','storm','fog','snowy','hail','snowy-rainy','lightning','lightning-rainy'].includes(state._weatherCondition);
         const [mgR, mgG, mgB] = isOvercast ? [170, 185, 210] : [220, 220, 170];
         const glowAlpha = state._alpha * Math.max(totalBright * 0.25, cloudDim > 0 ? 0.04 : 0);
-        const grd = ctx.createRadialGradient(moonX, moonY, moonR * 0.3, moonX, moonY, glowR);
-        grd.addColorStop(0, `rgba(${mgR},${mgG},${mgB},${glowAlpha})`);
-        grd.addColorStop(1, `rgba(${mgR},${mgG},${mgB},0)`);
         {
-          const _θg  = state._moonPhaseAngle * Math.PI / 180;
-          const _kg  = (1 - Math.cos(_θg)) / 2;
+          const _θg   = state._moonPhaseAngle * Math.PI / 180;
+          const _kg   = (1 - Math.cos(_θg)) / 2;
           const _eRxg = Math.abs(moonR * Math.cos(_θg));
           const _waxg = state._moonPhaseAngle <= 180;
-          // Terminator x boundary — gibbous: inner side; crescent: outer side
-          const _gxStart = _waxg ? (_kg >= 0.5 ? moonX - _eRxg : moonX + _eRxg) : moonX - glowR;
-          const _gxEnd   = _waxg ? moonX + glowR : (_kg >= 0.5 ? moonX + _eRxg : moonX - _eRxg);
+          const gPad  = Math.ceil(glowR) + 2;
+          const gOd   = gPad * 2;
+          if (!this._moonGlowCanvas || this._moonGlowCanvas.width !== gOd) {
+            this._moonGlowCanvas = document.createElement('canvas');
+            this._moonGlowCanvas.width = gOd;
+            this._moonGlowCanvas.height = gOd;
+          }
+          const gOff  = this._moonGlowCanvas;
+          const gOctx = gOff.getContext('2d');
+          const gox   = gPad, goy = gPad;
+          gOctx.clearRect(0, 0, gOd, gOd);
+          const grd2 = gOctx.createRadialGradient(gox, goy, moonR * 0.3, gox, goy, glowR);
+          grd2.addColorStop(0, `rgba(${mgR},${mgG},${mgB},${glowAlpha})`);
+          grd2.addColorStop(1, `rgba(${mgR},${mgG},${mgB},0)`);
+          gOctx.fillStyle = grd2;
+          gOctx.beginPath();
+          gOctx.arc(gox, goy, glowR, 0, Math.PI * 2);
+          gOctx.fill();
+          // Soft mask: feather glow to 0 on dark side over moonR*1.2 px at terminator
+          const feather = moonR * 1.2;
+          const cutX    = gox + (_waxg ? (_kg >= 0.5 ? -_eRxg : _eRxg) : (_kg >= 0.5 ? _eRxg : -_eRxg));
+          const maskGrd = gOctx.createLinearGradient(cutX - feather, 0, cutX + feather, 0);
+          maskGrd.addColorStop(0, _waxg ? 'rgba(0,0,0,0)' : 'rgba(0,0,0,1)');
+          maskGrd.addColorStop(1, _waxg ? 'rgba(0,0,0,1)' : 'rgba(0,0,0,0)');
+          gOctx.globalCompositeOperation = 'destination-in';
+          gOctx.fillStyle = maskGrd;
+          gOctx.fillRect(0, 0, gOd, gOd);
+          gOctx.globalCompositeOperation = 'source-over';
           ctx.save();
-          ctx.beginPath();
-          ctx.rect(_gxStart - 1, moonY - glowR - 1, _gxEnd - _gxStart + 2, glowR * 2 + 2);
-          ctx.clip();
           ctx.globalAlpha = 1;
-          ctx.fillStyle = grd;
-          ctx.beginPath();
-          ctx.arc(moonX, moonY, glowR, 0, Math.PI * 2);
-          ctx.fill();
+          ctx.drawImage(gOff, moonX - gPad, moonY - gPad);
           ctx.restore();
         }
 
@@ -2097,9 +2113,10 @@ export class WeatherFX {
             ox - moonR * 0.3, oy - moonR * 0.3, moonR * 0.1,
             ox, oy, moonR
           );
-          offGrd.addColorStop(0,   `rgba(255,255,245,${discAlpha})`);
-          offGrd.addColorStop(0.7, `rgba(225,225,210,${discAlpha * 0.9})`);
-          offGrd.addColorStop(1,   `rgba(190,190,175,${discAlpha * 0.75})`);
+          offGrd.addColorStop(0,    `rgba(255,255,245,${discAlpha})`);
+          offGrd.addColorStop(0.7,  `rgba(225,225,210,${discAlpha * 0.9})`);
+          offGrd.addColorStop(0.92, `rgba(195,195,180,${discAlpha * 0.4})`);
+          offGrd.addColorStop(1,    `rgba(190,190,175,0)`);
 
           octx.save();
           // Clip to disc boundary
