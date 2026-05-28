@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.60.8 (2026-05-28)
+
+### Bug Fixes
+- Soft-mask moon glow at terminator and fade disc edge to transparent
+
+
 ## v0.60.7 (2026-05-27)
 
 ### Bug Fixes
