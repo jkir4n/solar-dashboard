@@ -5,36 +5,16 @@ A real-time solar monitoring dashboard for Home Assistant, built as a HACS-compa
 ## Features
 
 - Auto-discovering BMS monitoring — works with JK, JBD, Daly, BatMON and other integrations (no hardcoded entity IDs)
-- NOAA/Meeus solar position and irradiance calculations
-- Weather-adjusted solar generation forecasts
-- Procedural weather particle effects (rain, snow, stars, clouds, lightning, fog) with adaptive intensity
-- Hexagonal snowflakes with rotating 6-arm crystal geometry and depth-scaled branching
-- Meteorologically accurate cloud archetypes (cumulus, altocumulus, stratocumulus, stratus, nimbostratus, cumulonimbus) inferred from live condition + cloud_coverage
-- Procedurally unique clouds — per-spawn lobe generation (5–14 lobes per cloud), no two identical
-- Per-lobe top-lit shading — shade gradient from crown (bright) to base (grey-blue) for volumetric depth
-- 3-pass cloud compositing (lighter/multiply/screen day; source-over/screen night) with aggressive Z-depth parallax layers (40–80 px far, 110–200 px near)
-- Wind bearing-reactive cloud drift — true directional movement from live wind_bearing with gentle per-cloud Y-bob oscillation
-- Branching lightning bolts (30% child probability) with 120ms blue-white screen flash per strike
-- Stratified fog with 4 depth layers, per-layer speed, and sine-wave turbulence
-- Rainbow arc at antisolar point during rainy/pouring daytime conditions (3s fade-in)
-- Real-time sun disc with elevation-based colour shift (orange at horizon → white at zenith), cloud occlusion, and 22° solar halo ring
-- Real-time moon disc with Meeus lunar position, phase brightness, cloud occlusion, and 22° lunar halo ring
-- Day overlay: sun rays rendered behind all daytime conditions, alpha scaled by cloud cover
-- Night overlay: stars with spectral colour variance (O/B/F/G/K/M classes) and smooth aurora curtain with vertical gradient and red lower fringe, dimmed by moon brightness
-- Wind and bearing-reactive particles — rain streaks, snow drift, fog, and sleet all track live `wind_speed` and `wind_bearing` from weather entity; rain intensity is severity-driven (`RAIN_SEVERITY`: sleet 0.45 → rainy 0.55 → storm 0.80 → pouring 1.0), with counts ranging ~70–280 drops depending on severity and wind; streaks use gradient rendering (opaque head → transparent tail); wind affects spawn count, streak length, real-time angle, and per-frame gust wave sweeping
-- **Twilight phase transitions** — smooth civil → nautical → astronomical twilight with gradient mesh colour shifts (amber → deep blue → near-black)
-- **Golden hour overlay** — warm canvas wash during the 15° above-horizon window, cosine-eased
-- **UV-driven sun disc** — disc brightness and sunray reach scale with UV index; halo suppressed below 2 km visibility
-- **Physically-based star field** — 250 persistent stars with magnitude-based brightness, radius, and colour temperature; atmospheric scintillation near horizon; diffraction spikes on bright stars
-- Continuous cloud dimming via sigmoid formula on live `cloud_coverage` % combined with per-condition multipliers
-- Custom canvas charts with crosshair/tooltip (Live, Yesterday, 7D, 30D ranges)
-- Cross/hub powerflow card — Solar (top) → Home (centre) ← Battery (left) and Grid (right), with 3 direction-aware animated flow lines; grid line is import-only (amber), idle when no grid entity is found
-- Grid power auto-discovery — automatically finds grid power sensors from SolarEdge, Enphase Envoy, SMA, Fronius, Huawei SUN2000, GoodWe, Sungrow, Deye/Solarman, Growatt, Victron, Sofar Solar, Shelly EM, and ESPHome grid monitors; no configuration needed
-- Animated number transitions
-- Dark and light themes with glassmorphism styling
-- Responsive layout
-- Auto-created HA helpers for panel and BMS configuration
-- Native HA integration via `hass` object (no tokens or manual WebSocket)
+- NOAA/Meeus solar position, irradiance, and weather-adjusted generation forecasts
+- Live weather effects: rain, snow, fog, lightning, and clouds — all wind-reactive and intensity-scaled
+- Real-time sun and moon discs with elevation-based colour, phase brightness, and cloud occlusion
+- Twilight phase transitions (civil → nautical → astronomical) and golden hour overlay
+- Star field with spectral colour variance, aurora, planets, Milky Way, and ISS pass rendering
+- Powerflow card: Solar → Home ← Battery + Grid with direction-aware animated flow lines
+- Auto-discovering grid power sensors (SolarEdge, Enphase, GoodWe, Sungrow, and more — no configuration needed)
+- Canvas charts with crosshair/tooltip (Live, Yesterday, 7D, 30D)
+- Dark and light themes, glassmorphism styling, responsive layout
+- Native HA integration via `hass` object — no tokens or manual WebSocket setup required
 
 ## Prerequisites
 
@@ -138,25 +118,14 @@ The dashboard re-discovers entities when `input_text.bms_entity_prefix` changes,
 | Voltage | sensor | `total_voltage` |
 | Current | sensor | `current` |
 | Power | sensor | `power` |
-| Remaining Ah | sensor | `capacity_remaining_derived` |
-| Cycles | sensor | `charging_cycles` |
-| Runtime | sensor | `total_runtime` |
-| Throughput | sensor | `total_charging_cycle_capacity` |
-| Min/Max Cell Voltage | sensor | `min_cell_voltage`, `max_cell_voltage` |
-| Min/Max Voltage Cell | sensor | `min_voltage_cell`, `max_voltage_cell` |
-| Firmware | sensor | `software_version` |
 | Temperature 1/2 | sensor | `temperature_sensor_1`, `temperature_2` |
 | MOSFET Temperature | sensor | `power_tube_temperature` |
-| Battery Strings | sensor | `battery_strings`, `cell_count` |
-| Manufacturer | sensor | `manufacturer` |
-| Battery Type | sensor | `battery_type` |
 | Cell Voltages (1–N) | sensor | `cell_voltage_1` through `cell_voltage_N` |
+| Min/Max Cell Voltage | sensor | `min_cell_voltage`, `max_cell_voltage` |
+| Cycles | sensor | `charging_cycles` |
 | Balancing | binary_sensor | `balancing` |
-| Balancing Switch | binary_sensor | `balancing_switch` |
-| Charging Switch | switch | `charging` |
-| Discharging Switch | switch | `discharging` |
-| Charging Power | sensor | `charging_power` |
-| Discharging Power | sensor | `discharging_power` |
+
+Additional roles (firmware, throughput, manufacturer, cell count, etc.) are also discovered automatically.
 
 ### Battery Chemistry Detection
 
@@ -179,21 +148,21 @@ The dashboard automatically discovers grid power sensors from any major inverter
 
 ### Supported Inverter Integrations
 
-| Integration | Notes |
-|-------------|-------|
-| SolarEdge | `sensor.*grid*power*` |
-| Enphase Envoy | `sensor.*grid*power*` |
-| SMA | `sensor.*grid*power*` |
-| Fronius | `sensor.*grid*power*` |
-| Huawei SUN2000 (`huawei_solar`) | `sensor.*grid*power*` |
-| GoodWe | `sensor.*grid*power*` |
-| Sungrow | `sensor.*grid*power*` |
-| Deye / Solarman | `sensor.*grid*power*` |
-| Growatt | `sensor.*grid*power*` |
-| Victron | `sensor.*grid*power*` |
-| Sofar Solar | `sensor.*grid*power*` |
-| Shelly EM | `sensor.*grid*power*` / `sensor.*channel*power*` |
-| ESPHome grid monitors | keyword-matched grid power sensors |
+| Integration |
+|-------------|
+| SolarEdge |
+| Enphase Envoy |
+| SMA |
+| Fronius |
+| Huawei SUN2000 (`huawei_solar`) |
+| GoodWe |
+| Sungrow |
+| Deye / Solarman |
+| Growatt |
+| Victron |
+| Sofar Solar |
+| Shelly EM |
+| ESPHome grid monitors |
 
 The grid line in the powerflow card shows amber import flow when grid power is being consumed, and goes idle when no grid entity is found.
 
