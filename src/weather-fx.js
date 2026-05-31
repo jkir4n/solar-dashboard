@@ -6,7 +6,7 @@ const CONDITION_PARTICLE_MAP = {
   'sunny': 'sunny', 'clear-night': 'night',
   'partlycloudy': 'cloudy', 'cloudy': 'cloudy',
   'rainy': 'rainy', 'pouring': 'pouring',
-  'snowy': 'snowy', 'hail': 'snowy',
+  'snowy': 'snowy', 'hail': 'hail',
   'fog': 'fog',
   'lightning': 'storm', 'lightning-rainy': 'storm',
   'windy': 'cloudy', 'windy-variant': 'cloudy',
@@ -1400,6 +1400,64 @@ export class WeatherFX {
           breatheSpeed: 0.003 + Math.random() * 0.004
         });
       }
+    } else if (type === 'hail') {
+    // Use WeatherFX instance fields directly — _effective does not exist on WeatherFX.
+    const precipIntensity = this._precipIntensity ?? 2;
+    const cloudCov        = this._cloudCoverage ?? 50;
+    const intensityFactor = Math.max(0.3, Math.min(1, precipIntensity / 5));
+    const cloudFactor     = 0.7 + cloudCov / 300;
+    const intensity       = intensityFactor * cloudFactor;
+
+    const w = canvas.width  / (window.devicePixelRatio || 1);
+    const h = canvas.height / (window.devicePixelRatio || 1);
+
+    const windFactor = Math.min((this._windSpeed ?? 0) / 54, 1);
+    const windBearing = this._windBearing ?? 0;
+    const downwindDeg = (windBearing + 180) % 360;
+    const windDx = Math.sin(downwindDeg * Math.PI / 180);
+
+    const HAIL_LAYERS = {
+      far:  { count: Math.round(40 * intensity), speedMult: 0.55, alphaMult: 0.45, rMult: 0.6 },
+      mid:  { count: Math.round(35 * intensity), speedMult: 0.80, alphaMult: 0.70, rMult: 0.85 },
+      near: { count: Math.round(25 * intensity), speedMult: 1.00, alphaMult: 1.00, rMult: 1.00 },
+    };
+
+    for (const [layer, cfg] of Object.entries(HAIL_LAYERS)) {
+      for (let i = 0; i < cfg.count; i++) {
+        const depth = layer === 'far'  ? 0.2 + Math.random() * 0.3
+                    : layer === 'mid'  ? 0.5 + Math.random() * 0.3
+                    :                    0.8 + Math.random() * 0.2;
+        particles.push({
+          kind:       'hailstone',
+          x:          Math.random() * w,
+          y:          Math.random() * h,
+          r:          (2 + Math.random() * 3) * cfg.rMult * depth,
+          vy:         (5 + Math.random() * 5) * cfg.speedMult * depth,
+          vx:         windDx * windFactor * 0.4 * depth,
+          o:          (0.4 + Math.random() * 0.3) * cfg.alphaMult,
+          depth,
+          layer,
+          glint:      Math.random() < 0.15,
+          glintPhase: Math.random() * Math.PI * 2,
+        });
+      }
+    }
+
+    // Splash ripples — kind: 'hailRipple' intentionally distinct from 'ripple'
+    for (let i = 0; i < 12; i++) {
+      particles.push({
+        kind: 'hailRipple',
+        x:    Math.random() * w,
+        y:    h * 0.85 + Math.random() * h * 0.15,
+        r:    0,
+        maxR: 6 + Math.random() * 8,
+      });
+    }
+
+    // All precipitation conditions include a cloud layer
+    this._createParticles('cloudy', canvas).forEach(p => {
+      if (p.kind === 'cloud') particles.push(p);
+    });
     }
 
     // Visibility fog overlay — append fog blobs for any non-fog condition when vis < 5km
@@ -1513,6 +1571,60 @@ export class WeatherFX {
       ctx.lineTo(x1, y1);
       ctx.stroke();
     });
+  }
+
+  _renderHailstones(ctx, particles, now, windFactor, windDx, gustRatio, w, h, alpha = 1) {
+    for (const p of particles) {
+      const effDx = p.vx * (1 + gustRatio * 0.3 * Math.sin(now * 0.0009 + p.glintPhase));
+      p.x += effDx;
+      p.y += p.vy;
+      if (p.y > h + p.r) { p.y = -p.r; p.x = Math.random() * w; }
+      if (p.x > w + p.r) { p.x = -p.r; }
+      if (p.x < -p.r)    { p.x = w + p.r; }
+
+      ctx.save();
+      ctx.globalAlpha = p.o * alpha;
+
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y, p.r, p.r * 0.75, 0, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(200, 220, 240, ${p.o})`;
+      ctx.fill();
+      ctx.strokeStyle = `rgba(160, 190, 215, ${p.o * 0.6})`;
+      ctx.lineWidth = 0.5;
+      ctx.stroke();
+
+      if (p.glint) {
+        const gA = 0.5 + 0.5 * Math.sin(now * 0.003 + p.glintPhase);
+        ctx.beginPath();
+        ctx.arc(p.x - p.r * 0.3, p.y - p.r * 0.25, p.r * 0.2, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 255, 255, ${gA * p.o})`;
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+  }
+
+  _renderRipples(ctx, particles, now, w, h) {
+    for (const p of particles) {
+      p.r += 0.3;
+      const alpha = (1 - p.r / p.maxR) * 0.4;
+      if (alpha > 0) {
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(180, 200, 220, 1)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.restore();
+      }
+      if (p.r >= p.maxR) {
+        p.r = 0;
+        p.x = Math.random() * w;
+        p.y = h * 0.85 + Math.random() * h * 0.15;
+        p.maxR = 6 + Math.random() * 8;
+      }
+    }
   }
 
   _drawBolt(ctx, boltTree, alpha) {
@@ -2899,6 +3011,17 @@ export class WeatherFX {
         ctx.fill();
       });
       ctx.globalAlpha = state._alpha;
+
+    } else if (state._currentType === 'hail') {
+      const windFactor = state._windFactorCur ?? 0;
+      const windDx     = state._windDx;
+      const gustRatio  = Math.min(Math.max(
+        state._windGustSpeed / Math.max(state._windSpeed, 1), 1), 3.0);
+      state._renderHailstones(ctx,
+        state._particles.filter(p => p.kind === 'hailstone'),
+        now, windFactor, windDx, gustRatio, w, h, state._alpha);
+      const ripples = state._particles.filter(p => p.kind === 'hailRipple');
+      if (ripples.length) state._renderRipples(ctx, ripples, now, w, h);
 
     }
     if (state._currentType === 'cloudy' || (state._particlesByType.cloud?.length ?? 0) > 0) {
