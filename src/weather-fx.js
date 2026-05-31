@@ -1587,9 +1587,9 @@ export class WeatherFX {
 
       ctx.beginPath();
       ctx.ellipse(p.x, p.y, p.r, p.r * 0.75, 0, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(200, 220, 240, ${p.o})`;
+      ctx.fillStyle = 'rgba(200, 220, 240, 1)';
       ctx.fill();
-      ctx.strokeStyle = `rgba(160, 190, 215, ${p.o * 0.6})`;
+      ctx.strokeStyle = 'rgba(160, 190, 215, 0.6)';
       ctx.lineWidth = 0.5;
       ctx.stroke();
 
@@ -1597,7 +1597,7 @@ export class WeatherFX {
         const gA = 0.5 + 0.5 * Math.sin(now * 0.003 + p.glintPhase);
         ctx.beginPath();
         ctx.arc(p.x - p.r * 0.3, p.y - p.r * 0.25, p.r * 0.2, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255, 255, 255, ${gA * p.o})`;
+        ctx.fillStyle = `rgba(255, 255, 255, ${gA})`;
         ctx.fill();
       }
       ctx.restore();
