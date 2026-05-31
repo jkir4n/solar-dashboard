@@ -2,6 +2,8 @@
 // Ported from solar-v9.html lines 792-1230
 import { snFBM } from './noise.js';
 
+const THICK_ARCHETYPES = new Set(['nimbostratus', 'cumulonimbus', 'stratus']);
+
 const CONDITION_PARTICLE_MAP = {
   'sunny': 'sunny', 'clear-night': 'night',
   'partlycloudy': 'cloudy', 'cloudy': 'cloudy',
@@ -408,8 +410,7 @@ export class WeatherFX {
       const ly = oy + lobe.dy * cloudR;
       const rsX = (lobe.rsX ?? lobe.rs) * cloudR;
       const rsY = (lobe.rsY ?? lobe.rs) * cloudR;
-      octx.moveTo(lx + rsX, ly);
-      octx.ellipse(lx, ly, rsX, rsY, 0, 0, Math.PI * 2);
+      if (rsX > 0 && rsY > 0) { octx.moveTo(lx + rsX, ly); octx.ellipse(lx, ly, rsX, rsY, 0, 0, Math.PI * 2); }
     }
     octx.fillStyle = 'rgba(0, 0, 0, 1)';
     octx.fill();
@@ -429,12 +430,12 @@ export class WeatherFX {
         : 'rgba(255, 255, 255, 0.07)');
       octx.fillStyle = eGrd;
       octx.beginPath();
-      octx.ellipse(lx, ly, rsX * 1.12, rsY * 1.12, 0, 0, Math.PI * 2);
+      if (rsX > 0 && rsY > 0) octx.ellipse(lx, ly, rsX * 1.12, rsY * 1.12, 0, 0, Math.PI * 2);
       octx.fill();
     }
 
     // --- Phase 5: silver lining + underside shadow ---
-    const cloudDim = this._calcCloudDim(this._cloudCoverage, this._weatherCondition);
+    const cloudDim = this._calcCloudDim(this._cloudCovCur ?? this._cloudCoverage, this._weatherCondition);
     if (cloudDim > 0.3 && this._sunElevCur > 5) {
       const sunAngle = this._sunAzCur * Math.PI / 180;
       const rimX = ox + Math.cos(sunAngle) * offW * 0.45;
@@ -449,7 +450,6 @@ export class WeatherFX {
       octx.fillRect(0, 0, offW, offH);
       octx.restore();
     }
-    const THICK_ARCHETYPES = new Set(['nimbostratus', 'cumulonimbus', 'stratus']);
     if (THICK_ARCHETYPES.has(p.archetype)) {
       const shadowAlpha = 0.3 + (1 - cloudDim) * 0.25;
       const shadowGrad = octx.createLinearGradient(0, oy, 0, oy + offH * 0.5);
@@ -458,7 +458,8 @@ export class WeatherFX {
       octx.save();
       octx.globalCompositeOperation = 'source-atop';
       octx.fillStyle = shadowGrad;
-      octx.fillRect(0, oy, offW, offH * 0.5);
+      const shadowTop = Math.min(oy, offH);
+      octx.fillRect(0, shadowTop, offW, offH - shadowTop);
       octx.restore();
     }
 
@@ -545,8 +546,11 @@ export class WeatherFX {
       const lobeSpread = bottomDy - topDy || 1;
       lobes.forEach(l => {
         if (l.dy < topDy + lobeSpread * 0.25) {
-          l.rsX = (l.rsX ?? l.rs) * 1.8;
-          l.rsY = (l.rsY ?? l.rs) * 0.6;
+          const baseRs = l.rsX ?? l.rs;
+          if (baseRs > 0) {
+            l.rsX = baseRs * 1.8;
+            l.rsY = (l.rsY ?? l.rs) * 0.6;
+          }
         }
       });
     }
