@@ -2669,6 +2669,19 @@ class SolarDashboard extends HTMLElement {
     const newTargets = this._computeMeshModifiers(baseTargets, sunElevation);
     if (!this._meshCur[0]) this._meshCur = newTargets.map(t => ({ ...t }));
     this._meshTarget = newTargets;
+
+    // Apply sky modifiers: UV index and golden hour only.
+    // Temperature and visibility are handled by _computeMeshModifiers() — do not add them here.
+    const uvIndex = this._effective?.uv_index ?? 0;
+    const [dr, dg, db] = this._computeSkyModifiers(uvIndex, sunElevation, isNight);
+    if (this._meshTarget) {
+      for (const c of this._meshTarget) {
+        c.r = Math.max(0, Math.min(255, c.r + dr));
+        c.g = Math.max(0, Math.min(255, c.g + dg));
+        c.b = Math.max(0, Math.min(255, c.b + db));
+      }
+    }
+
     // NB2: Restart mesh lerp if it was stopped after previous convergence
     if (!this._meshRafId) this._startMeshLerp();
 
@@ -2900,6 +2913,32 @@ class SolarDashboard extends HTMLElement {
   _getDateKeyInTZ(date = new Date()) {
     const tz = this._bridge.timezone;
     return new Intl.DateTimeFormat('sv', { timeZone: tz }).format(date);
+  }
+
+  _computeSkyModifiers(uvIndex, sunEl, isNight) {
+    const clamp = (v, lo, hi) => Math.max(lo, Math.min(v, hi));
+
+    const w = {
+      uv:     clamp(uvIndex / 10, 0, 1) * (isNight ? 0 : 1),
+      // Golden hour starts at 6° — _computeMeshModifiers() owns 0°–6° via wGolden (peak 0.5).
+      // Multiplied by 0.5 to match peak weight and prevent a visible colour pop at the 6° handoff.
+      golden: (sunEl >= 6 && sunEl <= 15)
+        ? Math.cos((sunEl - 6) / 9 * Math.PI / 2) * 0.5
+        : 0,
+    };
+
+    const MODS = {
+      uv:     [   0, +15, +35 ],  // vivid sky blue saturation
+      golden: [ +60, +20, -40 ],  // amber cast
+    };
+
+    let dr = 0, dg = 0, db = 0;
+    for (const [key, delta] of Object.entries(MODS)) {
+      dr += delta[0] * w[key];
+      dg += delta[1] * w[key];
+      db += delta[2] * w[key];
+    }
+    return [Math.round(dr), Math.round(dg), Math.round(db)];
   }
 
   _computeMeshModifiers(colors, sunElevation) {
