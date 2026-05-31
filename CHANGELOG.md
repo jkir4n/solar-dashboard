@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.61.0 (2026-05-31)
+
+### Features
+- Live attribute modifiers for sky gradient — UV index, golden hour
+- Guard zero-radius ellipse, clamp shadow rect, hoist THICK_ARCHETYPES constant, use smoothed cloud coverage
+- Volumetric cloud approximation — anvil top, silver lining, underside shadow
+- Remove double opacity in _renderHailstones fillStyle strings
+- Add dedicated hail particle system (hailstone kind)
+- Trim README — remove implementation internals from features, condense discovery tables
+
+
 ## v0.60.8 (2026-05-28)
 
 ### Bug Fixes
