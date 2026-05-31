@@ -406,9 +406,10 @@ export class WeatherFX {
     for (const lobe of p.lobes) {
       const lx = ox + lobe.dx * cloudR;
       const ly = oy + lobe.dy * cloudR;
-      const lr = lobe.rs * cloudR;
-      octx.moveTo(lx + lr, ly);
-      octx.arc(lx, ly, lr, 0, Math.PI * 2);
+      const rsX = (lobe.rsX ?? lobe.rs) * cloudR;
+      const rsY = (lobe.rsY ?? lobe.rs) * cloudR;
+      octx.moveTo(lx + rsX, ly);
+      octx.ellipse(lx, ly, rsX, rsY, 0, 0, Math.PI * 2);
     }
     octx.fillStyle = 'rgba(0, 0, 0, 1)';
     octx.fill();
@@ -419,6 +420,8 @@ export class WeatherFX {
       const lx = ox + lobe.dx * cloudR;
       const ly = oy + lobe.dy * cloudR;
       const lr = lobe.rs * cloudR;
+      const rsX = (lobe.rsX ?? lobe.rs) * cloudR;
+      const rsY = (lobe.rsY ?? lobe.rs) * cloudR;
       const eGrd = octx.createRadialGradient(lx, ly, lr * 0.82, lx, ly, lr * 1.12);
       eGrd.addColorStop(0, 'rgba(255,255,255,0)');
       eGrd.addColorStop(1, isNight
@@ -426,8 +429,37 @@ export class WeatherFX {
         : 'rgba(255, 255, 255, 0.07)');
       octx.fillStyle = eGrd;
       octx.beginPath();
-      octx.arc(lx, ly, lr * 1.12, 0, Math.PI * 2);
+      octx.ellipse(lx, ly, rsX * 1.12, rsY * 1.12, 0, 0, Math.PI * 2);
       octx.fill();
+    }
+
+    // --- Phase 5: silver lining + underside shadow ---
+    const cloudDim = this._calcCloudDim(this._cloudCoverage, this._weatherCondition);
+    if (cloudDim > 0.3 && this._sunElevCur > 5) {
+      const sunAngle = this._sunAzCur * Math.PI / 180;
+      const rimX = ox + Math.cos(sunAngle) * offW * 0.45;
+      const rimY = oy - Math.sin(sunAngle) * offH * 0.3;
+      const rimGrad = octx.createRadialGradient(rimX, rimY, 0, rimX, rimY, offW * 0.6);
+      const rimAlpha = cloudDim * 0.25;
+      rimGrad.addColorStop(0, `rgba(255, 255, 240, ${rimAlpha})`);
+      rimGrad.addColorStop(1, `rgba(255, 255, 240, 0)`);
+      octx.save();
+      octx.globalCompositeOperation = 'source-atop';
+      octx.fillStyle = rimGrad;
+      octx.fillRect(0, 0, offW, offH);
+      octx.restore();
+    }
+    const THICK_ARCHETYPES = new Set(['nimbostratus', 'cumulonimbus', 'stratus']);
+    if (THICK_ARCHETYPES.has(p.archetype)) {
+      const shadowAlpha = 0.3 + (1 - cloudDim) * 0.25;
+      const shadowGrad = octx.createLinearGradient(0, oy, 0, oy + offH * 0.5);
+      shadowGrad.addColorStop(0, `rgba(40, 40, 60, 0)`);
+      shadowGrad.addColorStop(1, `rgba(40, 40, 60, ${shadowAlpha})`);
+      octx.save();
+      octx.globalCompositeOperation = 'source-atop';
+      octx.fillStyle = shadowGrad;
+      octx.fillRect(0, oy, offW, offH * 0.5);
+      octx.restore();
     }
 
     // T3.6: Store perspective alpha scale for blit stage
@@ -506,6 +538,17 @@ export class WeatherFX {
     // Enforce exact fill count before returning (safety)
     while (lobes.length < lobeCount) {
       lobes.push({ dx: 0, dy: 0, rs: rsMin, phase: 0, shade: 0.5 });
+    }
+    if (archetype === 'cumulonimbus') {
+      const topDy    = Math.min(...lobes.map(l => l.dy));
+      const bottomDy = Math.max(...lobes.map(l => l.dy));
+      const lobeSpread = bottomDy - topDy || 1;
+      lobes.forEach(l => {
+        if (l.dy < topDy + lobeSpread * 0.25) {
+          l.rsX = (l.rsX ?? l.rs) * 1.8;
+          l.rsY = (l.rsY ?? l.rs) * 0.6;
+        }
+      });
     }
     return lobes;
   }
@@ -3070,6 +3113,12 @@ export class WeatherFX {
             l.dx = from.dx + (to.dx - from.dx) * ease + wobble;
             l.dy = from.dy + (to.dy - from.dy) * ease + wobble * 0.5;
             l.rs = from.rs + (to.rs - from.rs) * ease;
+            l.rsX = from.rsX !== undefined
+              ? from.rsX + ((to.rsX ?? to.rs) - from.rsX) * ease
+              : undefined;
+            l.rsY = from.rsY !== undefined
+              ? from.rsY + ((to.rsY ?? to.rs) - from.rsY) * ease
+              : undefined;
           });
           p.offDirty = true; // lobes changed → regen offscreen
         }
