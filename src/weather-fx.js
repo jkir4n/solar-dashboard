@@ -73,6 +73,7 @@ const MOON_CLOUD_DIM = {
 function lerp(a, b, t) { return a + (b - a) * t; }
 
 function intensityToSpawnCount(layerKey, intensity) {
+  if (!Number.isFinite(intensity) || intensity < 0) intensity = 0;
   const baseByDepth = { far: 0.3, mid: 0.45, near: 0.25 };
   const total = 15 + Math.pow(intensity, 0.65) * 40;
   return Math.round(total * baseByDepth[layerKey]);
@@ -452,7 +453,8 @@ export class WeatherFX {
     }
     if (THICK_ARCHETYPES.has(p.archetype)) {
       const shadowAlpha = 0.3 + (1 - cloudDim) * 0.25;
-      const shadowGrad = octx.createLinearGradient(0, oy, 0, oy + offH * 0.5);
+      const maxLobeDy = Math.max(...p.lobes.map(l => l.dy));
+      const shadowGrad = octx.createLinearGradient(0, oy + maxLobeDy * cloudR, 0, oy + maxLobeDy * cloudR + offH * 0.5);
       shadowGrad.addColorStop(0, `rgba(40, 40, 60, 0)`);
       shadowGrad.addColorStop(1, `rgba(40, 40, 60, ${shadowAlpha})`);
       octx.save();
@@ -1977,6 +1979,8 @@ export class WeatherFX {
     // ISS position lerp — uses faster factor since ISS moves quickly
     if (state._issPos) {
       const _issL = 0.06;
+      // Snap on first appearance — avoid lerping up from -90 which blocks _shouldKeepRendering
+      if (state._issElevCur < 0 && state._issPos.elevation > 0) state._issElevCur = state._issPos.elevation;
       state._issElevCur += (state._issPos.elevation - state._issElevCur) * _issL;
       let _dIA = state._issPos.azimuth - state._issAzCur;
       if (_dIA > 180) _dIA -= 360; if (_dIA < -180) _dIA += 360;
@@ -2139,7 +2143,7 @@ export class WeatherFX {
           ctx.restore();
         }
         // Solar halo — lerped strength for smooth fade, shimmer for organic life
-        const haloStrength = Math.max(0, cloudDim - 0.45) / 0.55;
+        const haloStrength = (cloudDim > 0.30 && cloudDim < 0.72) ? (cloudDim - 0.30) / 0.42 : 0;
         state._haloStrengthCur += (haloStrength - state._haloStrengthCur) * 0.006;
         const hs = state._haloStrengthCur;
         if (hs > 0.005 && elev > 5) {
@@ -2334,9 +2338,9 @@ export class WeatherFX {
           ctx.drawImage(oc, moonX - ox, moonY - oy);
         }
         // Lunar halo — same radial-gradient ring technique, silvery tones
-        const moonHaloStrength = Math.max(0, cloudDim - 0.45) / 0.55 * mb;
+        const moonHaloStrength = ((cloudDim > 0.30 && cloudDim < 0.72) ? (cloudDim - 0.30) / 0.42 : 0) * mb;
         if (moonHaloStrength > 0 && state._moonElevCur > 5) {
-          const mHaloR = moonR * 4.2;
+          const mHaloR = this._h * 0.122; // fixed 22° angular radius, independent of phase
           const mHalfW = moonR * 0.9;
           ctx.save();
 
