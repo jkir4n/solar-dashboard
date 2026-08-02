@@ -227,12 +227,15 @@ export class WeatherFX {
 
   _renderStarField(ctx, now, twilightStarAlpha) {
     if (!this._starField || !this._starField.length) return;
+    const light = this._theme === 'light';
     const cloudDim = this._calcCloudDim(this._cloudCovCur ?? 0, this._weatherCondition ?? '');
     const moonWash = (this._moonBrightCur ?? 0) * 0.65;
     const baseAlpha = twilightStarAlpha * cloudDim * (1 - moonWash);
     if (baseAlpha <= 0.01) return;
 
-    const rgbMap = { blue: '180,200,255', white: '255,255,255', warm: '255,230,180' };
+    const rgbMap = light
+      ? { blue: '120,140,190', white: '150,160,180', warm: '170,150,120' }
+      : { blue: '180,200,255', white: '255,255,255', warm: '255,230,180' };
 
     for (const s of this._starField) {
       const horizBoost = 1 + 2 * s.horizonProximity;
@@ -251,12 +254,12 @@ export class WeatherFX {
         if (s.mag >= 2.5) continue;
         const a = baseAlpha * s.baseBrightness * 0.6;
         ctx.lineWidth = 0.5;
-        ctx.strokeStyle = `rgba(200,220,255,${(a * 0.4).toFixed(3)})`;
+        ctx.strokeStyle = light ? `rgba(120,140,190,${(a * 0.4).toFixed(3)})` : `rgba(200,220,255,${(a * 0.4).toFixed(3)})`;
         ctx.beginPath();
         ctx.moveTo(s.x - s.r * 4, s.y); ctx.lineTo(s.x + s.r * 4, s.y);
         ctx.moveTo(s.x, s.y - s.r * 4); ctx.lineTo(s.x, s.y + s.r * 4);
         ctx.stroke();
-        ctx.strokeStyle = `rgba(220,230,255,${(a * 0.8).toFixed(3)})`;
+        ctx.strokeStyle = light ? `rgba(140,160,200,${(a * 0.8).toFixed(3)})` : `rgba(220,230,255,${(a * 0.8).toFixed(3)})`;
         ctx.beginPath();
         ctx.moveTo(s.x - s.r * 2, s.y); ctx.lineTo(s.x + s.r * 2, s.y);
         ctx.moveTo(s.x, s.y - s.r * 2); ctx.lineTo(s.x, s.y + s.r * 2);
@@ -1938,7 +1941,7 @@ export class WeatherFX {
         ss.trail.forEach((pt, i) => {
           const fade = (i + 1) / ss.trail.length;
           ctx.globalAlpha = scale * fade * 0.6;
-          ctx.fillStyle = '#fff';
+          ctx.fillStyle = light ? '#c8d0de' : '#fff';
           ctx.beginPath();
           ctx.arc(pt.x, pt.y, 1.5 * fade, 0, Math.PI * 2);
           ctx.fill();
@@ -2421,10 +2424,17 @@ export class WeatherFX {
         ctx.globalAlpha = state._milkyWayAlpha;
         // Core blob at galactic center
         const coreGrd = ctx.createRadialGradient(gcX, gcY, 0, gcX, gcY, h * 0.55);
-        coreGrd.addColorStop(0,   'rgba(200, 210, 255, 0.9)');
-        coreGrd.addColorStop(0.3, 'rgba(180, 195, 240, 0.4)');
-        coreGrd.addColorStop(0.7, 'rgba(160, 180, 230, 0.15)');
-        coreGrd.addColorStop(1,   'rgba(140, 165, 220, 0)');
+        if (light) {
+          coreGrd.addColorStop(0,   'rgba(150, 165, 215, 0.55)');
+          coreGrd.addColorStop(0.3, 'rgba(140, 158, 205, 0.28)');
+          coreGrd.addColorStop(0.7, 'rgba(130, 150, 195, 0.12)');
+          coreGrd.addColorStop(1,   'rgba(120, 145, 190, 0)');
+        } else {
+          coreGrd.addColorStop(0,   'rgba(200, 210, 255, 0.9)');
+          coreGrd.addColorStop(0.3, 'rgba(180, 195, 240, 0.4)');
+          coreGrd.addColorStop(0.7, 'rgba(160, 180, 230, 0.15)');
+          coreGrd.addColorStop(1,   'rgba(140, 165, 220, 0)');
+        }
         ctx.fillStyle = coreGrd;
         ctx.beginPath(); ctx.arc(gcX, gcY, h * 0.55, 0, Math.PI * 2); ctx.fill();
         // Extended band — two offset lobes perpendicular to galactic center direction
@@ -2434,9 +2444,15 @@ export class WeatherFX {
           const bx = gcX + perpX * h * t;
           const by = gcY + perpY * h * t;
           const bGrd = ctx.createRadialGradient(bx, by, 0, bx, by, h * 0.38);
-          bGrd.addColorStop(0,   'rgba(160, 175, 230, 0.5)');
-          bGrd.addColorStop(0.5, 'rgba(140, 160, 215, 0.15)');
-          bGrd.addColorStop(1,   'rgba(120, 145, 200, 0)');
+          if (light) {
+            bGrd.addColorStop(0,   'rgba(130, 148, 195, 0.32)');
+            bGrd.addColorStop(0.5, 'rgba(120, 140, 185, 0.10)');
+            bGrd.addColorStop(1,   'rgba(110, 135, 180, 0)');
+          } else {
+            bGrd.addColorStop(0,   'rgba(160, 175, 230, 0.5)');
+            bGrd.addColorStop(0.5, 'rgba(140, 160, 215, 0.15)');
+            bGrd.addColorStop(1,   'rgba(120, 145, 200, 0)');
+          }
           ctx.fillStyle = bGrd;
           ctx.beginPath(); ctx.arc(bx, by, h * 0.38, 0, Math.PI * 2); ctx.fill();
         });
@@ -2478,13 +2494,13 @@ export class WeatherFX {
       if (issAlpha > 0.05) {
         // Bright white-blue dot with a small glow
         const issGrd = ctx.createRadialGradient(issX, issY, 0, issX, issY, 12);
-        issGrd.addColorStop(0,   `rgba(220,240,255,${(issAlpha * 0.6).toFixed(3)})`);
-        issGrd.addColorStop(1,   'rgba(200,225,255,0)');
+        issGrd.addColorStop(0,   light ? `rgba(150,175,215,${(issAlpha * 0.6).toFixed(3)})` : `rgba(220,240,255,${(issAlpha * 0.6).toFixed(3)})`);
+        issGrd.addColorStop(1,   light ? 'rgba(140,165,205,0)' : 'rgba(200,225,255,0)');
         ctx.globalAlpha = 1;
         ctx.fillStyle = issGrd;
         ctx.beginPath(); ctx.arc(issX, issY, 12, 0, Math.PI * 2); ctx.fill();
         ctx.globalAlpha = issAlpha;
-        ctx.fillStyle = 'rgb(240,248,255)';
+        ctx.fillStyle = light ? 'rgb(175,195,225)' : 'rgb(240,248,255)';
         ctx.beginPath(); ctx.arc(issX, issY, 2.5, 0, Math.PI * 2); ctx.fill();
         ctx.globalAlpha = state._alpha;
       }
@@ -2926,7 +2942,7 @@ export class WeatherFX {
           ss.trail.forEach((pt, i) => {
             const fade = (i + 1) / ss.trail.length;
             ctx.globalAlpha = state._alpha * fade * 0.6 * starDim;
-            ctx.fillStyle = '#fff';
+            ctx.fillStyle = light ? '#c8d0de' : '#fff';
             ctx.beginPath();
             ctx.arc(pt.x, pt.y, 1.5 * fade, 0, Math.PI * 2);
             ctx.fill();
