@@ -279,6 +279,7 @@ export class WeatherFX {
   _renderCloudToOffscreen(p, isNight) {
     const cloudR = p.r;
     const DEG = Math.PI / 180;
+    const light = this._theme === 'light';
 
     // Use fixed origin with morph headroom if available, otherwise compute from current lobes
     let ox, oy, offW, offH;
@@ -366,17 +367,33 @@ export class WeatherFX {
     // --- Phase 2: fill gradient over full canvas ---
     const grd = octx.createLinearGradient(0, gradTop, 0, gradBot);
     if (isNight) {
-      grd.addColorStop(0,    'rgba(95, 115, 160, 0.92)');
-      grd.addColorStop(0.45, 'rgba(58,  70, 108, 0.87)');
-      grd.addColorStop(1,    'rgba(28,  35,  68, 0.80)');
+      if (light) {
+        // Muted dusk blue — visible on light theme's pale night backdrop
+        grd.addColorStop(0,    'rgba(150, 160, 195, 0.85)');
+        grd.addColorStop(0.45, 'rgba(115, 125, 160, 0.80)');
+        grd.addColorStop(1,    'rgba(85,  95,  130, 0.72)');
+      } else {
+        grd.addColorStop(0,    'rgba(95, 115, 160, 0.92)');
+        grd.addColorStop(0.45, 'rgba(58,  70, 108, 0.87)');
+        grd.addColorStop(1,    'rgba(28,  35,  68, 0.80)');
+      }
     } else {
       const sunBiasR = hasSunDir ? 12 : 0;
       const sunBiasG = hasSunDir ? 6  : 0;
-      const hi = 245, mid = 210;
-      grd.addColorStop(0,    'rgba(255, 255, 255, 0.97)');
-      grd.addColorStop(0.30, `rgba(${Math.min(255, hi + sunBiasR)}, ${Math.min(255, hi + sunBiasG)}, ${hi}, 0.92)`);
-      grd.addColorStop(0.65, `rgba(${Math.min(255, mid + sunBiasR)}, ${Math.min(255, mid + sunBiasG + 4)}, ${mid + 10}, 0.87)`);
-      grd.addColorStop(1,    `rgba(${undersideR}, ${undersideG}, ${undersideB}, 0.82)`);
+      if (light) {
+        // Soft gray-white — visible against light background
+        const hi = 235, mid = 200;
+        grd.addColorStop(0,    'rgba(242, 242, 244, 0.97)');
+        grd.addColorStop(0.30, `rgba(${Math.min(255, hi + sunBiasR)}, ${Math.min(255, hi + sunBiasG)}, ${hi + 2}, 0.92)`);
+        grd.addColorStop(0.65, `rgba(${Math.min(255, mid + sunBiasR)}, ${Math.min(255, mid + sunBiasG + 4)}, ${mid + 10}, 0.87)`);
+        grd.addColorStop(1,    `rgba(${Math.min(255, undersideR + 40)}, ${Math.min(255, undersideG + 40)}, ${Math.min(255, undersideB + 40)}, 0.82)`);
+      } else {
+        const hi = 245, mid = 210;
+        grd.addColorStop(0,    'rgba(255, 255, 255, 0.97)');
+        grd.addColorStop(0.30, `rgba(${Math.min(255, hi + sunBiasR)}, ${Math.min(255, hi + sunBiasG)}, ${hi}, 0.92)`);
+        grd.addColorStop(0.65, `rgba(${Math.min(255, mid + sunBiasR)}, ${Math.min(255, mid + sunBiasG + 4)}, ${mid + 10}, 0.87)`);
+        grd.addColorStop(1,    `rgba(${undersideR}, ${undersideG}, ${undersideB}, 0.82)`);
+      }
     }
     octx.fillStyle = grd;
     octx.fillRect(0, 0, off.width, off.height);
@@ -427,8 +444,8 @@ export class WeatherFX {
       const eGrd = octx.createRadialGradient(lx, ly, lr * 0.82, lx, ly, lr * 1.12);
       eGrd.addColorStop(0, 'rgba(255,255,255,0)');
       eGrd.addColorStop(1, isNight
-        ? 'rgba(60, 80, 130, 0.06)'
-        : 'rgba(255, 255, 255, 0.07)');
+        ? (light ? 'rgba(110, 120, 160, 0.07)' : 'rgba(60, 80, 130, 0.06)')
+        : (light ? 'rgba(190, 195, 205, 0.08)' : 'rgba(255, 255, 255, 0.07)'));
       octx.fillStyle = eGrd;
       octx.beginPath();
       if (rsX > 0 && rsY > 0) octx.ellipse(lx, ly, rsX * 1.12, rsY * 1.12, 0, 0, Math.PI * 2);
@@ -443,8 +460,9 @@ export class WeatherFX {
       const rimY = oy - Math.sin(sunAngle) * offH * 0.3;
       const rimGrad = octx.createRadialGradient(rimX, rimY, 0, rimX, rimY, offW * 0.6);
       const rimAlpha = cloudDim * 0.25;
-      rimGrad.addColorStop(0, `rgba(255, 255, 240, ${rimAlpha})`);
-      rimGrad.addColorStop(1, `rgba(255, 255, 240, 0)`);
+      const rimR = 255, rimG = light ? 250 : 255, rimB = light ? 215 : 240;
+      rimGrad.addColorStop(0, `rgba(${rimR}, ${rimG}, ${rimB}, ${rimAlpha})`);
+      rimGrad.addColorStop(1, `rgba(${rimR}, ${rimG}, ${rimB}, 0)`);
       octx.save();
       octx.globalCompositeOperation = 'source-atop';
       octx.fillStyle = rimGrad;
