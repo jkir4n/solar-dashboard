@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.61.3 (2026-08-02)
+
+### Bug Fixes
+- Add MIT license and dashboard screenshots for HACS validation
+
+
 ## v0.61.2 (2026-08-02)
 
 ### Bug Fixes
