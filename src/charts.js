@@ -17,6 +17,8 @@ export class ChartManager {
     this._themeRoot = null;
     this._cachedGrid = 'rgba(255,255,255,0.06)';
     this._cachedText = 'rgba(255,255,255,0.35)';
+    this._cachedCrosshair = 'rgba(255,255,255,0.3)';
+    this._cachedDotOutline = '#fff';
     this._canvasRect = null;
     // Invalidate cached rect on resize so stale values are not used
     this._onWindowResize = () => { this._canvasRect = null; };
@@ -30,11 +32,14 @@ export class ChartManager {
 
   updateTheme() {
     if (!this._themeRoot) return;
+    this._theme = this._themeRoot.dataset.theme;
     const cs = getComputedStyle(this._themeRoot);
     const grid = cs.getPropertyValue('--chart-grid').trim();
     const text = cs.getPropertyValue('--chart-text').trim();
     if (grid) this._cachedGrid = grid;
     if (text) this._cachedText = text;
+    this._cachedCrosshair = this._theme === 'light' ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.3)';
+    this._cachedDotOutline = this._theme === 'light' ? 'rgba(0,0,0,0.6)' : '#fff';
   }
 
   // ─── drawChart ───────────────────────────────────────────────
@@ -255,7 +260,7 @@ export class ChartManager {
     ctx.save();
 
     // Crosshair vertical line
-    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.strokeStyle = this._cachedCrosshair || 'rgba(255,255,255,0.3)';
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(pointX, padTop);
@@ -271,7 +276,7 @@ export class ChartManager {
       ctx.beginPath();
       ctx.arc(pointX, py, 4, 0, Math.PI * 2);
       ctx.fill();
-      ctx.strokeStyle = '#fff';
+      ctx.strokeStyle = this._cachedDotOutline || '#fff';
       ctx.lineWidth = 1.5;
       ctx.stroke();
     });

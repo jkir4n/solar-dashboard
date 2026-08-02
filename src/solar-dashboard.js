@@ -2205,7 +2205,7 @@ class SolarDashboard extends HTMLElement {
     if (solarW > 10) {
       wrap1.classList.remove('flow-idle');
       this._animateValue(watt1, parseFloat(watt1.textContent) || 0, Math.round(solarW), 600, v => Math.round(v) + ' W');
-      watt1.style.color = gridPowering ? '#00F0FF' : '#FFD60A';
+      watt1.style.color = gridPowering ? 'var(--flow-battery)' : 'var(--flow-solar)';
       this._flowPS1?.start(solarW, 1);
     } else {
       wrap1.classList.add('flow-idle');
@@ -2232,17 +2232,17 @@ class SolarDashboard extends HTMLElement {
     if (gridPowering && solarW > 10) {
       wrap2.classList.remove('flow-idle');
       this._animateValue(watt2, parseFloat(watt2.textContent) || 0, Math.round(solarW), 600, v => Math.round(v) + ' W');
-      watt2.style.color = '#00F0FF';
+      watt2.style.color = 'var(--flow-battery)';
       this._flowPS2?.start(solarW, 1);
     } else if (charging) {
       wrap2.classList.remove('flow-idle');
       this._animateValue(watt2, parseFloat(watt2.textContent) || 0, Math.round(chgPower), 600, v => Math.round(v) + ' W');
-      watt2.style.color = '#00F0FF';
+      watt2.style.color = 'var(--flow-battery)';
       this._flowPS2?.start(chgPower, 1);
     } else if (discharging) {
       wrap2.classList.remove('flow-idle');
       this._animateValue(watt2, parseFloat(watt2.textContent) || 0, Math.round(dischgPower), 600, v => Math.round(v) + ' W');
-      watt2.style.color = '#FF453A';
+      watt2.style.color = 'var(--red)';
       this._flowPS2?.start(dischgPower, -1);
     } else {
       wrap2.classList.add('flow-idle');
@@ -2256,7 +2256,7 @@ class SolarDashboard extends HTMLElement {
     if (gridW > 10) {
       wrap3.classList.remove('flow-idle');
       this._animateValue(watt3, parseFloat(watt3.textContent) || 0, Math.round(gridW), 600, v => Math.round(v) + ' W');
-      watt3.style.color = '#0A84FF';
+      watt3.style.color = 'var(--flow-grid)';
       this._flowPS3?.start(gridW, 1);
     } else {
       wrap3.classList.add('flow-idle');
@@ -2272,7 +2272,7 @@ class SolarDashboard extends HTMLElement {
       wrap4.classList.remove('flow-idle');
       this._animateValue(watt4, parseFloat(watt4.textContent) || 0, Math.round(homeW), 600, v => Math.round(v) + ' W');
       // Color reflects primary power source: solar=yellow, battery=red, grid=blue
-      watt4.style.color = solarW > dischgPower && solarW > gridW ? '#FFD60A' : dischgPower > gridW ? '#FF453A' : '#0A84FF';
+      watt4.style.color = solarW > dischgPower && solarW > gridW ? 'var(--flow-solar)' : dischgPower > gridW ? 'var(--red)' : 'var(--flow-grid)';
       this._flowPS4?.start(homeW, 1);
     } else {
       wrap4.classList.add('flow-idle');
@@ -2404,7 +2404,7 @@ class SolarDashboard extends HTMLElement {
     const core = document.createElementNS(ns, 'path');
     core.setAttribute('d', d);
     core.setAttribute('fill', 'none');
-    core.setAttribute('stroke', '#fff');
+    core.style.stroke = 'var(--text)';
     core.setAttribute('stroke-width', String(coreWidth));
     core.setAttribute('stroke-linecap', 'round');
     core.setAttribute('stroke-linejoin', 'round');

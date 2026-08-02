@@ -17,6 +17,7 @@ export const STYLES = `
     --red:var(--error-color, #FF453A);--red-glow:rgba(255,69,58,0.25);--red-bg:rgba(255,69,58,0.12);
     --blue:var(--info-color, #0A84FF);--blue-glow:rgba(10,132,255,0.25);--blue-bg:rgba(10,132,255,0.12);
     --indigo:#5E5CE6;--teal:#64D2FF;
+    --flow-solar:#FFD60A;--flow-battery:#00F0FF;--flow-grid:#0A84FF;
     --mesh-1:rgba(10,132,255,0.08);--mesh-2:rgba(48,209,88,0.06);
     --mesh-3:rgba(255,159,10,0.05);--mesh-4:rgba(94,92,230,0.07);
     --shadow:0 8px 32px rgba(0,0,0,0.4);--shadow-sm:0 2px 12px rgba(0,0,0,0.3);
@@ -35,6 +36,7 @@ export const STYLES = `
     --red:var(--error-color, #D0281F);--red-glow:rgba(208,40,31,0.2);--red-bg:rgba(208,40,31,0.1);
     --blue:var(--info-color, #0062CC);--blue-glow:rgba(0,98,204,0.15);--blue-bg:rgba(0,98,204,0.08);
     --indigo:#4B48C8;--teal:#3AAFE0;
+    --flow-solar:#B8860B;--flow-battery:#0096A8;--flow-grid:#0A5DB8;
     --mesh-1:rgba(0,98,204,0.07);--mesh-2:rgba(30,140,58,0.06);
     --mesh-3:rgba(196,112,0,0.05);--mesh-4:rgba(75,72,200,0.07);
     --shadow:0 8px 32px rgba(0,0,0,0.12);--shadow-sm:0 2px 12px rgba(0,0,0,0.08);
@@ -503,9 +505,18 @@ export const STYLES = `
     position: relative;
     animation: junctionPulse 2.5s ease-in-out infinite;
   }
+  [data-theme="light"] .fh-junction {
+    background: rgba(0, 0, 0, 0.12);
+    border: 1px solid rgba(0, 0, 0, 0.25);
+    animation-name: junctionPulseLight;
+  }
   @keyframes junctionPulse {
     0%, 100% { box-shadow: 0 0 6px rgba(0, 240, 255, 0.2); background: rgba(255, 255, 255, 0.2); }
     50% { box-shadow: 0 0 16px rgba(0, 240, 255, 0.45); background: rgba(255, 255, 255, 0.35); }
+  }
+  @keyframes junctionPulseLight {
+    0%, 100% { box-shadow: 0 0 6px rgba(0, 150, 190, 0.25); background: rgba(0, 0, 0, 0.12); }
+    50% { box-shadow: 0 0 16px rgba(0, 150, 190, 0.5); background: rgba(0, 0, 0, 0.22); }
   }
 
   .flow-hub .flow-line-wrap { margin-top: 0; }
