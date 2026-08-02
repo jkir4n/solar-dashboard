@@ -732,6 +732,19 @@ export class WeatherFX {
     if (!this._starField || !this._starField.length) this._initStarField();
   }
 
+  /**
+   * Update the theme at runtime ('dark' | 'light').
+   * Marks cloud offscreen canvases dirty so they re-render with the new palette.
+   */
+  setTheme(theme) {
+    if (this._theme === theme) return;
+    this._theme = theme;
+    // Force cloud offscreen re-render with the new theme's palette
+    for (const p of this._particles || []) {
+      if (p.kind === 'cloud' && p.off) p.offDirty = true;
+    }
+  }
+
   /** Stop all weather effects and clear canvas. */
   stop() {
     this._fadeGen++;

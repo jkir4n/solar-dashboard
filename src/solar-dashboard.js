@@ -1119,7 +1119,8 @@ class SolarDashboard extends HTMLElement {
         this._weatherFx.resize(window.innerWidth, window.innerHeight);
         // Start with a default condition so particles are visible immediately
         const isNight = this._engine ? this._engine.getPosition(new Date()).elevation < 0 : false;
-        this._weatherFx.start(isNight ? 'clear-night' : 'sunny', isNight, 'dark', 0, 0.5, -90, 180, isNight ? -10 : 30, 180, isNight ? 0 : 20, 180);
+        const initTheme = this._els.dashRoot?.dataset.theme || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        this._weatherFx.start(isNight ? 'clear-night' : 'sunny', isNight, initTheme, 0, 0.5, -90, 180, isNight ? -10 : 30, 180, isNight ? 0 : 20, 180);
         // Defer real weather to next rAF — default renders first, then fades to real
         requestAnimationFrame(() => this._updateWeather());
       }
@@ -1391,6 +1392,7 @@ class SolarDashboard extends HTMLElement {
     const darkMode = hass?.themes?.darkMode ?? window.matchMedia('(prefers-color-scheme: dark)').matches;
     root.dataset.theme = darkMode ? 'dark' : 'light';
     if (this._charts) this._charts.updateTheme();
+    if (this._weatherFx) this._weatherFx.setTheme(root.dataset.theme);
   }
 
   // ============ 24/7: CONNECTION HEALTH CHECK ============
