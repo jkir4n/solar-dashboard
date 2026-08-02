@@ -2176,6 +2176,14 @@ export class WeatherFX {
           ctx.arc(sunX, sunY, sunR * 3.5, 0, Math.PI * 2);
           ctx.fill();
           ctx.restore();
+          // Light theme: thin soft outline so the disc reads on a pale sky
+          if (light) {
+            ctx.strokeStyle = 'rgba(160, 140, 90, 0.35)';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(sunX, sunY, sunR, 0, Math.PI * 2);
+            ctx.stroke();
+          }
         }
         // Solar halo — lerped strength for smooth fade, shimmer for organic life
         const haloStrength = (cloudDim > 0.30 && cloudDim < 0.72) ? (cloudDim - 0.30) / 0.42 : 0;
@@ -2190,7 +2198,7 @@ export class WeatherFX {
           // Inner darkening — sky is depleted inside the 22° ring
           const darkGrd = ctx.createRadialGradient(sunX, sunY, sunR * 1.8, sunX, sunY, haloR - halfW);
           darkGrd.addColorStop(0, 'rgba(0,0,0,0)');
-          darkGrd.addColorStop(1, `rgba(0,0,0,${(hs * 0.09).toFixed(3)})`);
+          darkGrd.addColorStop(1, `rgba(0,0,0,${((hs * 0.09) * (light ? 0.6 : 1)).toFixed(3)})`);
           ctx.globalAlpha = state._alpha;
           ctx.fillStyle = darkGrd;
           ctx.beginPath();
@@ -2382,7 +2390,7 @@ export class WeatherFX {
           // Inner darkening
           const mDarkGrd = ctx.createRadialGradient(moonX, moonY, moonR * 1.8, moonX, moonY, mHaloR - mHalfW);
           mDarkGrd.addColorStop(0, 'rgba(0,0,0,0)');
-          mDarkGrd.addColorStop(1, `rgba(0,0,0,${(moonHaloStrength * 0.05).toFixed(3)})`);
+          mDarkGrd.addColorStop(1, `rgba(0,0,0,${((moonHaloStrength * 0.05) * (light ? 0.6 : 1)).toFixed(3)})`);
           ctx.globalAlpha = state._alpha;
           ctx.fillStyle = mDarkGrd;
           ctx.beginPath();
