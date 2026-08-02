@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.61.4 (2026-08-02)
+
+### Bug Fixes
+- Sun/moon disc contrast in light theme
+- Theme-aware UI colors (battery arc, chart crosshair, junction dot, watt labels)
+- Theme-aware fog and hail rendering for light theme
+- Theme-aware night-sky objects (stars, shooting stars, Milky Way, ISS)
+- Theme-aware cloud gradient, edge, and rim for light theme
+- Propagate theme changes to weather FX engine at runtime
+
+
 ## v0.61.3 (2026-08-02)
 
 ### Bug Fixes
