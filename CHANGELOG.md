@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.61.2 (2026-08-02)
+
+### Bug Fixes
+- Comply with HACS manifest schema — remove version key, add validate action
+
+
 ## v0.61.1 (2026-06-03)
 
 ### Bug Fixes
