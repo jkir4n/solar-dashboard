@@ -2,6 +2,7 @@
   "name": "solar-dashboard",
   "version": "0.61.2",
   "description": "Solar monitoring dashboard for Home Assistant",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "build": "rollup -c",

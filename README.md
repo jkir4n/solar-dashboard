@@ -2,6 +2,14 @@
 
 A real-time solar monitoring dashboard for Home Assistant, built as a HACS-compatible custom panel. Displays battery status (JK BMS, JBD, Daly, and more), solar generation forecasts (NOAA-based), weather-reactive backgrounds, and historical charts -- all in a single full-page panel.
 
+![Solar Dashboard (dark theme)](images/screenshot-dark.png)
+
+*Dark theme — live powerflow, battery pack info, and solar estimates*
+
+![Solar Dashboard (light theme)](images/screenshot-light.png)
+
+*Light theme*
+
 ## Features
 
 - Auto-discovering BMS monitoring — works with JK, JBD, Daly, BatMON and other integrations (no hardcoded entity IDs)
