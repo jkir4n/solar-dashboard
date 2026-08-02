@@ -1657,6 +1657,7 @@ export class WeatherFX {
   }
 
   _renderHailstones(ctx, particles, now, windFactor, windDx, gustRatio, w, h, alpha = 1) {
+    const light = this._theme === 'light';
     for (const p of particles) {
       const effDx = p.vx * (1 + gustRatio * 0.3 * Math.sin(now * 0.0009 + p.glintPhase));
       p.x += effDx;
@@ -1670,9 +1671,9 @@ export class WeatherFX {
 
       ctx.beginPath();
       ctx.ellipse(p.x, p.y, p.r, p.r * 0.75, 0, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(200, 220, 240, 1)';
+      ctx.fillStyle = light ? 'rgba(150, 175, 205, 1)' : 'rgba(200, 220, 240, 1)';
       ctx.fill();
-      ctx.strokeStyle = 'rgba(160, 190, 215, 0.6)';
+      ctx.strokeStyle = light ? 'rgba(110, 140, 175, 0.6)' : 'rgba(160, 190, 215, 0.6)';
       ctx.lineWidth = 0.5;
       ctx.stroke();
 
@@ -1680,7 +1681,7 @@ export class WeatherFX {
         const gA = 0.5 + 0.5 * Math.sin(now * 0.003 + p.glintPhase);
         ctx.beginPath();
         ctx.arc(p.x - p.r * 0.3, p.y - p.r * 0.25, p.r * 0.2, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255, 255, 255, ${gA})`;
+        ctx.fillStyle = light ? `rgba(220, 230, 240, ${gA})` : `rgba(255, 255, 255, ${gA})`;
         ctx.fill();
       }
       ctx.restore();
@@ -3077,10 +3078,11 @@ export class WeatherFX {
       // T3.2: Vertical density gradient — denser at canvas bottom
       if ((state._particlesByType.fogBlob || []).length > 0) {
         const _fd = state._particlesByType.fogBlob[0].fogDensity ?? 0.5;
+        const _fogR = light ? 165 : 200, _fogG = light ? 172 : 210, _fogB = light ? 182 : 220;
         const _fogGrad = ctx.createLinearGradient(0, h * 0.4, 0, h);
-        _fogGrad.addColorStop(0,   `rgba(200, 210, 220, 0)`);
-        _fogGrad.addColorStop(0.5, `rgba(200, 210, 220, ${(_fd * 0.15).toFixed(3)})`);
-        _fogGrad.addColorStop(1,   `rgba(200, 210, 220, ${(_fd * 0.35).toFixed(3)})`);
+        _fogGrad.addColorStop(0,   `rgba(${_fogR}, ${_fogG}, ${_fogB}, 0)`);
+        _fogGrad.addColorStop(0.5, `rgba(${_fogR}, ${_fogG}, ${_fogB}, ${(_fd * 0.15).toFixed(3)})`);
+        _fogGrad.addColorStop(1,   `rgba(${_fogR}, ${_fogG}, ${_fogB}, ${(_fd * 0.35).toFixed(3)})`);
         ctx.save();
         ctx.fillStyle = _fogGrad;
         ctx.fillRect(0, 0, w, h);
@@ -3100,9 +3102,10 @@ export class WeatherFX {
         if (p.x < -p.rx) p.x = w + p.rx;
         const y = p.yBase + Math.sin(p.x * 0.04 + t * 0.025 + p.blobIndex) * p.amp;
         ctx.globalAlpha = state._alpha * p.o;
-        const _r = Math.round(180 + _fogWarmthEff * 60);
-        const _g = Math.round(190 + _fogWarmthEff * 30);
-        const _b = Math.round(200 - _fogWarmthEff * 20);
+        const _fogBaseShift = light ? -35 : 0;
+        const _r = Math.round(180 + _fogWarmthEff * 60 + _fogBaseShift);
+        const _g = Math.round(190 + _fogWarmthEff * 30 + _fogBaseShift);
+        const _b = Math.round(200 - _fogWarmthEff * 20 + _fogBaseShift);
         ctx.fillStyle = `rgba(${_r},${_g},${_b},1)`;
         ctx.beginPath();
         ctx.ellipse(p.x, y, p.rx, p.ry, 0, 0, Math.PI * 2);
@@ -3272,10 +3275,11 @@ export class WeatherFX {
       // T3.2: Vertical density gradient for vis-overlay fog
       if ((state._particlesByType.fogBlob || []).length > 0) {
         const _fdVis = state._particlesByType.fogBlob[0].fogDensity ?? 0.5;
+        const _fogRVis = light ? 165 : 200, _fogGVis = light ? 172 : 210, _fogBVis = light ? 182 : 220;
         const _fogGradVis = ctx.createLinearGradient(0, h * 0.4, 0, h);
-        _fogGradVis.addColorStop(0,   `rgba(200, 210, 220, 0)`);
-        _fogGradVis.addColorStop(0.5, `rgba(200, 210, 220, ${(_fdVis * 0.15).toFixed(3)})`);
-        _fogGradVis.addColorStop(1,   `rgba(200, 210, 220, ${(_fdVis * 0.35).toFixed(3)})`);
+        _fogGradVis.addColorStop(0,   `rgba(${_fogRVis}, ${_fogGVis}, ${_fogBVis}, 0)`);
+        _fogGradVis.addColorStop(0.5, `rgba(${_fogRVis}, ${_fogGVis}, ${_fogBVis}, ${(_fdVis * 0.15).toFixed(3)})`);
+        _fogGradVis.addColorStop(1,   `rgba(${_fogRVis}, ${_fogGVis}, ${_fogBVis}, ${(_fdVis * 0.35).toFixed(3)})`);
         ctx.save();
         ctx.fillStyle = _fogGradVis;
         ctx.fillRect(0, 0, w, h);
@@ -3294,9 +3298,10 @@ export class WeatherFX {
         if (p.x < -p.rx) p.x = w + p.rx;
         const y = p.yBase + Math.sin(p.x * 0.04 + t * 0.025 + p.blobIndex) * p.amp;
         ctx.globalAlpha = state._alpha * p.o;
-        const _r = Math.round(180 + _fogWarmthEffVis * 60);
-        const _g = Math.round(190 + _fogWarmthEffVis * 30);
-        const _b = Math.round(200 - _fogWarmthEffVis * 20);
+        const _fogBaseShiftVis = light ? -35 : 0;
+        const _r = Math.round(180 + _fogWarmthEffVis * 60 + _fogBaseShiftVis);
+        const _g = Math.round(190 + _fogWarmthEffVis * 30 + _fogBaseShiftVis);
+        const _b = Math.round(200 - _fogWarmthEffVis * 20 + _fogBaseShiftVis);
         ctx.fillStyle = `rgba(${_r},${_g},${_b},1)`;
         ctx.beginPath();
         ctx.ellipse(p.x, y, p.rx, p.ry, 0, 0, Math.PI * 2);
