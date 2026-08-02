@@ -1,5 +1,5 @@
 // weather-fx.js — Weather particle system
-// Ported from solar-v9.html lines 792-1230
+// Refactored from legacy solar-v9.html monolith (lines 792-1230)
 import { snFBM } from './noise.js';
 
 const THICK_ARCHETYPES = new Set(['nimbostratus', 'cumulonimbus', 'stratus']);

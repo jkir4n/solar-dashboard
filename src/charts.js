@@ -1,5 +1,5 @@
 // charts.js — Custom canvas charting with crosshair overlay
-// Ported from solar-v9.html lines 2033-2475
+// Refactored from legacy solar-v9.html monolith (lines 2033-2475)
 
 export class ChartManager {
   /**
