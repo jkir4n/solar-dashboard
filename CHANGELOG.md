@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.61.6 (2026-08-06)
+
+### Bug Fixes
+- Weather background hidden behind HA opaque panel background
+
+
 ## v0.61.5 (2026-08-06)
 
 ### Bug Fixes
