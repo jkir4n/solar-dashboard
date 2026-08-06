@@ -2401,7 +2401,7 @@ export class WeatherFX {
         // Lunar halo — same radial-gradient ring technique, silvery tones
         const moonHaloStrength = ((cloudDim > 0.30 && cloudDim < 0.72) ? (cloudDim - 0.30) / 0.42 : 0) * mb;
         if (moonHaloStrength > 0 && state._moonElevCur > 5) {
-          const mHaloR = this._h * 0.122; // fixed 22° angular radius, independent of phase
+          const mHaloR = moonR * 2.8; // fixed 22° angular radius, independent of phase (mirrors solar halo sizing)
           const mHalfW = moonR * 0.9;
           ctx.save();
 
