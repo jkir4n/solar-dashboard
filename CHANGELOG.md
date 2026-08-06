@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.61.5 (2026-08-06)
+
+### Bug Fixes
+- Weather fade pin, render-loop leak, tab-restore, moon halo NaN
+
+
 ## v0.61.4 (2026-08-02)
 
 ### Bug Fixes
