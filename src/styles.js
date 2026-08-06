@@ -47,10 +47,15 @@ export const STYLES = `
   * { margin:0; padding:0; box-sizing:border-box; }
   :host {
     font-family: Inter, -apple-system, system-ui, sans-serif;
-    background: var(--bg); color: var(--text);
+    background: transparent; color: var(--text);
     min-height: 100vh; overflow-x: hidden;
   }
-  .container { max-width: 1200px; margin: 0 auto; padding: 16px; }
+  /* Own stacking context so the weather canvas / mesh paint above HA's opaque
+     panel background (ha-panel-custom sets background:var(--primary-background-color),
+     HA 2026.8+ — opaque #111 in dark theme) but below the cards.
+     Without these z-index layers the background effects are invisible. */
+  .dashboard-root { position: relative; z-index: 0; isolation: isolate; }
+  .container { position: relative; z-index: 2; max-width: 1200px; margin: 0 auto; padding: 16px; }
   .card {
     background: var(--glass);
     backdrop-filter: blur(var(--glass-blur));
@@ -75,7 +80,7 @@ export const STYLES = `
 
   #weatherParticles {
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-    z-index: -2; pointer-events: none;
+    z-index: 1; pointer-events: none;
   }
 
   /* Mesh gradient — must be on .dashboard-root so it inherits --mesh-1/2/3 vars
