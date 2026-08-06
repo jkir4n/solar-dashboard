@@ -770,6 +770,7 @@ export class WeatherFX {
   /** Stop all weather effects and clear canvas. */
   stop() {
     this._fadeGen++;
+    this._loopToken++; // kill any surviving render-loop chains
     if (this._animFrameId) {
       cancelAnimationFrame(this._animFrameId);
       this._animFrameId = null;
