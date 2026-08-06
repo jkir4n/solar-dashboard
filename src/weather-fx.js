@@ -95,6 +95,7 @@ export class WeatherFX {
     this._isNight = false;
     this._particles = [];
     this._animFrameId = null;
+    this._loopToken = 0;
     this._currentType = null;
     this._alpha = 1;
     this._fading = false;
