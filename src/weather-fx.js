@@ -829,7 +829,11 @@ export class WeatherFX {
     const canvas = this.canvas;
     if (!canvas || !state.ctx) return;
     if (state._animFrameId) return;
+    const token = ++state._loopToken;
     const loop = (ts) => {
+      // Only the newest chain may keep rendering — older chains exit so a
+      // shared `_animFrameId` overwrite can't leak duplicate render loops
+      if (token !== state._loopToken) return;
       if (ts - state._lastFrame >= 16) {
         state._lastFrame = ts;
         try {
