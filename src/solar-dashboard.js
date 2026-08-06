@@ -1273,6 +1273,7 @@ class SolarDashboard extends HTMLElement {
           this._connCheckInterval = setInterval(() => this._checkConnection(), 30000);
           this._startMeshLerp();
           this._startBattArcs();
+          this._updateWeather(); // immediate weather restart (fxKey was nulled on hide)
           this._refreshAllUI();
         }
       };
