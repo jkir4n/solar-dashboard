@@ -918,17 +918,9 @@ export class WeatherFX {
       const gen = ++state._fadeGen;
       const fadeStep = () => {
         if (state._fadeGen !== gen) return; // cancelled by stop() or a newer transition
-        state._alpha -= 0.02;
-        if (state._alpha <= 0.15) {
-          // Start fade-in before fade-out completes — overlap avoids blank frame
-          if (!state._newParticlesCreated) {
-            state._alpha = 0.15;
-            state._newParticlesCreated = true;
-            state._currentType = state._nextType;
-            state._particles = state._currentType
-              ? state._createParticles(state._currentType, canvas) : [];
-            state._particlesByType = state._currentType ? state._bucketize(state._particles) : {};
-          }
+        if (state._newParticlesCreated) {
+          // Fade-in phase: only climb — never decrement back into the switch threshold,
+          // or the fade oscillates at ~0.16 forever and the `>= 1` completion is unreachable
           state._alpha += 0.02;
           if (state._alpha >= 1) {
             state._alpha = 1;
@@ -938,6 +930,26 @@ export class WeatherFX {
             return;
           }
           state._animFrameId = requestAnimationFrame(fadeStep);
+          return;
+        }
+        // Fade-out phase: decrement until the switch point, then swap types
+        state._alpha -= 0.02;
+        if (state._alpha > 0.15) {
+          state._animFrameId = requestAnimationFrame(fadeStep);
+          return;
+        }
+        state._alpha = 0.15;
+        state._newParticlesCreated = true;
+        state._currentType = state._nextType;
+        state._particles = state._currentType
+          ? state._createParticles(state._currentType, canvas) : [];
+        state._particlesByType = state._currentType ? state._bucketize(state._particles) : {};
+        state._alpha += 0.02;
+        if (state._alpha >= 1) {
+          state._alpha = 1;
+          state._fading = false;
+          state._newParticlesCreated = false;
+          state._animFrameId = null;
           return;
         }
         state._animFrameId = requestAnimationFrame(fadeStep);
