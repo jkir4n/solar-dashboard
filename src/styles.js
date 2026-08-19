@@ -161,6 +161,8 @@ export const STYLES = `
     /* Power flow */
     .flow-icon { width: 36px !important; height: 36px !important; }
     .flow-label { font-size: 10px !important; }
+    .flow-node-card { padding: 6px 8px !important; border-radius: 12px !important; min-width: 52px !important; }
+    .flow-watt-badge { padding: 1px 6px !important; font-size: 10px !important; border-radius: 8px !important; }
     /* Header */
     .header { flex-wrap: wrap !important; gap: 4px !important; padding: 8px 0 12px !important; }
     .header h1 { font-size: 20px !important; }
@@ -184,7 +186,9 @@ export const STYLES = `
     .inf { padding: 3px 0 !important; }
     .flow-icon { width: 28px !important; height: 28px !important; }
     .flow-label { font-size: 9px !important; }
-    .flow-watt { font-size: 11px !important; }
+    .flow-watt { font-size: 10px !important; }
+    .flow-node-card { padding: 4px 6px !important; border-radius: 10px !important; min-width: 44px !important; }
+    .flow-watt-badge { padding: 1px 4px !important; font-size: 9px !important; border-radius: 6px !important; }
     .chart-wrap canvas { height: 150px !important; }
     .chart-title { font-size: 11px !important; }
     .chart-value { font-size: 14px !important; }
@@ -317,7 +321,7 @@ export const STYLES = `
   .flow-icon.glow-dim svg { stroke: var(--text3); }
   .flow-label { font-size: 11px; font-weight: 600; color: var(--text2); }
   .flow-line-wrap { flex: 1; min-width: 40px; position: relative; display: flex; align-items: center; padding: 0 4px; margin-top: 22px; }
-  .flow-line { width: 100%; height: 3px; border-radius: 2px; background: var(--glass-border); position: relative; overflow: hidden; transition: box-shadow 0.4s ease, background 0.4s ease; }
+  .flow-line { width: 100%; height: 4px; border-radius: 3px; background: var(--glass-border); position: relative; overflow: hidden; transition: box-shadow 0.4s ease, background 0.4s ease; }
   .flow-pulse { display: none; }
   .flow-particles { position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; overflow: hidden; }
   .flow-dot { position: absolute; width: 4px; height: 4px; border-radius: 50%; top: 0; opacity: 0; }
@@ -330,6 +334,17 @@ export const STYLES = `
   }
   @keyframes lineSweep { 0% { background-position: -40% 0; } 100% { background-position: 140% 0; } }
   .flow-watt { position: absolute; top: calc(100% + 4px); left: 50%; transform: translateX(-50%); font-size: 11px; font-weight: 700; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .flow-watt-badge {
+    background: var(--glass);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    padding: 2px 8px;
+    box-shadow: var(--shadow-sm);
+    z-index: 3;
+    transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+  }
   .flow-idle .flow-particles { display: none; }
   .flow-idle .flow-line { opacity: 0.3; }
   .flow-arc-canvas { position: absolute; top: 50%; left: 0; transform: translateY(-50%); width: 100%; height: 20px; pointer-events: none; z-index: 1; }
@@ -486,6 +501,54 @@ export const STYLES = `
 
   .flow-hub-cell { display: flex; align-items: center; justify-content: center; }
 
+  /* Node cards */
+  .flow-node-card {
+    background: var(--fill-subtle);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 10px 14px;
+    min-width: 64px;
+    box-sizing: border-box;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    z-index: 2;
+  }
+  .flow-node-card:hover {
+    background: var(--glass-hover);
+    border-color: var(--glass-highlight);
+    transform: translateY(-2px);
+  }
+  .flow-node-card.node-active-solar {
+    border-color: var(--flow-solar);
+    box-shadow: 0 0 16px var(--orange-glow);
+    background: var(--orange-bg);
+  }
+  .flow-node-card.node-active-charging {
+    border-color: var(--flow-battery);
+    box-shadow: 0 0 16px rgba(0, 240, 255, 0.3);
+    background: rgba(0, 240, 255, 0.08);
+  }
+  [data-theme="light"] .flow-node-card.node-active-charging {
+    box-shadow: 0 0 16px rgba(0, 150, 168, 0.25);
+    background: rgba(0, 150, 168, 0.08);
+  }
+  .flow-node-card.node-active-discharging {
+    border-color: var(--red);
+    box-shadow: 0 0 16px var(--red-glow);
+    background: var(--red-bg);
+  }
+  .flow-node-card.node-active-grid {
+    border-color: var(--flow-grid);
+    box-shadow: 0 0 16px var(--blue-glow);
+    background: var(--blue-bg);
+  }
+  .flow-node-card.node-active-home {
+    border-color: var(--orange);
+    box-shadow: 0 0 16px var(--orange-glow);
+    background: var(--orange-bg);
+  }
+
   /* Grid placements */
   .fh-solar-node { grid-column: 3; grid-row: 1; align-self: end; }
   .fh-solar-line { grid-column: 3; grid-row: 2; align-self: stretch; }
@@ -500,34 +563,54 @@ export const STYLES = `
   .fh-grid-line .flow-line-wrap { margin-right: -28px; }
   .fh-home-line .flow-line-wrap { margin-left: -28px; }
 
-  /* Junction dot at the cross-center */
+  /* Junction hub at the cross-center */
   .fh-junction {
     grid-column: 3;
     grid-row: 2 / 4;
     align-self: center;
     justify-self: center;
-    width: 14px;
-    height: 14px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.35);
+    background: var(--glass);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1.5px solid var(--glass-border);
     pointer-events: none;
     z-index: 2;
     position: relative;
-    animation: junctionPulse 2.5s ease-in-out infinite;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.4s ease, box-shadow 0.4s ease, background 0.4s ease;
   }
-  [data-theme="light"] .fh-junction {
-    background: rgba(0, 0, 0, 0.12);
-    border: 1px solid rgba(0, 0, 0, 0.25);
-    animation-name: junctionPulseLight;
+  .fh-junction-core {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--text3);
+    transition: background 0.4s ease, box-shadow 0.4s ease, transform 0.4s ease;
   }
-  @keyframes junctionPulse {
-    0%, 100% { box-shadow: 0 0 6px rgba(0, 240, 255, 0.2); background: rgba(255, 255, 255, 0.2); }
-    50% { box-shadow: 0 0 16px rgba(0, 240, 255, 0.45); background: rgba(255, 255, 255, 0.35); }
+  .fh-junction.junction-active {
+    border-color: var(--flow-battery);
+    box-shadow: 0 0 12px rgba(0, 240, 255, 0.4), 0 0 24px rgba(0, 240, 255, 0.15);
+    animation: junctionRingPulse 2s ease-in-out infinite alternate;
   }
-  @keyframes junctionPulseLight {
-    0%, 100% { box-shadow: 0 0 6px rgba(0, 150, 190, 0.25); background: rgba(0, 0, 0, 0.12); }
-    50% { box-shadow: 0 0 16px rgba(0, 150, 190, 0.5); background: rgba(0, 0, 0, 0.22); }
+  [data-theme="light"] .fh-junction.junction-active {
+    box-shadow: 0 0 12px rgba(0, 150, 168, 0.35), 0 0 24px rgba(0, 150, 168, 0.12);
+  }
+  .fh-junction.junction-active .fh-junction-core {
+    background: var(--flow-battery);
+    box-shadow: 0 0 8px var(--flow-battery);
+    animation: junctionCorePulse 2s ease-in-out infinite alternate;
+  }
+  @keyframes junctionRingPulse {
+    0%   { transform: scale(1); box-shadow: 0 0 8px rgba(0, 240, 255, 0.3); }
+    100% { transform: scale(1.1); box-shadow: 0 0 18px rgba(0, 240, 255, 0.6), 0 0 28px rgba(0, 240, 255, 0.2); }
+  }
+  @keyframes junctionCorePulse {
+    0%   { transform: scale(0.9); opacity: 0.8; }
+    100% { transform: scale(1.2); opacity: 1; }
   }
 
   .flow-hub .flow-line-wrap { margin-top: 0; }
@@ -544,7 +627,8 @@ export const STYLES = `
 
   .flow-vertical .flow-line {
     position: absolute;
-    width: 3px;
+    width: 4px;
+    border-radius: 3px;
     height: 100%;
     left: 50%;
     top: 0;
@@ -572,7 +656,7 @@ export const STYLES = `
   /* ── Vertical watt label (beside the vertical line) ── */
   .fh-watt-vertical {
     position: absolute;
-    left: calc(50% + 5px);
+    left: calc(50% + 8px);
     top: 50%;
     transform: translateY(-50%);
     bottom: auto !important;
@@ -591,8 +675,13 @@ export const STYLES = `
 
   /* ── Mobile adjustments ── */
   @media (max-width: 700px) {
-    .flow-hub { padding: 16px; min-height: 160px; }
+    .flow-hub { padding: 16px 8px; min-height: 160px; }
     .flow-vertical { height: 56px; width: 40px; }
     .fh-watt-vertical { font-size: 10px; }
+  }
+  @media (max-width: 500px) {
+    .flow-hub { padding: 10px 4px; min-height: 140px; }
+    .fh-junction { width: 16px; height: 16px; }
+    .fh-junction-core { width: 5px; height: 5px; }
   }
 `;
