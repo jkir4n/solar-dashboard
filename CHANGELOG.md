@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.62.0 (2026-08-19)
+
+### Features
+- Enhance typography with tabular-nums and eliminate animation layout thrashing
+
+
 ## v0.61.6 (2026-08-06)
 
 ### Bug Fixes
