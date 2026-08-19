@@ -1054,6 +1054,7 @@ class SolarDashboard extends HTMLElement {
     const root = this.shadowRoot;
     this._els = {
       battRing:      root.getElementById('battRing'),
+      battCapDot:    root.getElementById('battCapDot'),
       battSOC:       root.getElementById('battSOC'),
       battStatus:    root.getElementById('battStatus'),
       battStatusDot: root.getElementById('battStatusDot'),
@@ -1483,11 +1484,12 @@ class SolarDashboard extends HTMLElement {
         <svg viewBox="0 0 200 200" width="200" height="200">
           <circle cx="100" cy="100" r="80" fill="none" stroke="var(--glass-border)" stroke-width="10"/>
           <circle id="battRing" class="batt-ring" cx="100" cy="100" r="80" fill="none" stroke="var(--green)" stroke-width="10" stroke-dasharray="0 502.65" stroke-linecap="round"/>
+          <circle id="battCapDot" cx="100" cy="20" r="6" fill="#fff" opacity="0" style="transition:all 800ms ease-in-out;pointer-events:none;"/>
           <text id="battSOC" x="100" y="108" text-anchor="middle" dominant-baseline="middle" class="batt-soc" fill="var(--text)" style="filter:drop-shadow(0 0 8px var(--green-glow))">0%</text>
         </svg>
-        <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+        <div class="batt-status-pill" style="margin-top:10px;">
           <div id="battStatusDot" style="width:8px;height:8px;border-radius:50%;background:var(--text2);animation:pulse 2s ease-in-out infinite;"></div>
-          <span id="battStatus" style="font-size:13px;font-weight:600;">${t(lang, 'idle')}</span>
+          <span id="battStatus" style="font-size:12px;font-weight:700;letter-spacing:0.02em;">${t(lang, 'idle')}</span>
         </div>
       </div>
       <div class="batt-zone-label">Live</div>
@@ -1970,16 +1972,36 @@ class SolarDashboard extends HTMLElement {
 
     const r = 80, circ = 2 * Math.PI * r;
     const ring = this._els.battRing;
+    const capDot = this._els.battCapDot;
     if (soc != null) {
       const socEl = this._els.battSOC;
       const oldSoc = parseFloat(socEl.textContent) || 0;
       this._animateValue(socEl, oldSoc, soc, 600, v => Math.round(v) + '%');
+      const color = soc < 20 ? 'var(--red)' : soc < 40 ? 'var(--orange)' : 'var(--green)';
+      const glow = soc < 20 ? 'var(--red-glow)' : soc < 40 ? 'var(--orange-glow)' : 'var(--green-glow)';
       ring.style.strokeDasharray = `${circ * soc / 100} ${circ}`;
-      ring.style.stroke = soc < 20 ? 'var(--red)' : soc < 40 ? 'var(--orange)' : 'var(--green)';
+      ring.style.stroke = color;
+      socEl.style.filter = `drop-shadow(0 0 8px ${glow})`;
+      if (capDot) {
+        if (soc > 0) {
+          const angle = (soc / 100) * 2 * Math.PI - Math.PI / 2;
+          const cx = 100 + r * Math.cos(angle);
+          const cy = 100 + r * Math.sin(angle);
+          capDot.setAttribute('cx', cx.toFixed(2));
+          capDot.setAttribute('cy', cy.toFixed(2));
+          capDot.style.fill = color;
+          capDot.style.filter = 'drop-shadow(0 0 6px ' + color + ')';
+          capDot.style.opacity = '1';
+        } else {
+          capDot.style.opacity = '0';
+        }
+      }
     } else {
       this._els.battSOC.textContent = '--%';
+      this._els.battSOC.style.filter = 'none';
       ring.style.strokeDasharray = `0 ${circ}`;
       ring.style.stroke = 'var(--secondary-text)';
+      if (capDot) capDot.style.opacity = '0';
     }
 
     const cur = current || 0;

@@ -217,6 +217,19 @@ export const STYLES = `
   .section-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
 
   /* Battery Hero */
+  .batt-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 14px;
+    border-radius: 20px;
+    background: var(--fill-subtle);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: var(--shadow-sm);
+    transition: background 0.3s ease, border-color 0.3s ease;
+  }
   .batt-ring { transform: rotate(-90deg); transform-origin: center; transition: stroke-dasharray 800ms ease-in-out, stroke-dashoffset 800ms ease-in-out, stroke 800ms ease-in-out; }
   .batt-soc { font-size: 48px; font-weight: 800; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
   .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 16px; }
