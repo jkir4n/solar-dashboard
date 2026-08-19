@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.63.1 (2026-08-19)
+
+### Bug Fixes
+- Polish power flow layout with circular emblems and clean typography
+- Redesign power flow with circular emblems and clean typography
+
+
 ## v0.63.0 (2026-08-19)
 
 ### Features
