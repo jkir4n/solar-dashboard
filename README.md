@@ -13,12 +13,14 @@ A real-time solar monitoring dashboard for Home Assistant, built as a HACS-compa
 ## Features
 
 - Auto-discovering BMS monitoring — works with JK, JBD, Daly, BatMON and other integrations (no hardcoded entity IDs)
+- Battery Hero radial gauge with real-time glowing endpoint tracking, state-reactive color shifts, and frosted status pill
+- Powerflow card: Minimalist circular energy hub (Solar → Home ← Battery + Grid) with fluid animated flow particles and floating live wattage telemetry
+- Zero-jitter tabular typography and optimized 60fps numerical animations
 - NOAA/Meeus solar position, irradiance, and weather-adjusted generation forecasts
 - Live weather effects: rain, snow, fog, lightning, and clouds — all wind-reactive and intensity-scaled
 - Real-time sun and moon discs with elevation-based colour, phase brightness, and cloud occlusion
 - Twilight phase transitions (civil → nautical → astronomical) and golden hour overlay
 - Star field with spectral colour variance, aurora, planets, Milky Way, and ISS pass rendering
-- Powerflow card: Solar → Home ← Battery + Grid with direction-aware animated flow lines
 - Auto-discovering grid power sensors (SolarEdge, Enphase, GoodWe, Sungrow, and more — no configuration needed)
 - Canvas charts with crosshair/tooltip (Live, Yesterday, 7D, 30D)
 - Dark and light themes, glassmorphism styling, responsive layout
