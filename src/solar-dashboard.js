@@ -1816,8 +1816,9 @@ class SolarDashboard extends HTMLElement {
       // Animation complete — flash effect
       this._animations.splice(i, 1);
       a.el.classList.remove('val-flash');
-      void a.el.offsetWidth;
-      a.el.classList.add('val-flash');
+      requestAnimationFrame(() => {
+        a.el.classList.add('val-flash');
+      });
       const _cleanFlash = () => a.el.classList.remove('val-flash');
       const _flashTimer = setTimeout(_cleanFlash, 1000);
       a.el._flashTimer = _flashTimer;
