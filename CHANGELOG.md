@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.64.0 (2026-08-19)
+
+### Features
+- Add leading glow cap dot to battery SOC ring and frosted status pill
+
+
 ## v0.63.1 (2026-08-19)
 
 ### Bug Fixes
