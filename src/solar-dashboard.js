@@ -1528,7 +1528,7 @@ class SolarDashboard extends HTMLElement {
             <h2 class="section-title">${t(lang, 'powerFlow')}</h2>
             <div class="flow-hub">
               <div class="flow-hub-cell fh-solar-node">
-                  <div class="flow-node flow-node-card" id="nodeSolarCard">
+                  <div class="flow-node">
                     <div class="flow-icon" id="iconSolar">
                       <svg viewBox="0 0 48 48">
                         <circle cx="24" cy="24" r="8"/>
@@ -1549,11 +1549,11 @@ class SolarDashboard extends HTMLElement {
                   <div class="flow-line-wrap flow-vertical" id="flowWrap1">
                     <div class="flow-line" id="flowLine1"></div>
                     <div class="flow-particles" id="flowParticles1">${'<div class="flow-dot"></div>'.repeat(20)}</div>
-                    <span class="flow-watt flow-watt-badge fh-watt-vertical" id="flowWatt1">0 W</span>
+                    <span class="flow-watt fh-watt-vertical" id="flowWatt1">0 W</span>
                   </div>
                 </div>
                 <div class="flow-hub-cell fh-grid-node">
-                  <div class="flow-node flow-node-card" id="nodeGridCard">
+                  <div class="flow-node">
                     <div class="flow-icon" id="iconGrid">
                       <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="24" y1="4"  x2="24" y2="44"/>
@@ -1574,18 +1574,18 @@ class SolarDashboard extends HTMLElement {
                   <div class="flow-line-wrap" id="flowWrap3">
                     <div class="flow-line" id="flowLine3"></div>
                     <div class="flow-particles" id="flowParticles3">${'<div class="flow-dot"></div>'.repeat(20)}</div>
-                    <span class="flow-watt flow-watt-badge" id="flowWatt3">0 W</span>
+                    <span class="flow-watt" id="flowWatt3">0 W</span>
                   </div>
                 </div>
                 <div class="flow-hub-cell fh-home-line">
                   <div class="flow-line-wrap" id="flowWrap4">
                     <div class="flow-line" id="flowLine4"></div>
                     <div class="flow-particles" id="flowParticles4">${'<div class="flow-dot"></div>'.repeat(20)}</div>
-                    <span class="flow-watt flow-watt-badge" id="flowWatt4">0 W</span>
+                    <span class="flow-watt" id="flowWatt4">0 W</span>
                   </div>
                 </div>
                 <div class="flow-hub-cell fh-home-node">
-                  <div class="flow-node flow-node-card" id="nodeHomeCard">
+                  <div class="flow-node">
                     <div class="flow-icon" id="iconHome">
                       <svg viewBox="0 0 48 48">
                         <polyline points="6,22 24,6 42,22"/>
@@ -1601,11 +1601,11 @@ class SolarDashboard extends HTMLElement {
                   <div class="flow-line-wrap flow-vertical" id="flowWrap2">
                     <div class="flow-line" id="flowLine2"></div>
                     <div class="flow-particles" id="flowParticles2">${'<div class="flow-dot"></div>'.repeat(20)}</div>
-                    <span class="flow-watt flow-watt-badge fh-watt-vertical" id="flowWatt2">0 W</span>
+                    <span class="flow-watt fh-watt-vertical" id="flowWatt2">0 W</span>
                   </div>
                 </div>
                 <div class="flow-hub-cell fh-bat-node">
-                  <div class="flow-node flow-node-card" id="nodeBatCard">
+                  <div class="flow-node">
                     <div class="flow-icon" id="iconBattery" style="position:relative;">
                       <svg viewBox="0 0 48 48">
                         <rect x="8" y="14" width="32" height="24" rx="3" ry="3"/>
@@ -1616,7 +1616,7 @@ class SolarDashboard extends HTMLElement {
                     <span class="flow-label">${t(lang, 'batteryNode')}</span>
                   </div>
                 </div>
-              <div class="fh-junction" id="flowJunction"><div class="fh-junction-core"></div></div>
+              <div class="fh-junction"></div>
             </div>
           </div>
   </div>
@@ -2200,11 +2200,6 @@ class SolarDashboard extends HTMLElement {
       this._els.flowWatt3 = root.getElementById('flowWatt3');
       this._els.flowWrap4 = root.getElementById('flowWrap4');
       this._els.flowWatt4 = root.getElementById('flowWatt4');
-      this._els.nodeSolarCard = root.getElementById('nodeSolarCard');
-      this._els.nodeBatCard   = root.getElementById('nodeBatCard');
-      this._els.nodeGridCard  = root.getElementById('nodeGridCard');
-      this._els.nodeHomeCard  = root.getElementById('nodeHomeCard');
-      this._els.flowJunction  = root.getElementById('flowJunction');
     }
 
     // Flow 1: Solar → Home (vertical, top→bottom)
@@ -2295,17 +2290,6 @@ class SolarDashboard extends HTMLElement {
     this._setIconGlow('iconGrid', gridSnap.gridAvailable === false ? 'icon-grid-offline' : gridW > 10 ? 'icon-grid-active' : 'glow-dim', gridW);
     const _gsDot = this.shadowRoot?.getElementById('gridStatusDot');
     if (_gsDot) _gsDot.classList.toggle('offline', gridSnap.gridAvailable === false);
-
-    // Active status toggles on node cards and hub junction
-    (this._els.nodeSolarCard || root.getElementById('nodeSolarCard'))?.classList.toggle('node-active-solar', solarW > 10);
-    const batCard = this._els.nodeBatCard || root.getElementById('nodeBatCard');
-    if (batCard) {
-      batCard.classList.toggle('node-active-charging', charging);
-      batCard.classList.toggle('node-active-discharging', discharging);
-    }
-    (this._els.nodeGridCard || root.getElementById('nodeGridCard'))?.classList.toggle('node-active-grid', gridW > 10);
-    (this._els.nodeHomeCard || root.getElementById('nodeHomeCard'))?.classList.toggle('node-active-home', homeActive);
-    (this._els.flowJunction || root.getElementById('flowJunction'))?.classList.toggle('junction-active', solarW > 10 || charging || discharging || gridW > 10);
 
     // Grid voltage / frequency display
     const _gridInfo     = this.shadowRoot?.getElementById('gridInfo');
