@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.63.0 (2026-08-19)
+
+### Features
+- Upgrade power flow card with frosted node cards and distribution hub
+
+
 ## v0.62.0 (2026-08-19)
 
 ### Features
