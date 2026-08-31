@@ -2371,17 +2371,29 @@ class SolarDashboard extends HTMLElement {
     const pwrEl = this._els.pwrVal || (this._els.pwrVal = root.getElementById('pwrVal'));
     const socEl = this._els.socVal || (this._els.socVal = root.getElementById('socVal'));
     const solEl = this._els.solVal || (this._els.solVal = root.getElementById('solVal'));
-    if (pwrEl && powerData?.length) {
-      const avg = powerData.reduce((s, v) => s + (v || 0), 0) / powerData.length;
-      pwrEl.textContent = Math.round(Math.abs(avg)) + ' W';
+    if (pwrEl) {
+      if (powerData?.length) {
+        const avg = powerData.reduce((s, v) => s + (v || 0), 0) / powerData.length;
+        pwrEl.textContent = Math.round(Math.abs(avg)) + ' W';
+      } else {
+        pwrEl.textContent = '--';
+      }
     }
-    if (socEl && socData?.length) {
-      const avg = socData.reduce((s, v) => s + (v || 0), 0) / socData.length;
-      socEl.textContent = Math.round(avg) + '%';
+    if (socEl) {
+      if (socData?.length) {
+        const avg = socData.reduce((s, v) => s + (v || 0), 0) / socData.length;
+        socEl.textContent = Math.round(avg) + '%';
+      } else {
+        socEl.textContent = '--';
+      }
     }
-    if (solEl && solarData?.length) {
-      const avg = solarData.reduce((s, v) => s + (v || 0), 0) / solarData.length;
-      solEl.textContent = Math.round(avg) + ' W';
+    if (solEl) {
+      if (solarData?.length) {
+        const avg = solarData.reduce((s, v) => s + (v || 0), 0) / solarData.length;
+        solEl.textContent = Math.round(avg) + ' W';
+      } else {
+        solEl.textContent = '--';
+      }
     }
   }
 
@@ -3758,7 +3770,7 @@ class SolarDashboard extends HTMLElement {
       if (samePowerEntity) {
         // NI3: Both charts use the same entity — fetch once, loadRange splits signed data
         // (battery chart takes negative=discharge, solar chart takes positive=charge)
-        result = await this._charts.loadRange(range, canvases, {
+        result = await this._charts.loadRange(range, { power: canvases.power, soc: canvases.soc }, {
           power: batteryPowerEntity,
           soc: E.SOC,
           _signed: !E.DISCHG_POWER,
@@ -3766,12 +3778,12 @@ class SolarDashboard extends HTMLElement {
         solarResult = { powerData: result.powerData, timeXLabel: result.timeXLabel };
       } else {
         [result, solarResult] = await Promise.all([
-          this._charts.loadRange(range, canvases, {
+          this._charts.loadRange(range, { power: canvases.power, soc: canvases.soc }, {
             power: batteryPowerEntity,
             soc: E.SOC,
             _signed: !E.DISCHG_POWER,
           }, this._bridge.timezone),
-          this._charts.loadRange(range, { solar: canvases.solar }, {
+          this._charts.loadRange(range, {}, {
             power: solarPowerEntity,
             _signed: !E.CHG_POWER,
           }, this._bridge.timezone),
@@ -3782,50 +3794,56 @@ class SolarDashboard extends HTMLElement {
       return;
     }
 
-    // Overlay estimated solar line on solar chart
-    // For Live: use current weather conditions for fair comparison
-    // For historical (1D/7D/30D): use clear-sky (no weather) since past weather is unknown
-    if (canvases.solar && solarResult.powerData?.length && this._engine && this._solarEngineReady) {
-      const panelConfig = this._getPanelConfig();
-      const actualPts = solarResult.powerData.map(d => (d.v !== null) ? Math.max(d.v, 0) : 0);
-      const isLive = range === 'Live';
-      const is30D = range === '30D';
-      const cloudPct = isLive ? (1 - this._weatherCloudFactor) * 100 : 0;
-      const ambientC = isLive ? this._weatherAmbientC : null;
-      let overlayPts, overlayLabel;
-      if (is30D) {
-        // 30D: show 7-day rolling average of actual as trend line (filter nighttime zeros)
-        overlayPts = actualPts.map((_, i) => {
-          const window = actualPts.slice(Math.max(0, i - 6), i + 1).filter(v => v > 0);
-          return window.length > 0 ? window.reduce((a, b) => a + b, 0) / window.length : 0;
-        });
-        overlayLabel = t(lang, 'sevenDAvg');
+    // Render solar chart with estimated overlay or single actual line
+    if (canvases.solar) {
+      if (solarResult?.powerData?.length) {
+        const actualPts = solarResult.powerData.map(d => (d.v !== null) ? Math.max(d.v, 0) : 0);
+        if (this._engine && this._solarEngineReady) {
+          const panelConfig = this._getPanelConfig();
+          const isLive = range === 'Live';
+          const is30D = range === '30D';
+          const cloudPct = isLive ? (1 - this._weatherCloudFactor) * 100 : 0;
+          const ambientC = isLive ? this._weatherAmbientC : null;
+          let overlayPts, overlayLabel;
+          if (is30D) {
+            // 30D: show 7-day rolling average of actual as trend line (filter nighttime zeros)
+            overlayPts = actualPts.map((_, i) => {
+              const window = actualPts.slice(Math.max(0, i - 6), i + 1).filter(v => v > 0);
+              return window.length > 0 ? window.reduce((a, b) => a + b, 0) / window.length : 0;
+            });
+            overlayLabel = t(lang, 'sevenDAvg');
+          } else {
+            overlayPts = solarResult.powerData.map(d => {
+              const out = this._engine.calcSolarOutput(d.t, panelConfig, cloudPct, ambientC);
+              return out.watts;
+            });
+            overlayLabel = t(lang, 'west');
+          }
+          this._charts.drawChart(canvases.solar, [
+            { points: actualPts, color: 'rgb(34,197,94)', label: 'W', fill: true },
+            { points: overlayPts, color: 'rgb(249,115,22)', label: overlayLabel, fill: false },
+          ], { minY: 0, xLabel: solarResult.timeXLabel(solarResult.powerData), yFormat: v => Math.round(v) + ' W' }, true);
+          const overlayLabelEl = root.getElementById('solarOverlayLabel');
+          if (overlayLabelEl) overlayLabelEl.textContent = '\u25A0 ' + (is30D ? t(lang, 'sevenDAvg') : t(lang, 'estimated'));
+        } else {
+          this._charts.drawChart(canvases.solar, [
+            { points: actualPts, color: 'rgb(34,197,94)', label: 'W', fill: true },
+          ], { minY: 0, xLabel: solarResult.timeXLabel(solarResult.powerData), yFormat: v => Math.round(v) + ' W' }, true);
+        }
+        this._charts.attachCrosshair(canvases.solar);
       } else {
-        overlayPts = solarResult.powerData.map(d => {
-          const out = this._engine.calcSolarOutput(d.t, panelConfig, cloudPct, ambientC);
-          return out.watts;
-        });
-        overlayLabel = t(lang, 'west');
+        this._charts.showPlaceholder(canvases.solar, solarResult?.powerData === null ? 'Fetch error' : 'No data available');
       }
-      this._charts.drawChart(canvases.solar, [
-        { points: actualPts, color: 'rgb(34,197,94)', label: 'W', fill: true },
-        { points: overlayPts, color: 'rgb(249,115,22)', label: overlayLabel, fill: false },
-      ], { minY: 0, xLabel: solarResult.timeXLabel(solarResult.powerData), yFormat: v => Math.round(v) + ' W' }, false);
-      this._charts.attachCrosshair(canvases.solar);
-      const overlayLabelEl = root.getElementById('solarOverlayLabel');
-      if (overlayLabelEl) overlayLabelEl.textContent = '\u25A0 ' + (is30D ? t(lang, 'sevenDAvg') : t(lang, 'estimated'));
     }
 
-    // Update chart value displays with last data point
-    const lastPwr = result.powerData?.[result.powerData.length - 1];
-    const lastSoc = result.socData?.[result.socData.length - 1];
-    const lastSol = solarResult.powerData?.[solarResult.powerData.length - 1];
-    const pwrEl = root.getElementById('pwrVal');
-    const socEl = root.getElementById('socVal');
-    const solEl = root.getElementById('solVal');
-    if (pwrEl && lastPwr?.v != null) pwrEl.textContent = Math.round(Math.abs(lastPwr.v)) + ' W';
-    if (socEl && lastSoc?.v != null) socEl.textContent = Math.round(lastSoc.v) + '%';
-    if (solEl && lastSol?.v != null) solEl.textContent = Math.round(Math.max(0, lastSol.v)) + ' W';
+    // Update chart value displays consistently
+    const snap = {
+      power:       this._bridge.getVal(E.POWER),
+      chgPower:    this._bridge.getVal(E.CHG_POWER),
+      dischgPower: this._bridge.getVal(E.DISCHG_POWER),
+      soc:         this._bridge.getVal(E.SOC),
+    };
+    this._updateChartValues(snap);
 
     // Pulse chart values
     ['pwrVal', 'socVal', 'solVal'].forEach(id => {

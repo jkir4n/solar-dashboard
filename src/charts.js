@@ -498,13 +498,20 @@ export class ChartManager {
       if (canvases.solar) this.showPlaceholder(canvases.solar, 'Failed to load');
     }
 
-    // Build x-label function from timestamps
+    // Build x-label function from timestamps formatted in the specified timezone
+    let timeFmt, dateFmt;
+    try {
+      timeFmt = new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: false });
+      dateFmt = new Intl.DateTimeFormat('en-US', { timeZone: tz, month: 'numeric', day: 'numeric' });
+    } catch {
+      timeFmt = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+      dateFmt = new Intl.DateTimeFormat('en-US', { month: 'numeric', day: 'numeric' });
+    }
     const timeXLabel = (data) => (i) => {
       if (!data?.[i]) return '';
       const d = data[i].t;
-      return (range === 'Live' || range === '1D')
-        ? d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0')
-        : (d.getMonth() + 1) + '/' + d.getDate();
+      if (!(d instanceof Date) || isNaN(d)) return '';
+      return (range === 'Live' || range === '1D') ? timeFmt.format(d) : dateFmt.format(d);
     };
 
     // Render power chart (discharging power)
