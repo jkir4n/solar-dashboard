@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.64.3 (2026-08-31)
+
+### Bug Fixes
+- Cell balancer null handling, inverter kw power scaling, and ttf calculations
+
+
 ## v0.64.2 (2026-08-31)
 
 ### Bug Fixes
