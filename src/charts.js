@@ -402,6 +402,9 @@ export class ChartManager {
     this._snapshots = {};
     this._crosshairHandlers.clear();
     this._canvasRect = null;
+    if (this._onWindowResize) {
+      window.removeEventListener('resize', this._onWindowResize);
+    }
   }
 
   // ─── showPlaceholder ─────────────────────────────────────────

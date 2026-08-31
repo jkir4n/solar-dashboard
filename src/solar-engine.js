@@ -431,7 +431,7 @@ export class SolarEngine {
     }
 
     const result = totalWh / 1000; // kWh
-    this._forecastCache = { key: dayKey, val: result };
+    this._forecastCache = { key: cacheKey, val: result };
     return result;
   }
 

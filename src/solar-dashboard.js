@@ -736,6 +736,8 @@ class FlowParticles {
     const dotsEl = this.container?.querySelectorAll('.flow-dot');
     if (dotsEl) {
       dotsEl.forEach((d) => {
+        d.style.background = this.color;
+        d.style.boxShadow = `0 0 6px 2px ${this.color}, 0 0 12px 4px ${this.color}55`;
         this.dots.push({ el: d, p: Math.random() });
       });
     }
@@ -748,6 +750,10 @@ class FlowParticles {
       this.direction = direction;
       this.dots.forEach(d => { d.p = 1 - d.p; });
     }
+    this.dots.forEach(d => {
+      d.el.style.background = this.color;
+      d.el.style.boxShadow = `0 0 6px 2px ${this.color}, 0 0 12px 4px ${this.color}55`;
+    });
     this.active = true;
     this.powerW = powerW;
     const MAX_W = 5000;
@@ -831,8 +837,6 @@ class FlowParticles {
         d.el.style.left = (d.p * 100) + '%';
       }
       d.el.style.opacity = (maxOpacity * edgeFade).toFixed(3);
-      d.el.style.background = this.color;
-      d.el.style.boxShadow = `0 0 6px 2px ${this.color}, 0 0 12px 4px ${this.color}55`;
     }
     this._drawArcs();
     this.rafId = requestAnimationFrame(this._tick);
@@ -1041,14 +1045,6 @@ class SolarDashboard extends HTMLElement {
   set panel(panel) { this._panel = panel; }
   set narrow(narrow) { this._narrow = narrow; }
 
-  // ============ RE-RENDER (language change) ============
-  _render() {
-    const root = this.shadowRoot;
-    if (!root) return;
-    const lang = this._bridge._hass?.language || 'en';
-    root.innerHTML = `<style>${STYLES}</style>${this._getHTML(lang)}`;
-    this._cacheElements();
-  }
 
   _cacheElements() {
     const root = this.shadowRoot;
