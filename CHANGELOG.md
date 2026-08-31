@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.64.1 (2026-08-31)
+
+### Bug Fixes
+- Polish analytics charts timezone formatting and value headers
+- Update README with battery hero, powerflow, and typography features
+
+
 ## v0.64.0 (2026-08-19)
 
 ### Features
