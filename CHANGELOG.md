@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.64.2 (2026-08-31)
+
+### Bug Fixes
+- Resolve forecast cache miss, charts resize listener leak, and duplicate render method
+
+
 ## v0.64.1 (2026-08-31)
 
 ### Bug Fixes
