@@ -762,7 +762,12 @@ export class WeatherFX {
     if (this._theme === theme) return;
     this._theme = theme;
     // Force cloud offscreen re-render with the new theme's palette
-    for (const p of this._particles || []) {
+    const all = [
+      ...(this._particles || []),
+      ...(this._overlayParticles || []),
+      ...(this._overlayParticlesPrev || []),
+    ];
+    for (const p of all) {
       if (p.kind === 'cloud' && p.off) p.offDirty = true;
     }
   }

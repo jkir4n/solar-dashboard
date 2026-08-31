@@ -1198,11 +1198,7 @@ class SolarDashboard extends HTMLElement {
 
       // Start clock
       this._startClock();
-      this._intervals.push(setInterval(() => this._startClock(), 1000));
-
-      // Start calcTodayInOut
       this._calcTodayInOut().catch(() => {});
-      this._intervals.push(setInterval(() => this._calcTodayInOut().catch(() => {}), 300000));
 
       // Fetch energy price and currency
       this._fetchEnergyPriceAndCurrency().catch(() => {});
@@ -1211,22 +1207,13 @@ class SolarDashboard extends HTMLElement {
       this._fetchTodaySolarStats().catch(() => {});
       this._fetchTodayPerformance().catch(() => {});
 
-      // Start solar estimate update
+      // Start solar estimate and UI
       this._updateSolarEstimate();
-      this._intervals.push(setInterval(() => this._updateSolarEstimate(), 300000));
-      this._intervals.push(setInterval(() => this._updateWeather(), 300000));
-      this._intervals.push(setInterval(() => this._updateSunMoonPosition(), 10000));
-      // 24/7: ISS fetch uses self-scheduling with exponential backoff (not fixed interval)
-      this._scheduleISSFetch();
-
-      // Start solar degradation UI (hourly)
       this._updateSolarUI();
-      this._intervals.push(setInterval(() => this._updateSolarUI(), 3600000));
-
-      // Cycle rate (7-day rolling) — fetch once on load, refresh hourly
       this._updateCycleRate().catch(() => {});
-      this._intervals.push(setInterval(() => this._updateCycleRate().catch(() => {}), 3600000));
 
+      // Start background intervals & tasks
+      this._startIntervals();
 
       // Resize handler
       this._resizeHandler = () => {
@@ -1240,34 +1227,18 @@ class SolarDashboard extends HTMLElement {
       // Visibility handler — pause all animations when panel is hidden
       this._visibilityHandler = () => {
         if (document.hidden) {
-          this._intervals.forEach(id => clearInterval(id));
-          this._intervals = [];
+          this._stopIntervals();
           if (this._flowPS1) this._flowPS1.stop();
           if (this._flowPS2) this._flowPS2.stop();
           if (this._flowPS3) this._flowPS3.stop();
           if (this._flowPS4) this._flowPS4.stop();
           this._stopBattArcs();
           this._cancelAllAnimations();
-        if (this._weatherFx) this._weatherFx.stop();
-        this._fxKey = null; // force weather restart on resume
+          if (this._weatherFx) this._weatherFx.stop();
           this._fxKey = null; // force weather restart on visibility restore
           if (this._meshRafId) { cancelAnimationFrame(this._meshRafId); this._meshRafId = null; }
-          if (this._connCheckInterval) { clearInterval(this._connCheckInterval); this._connCheckInterval = null; }
         } else {
-          // Restart all intervals
-          this._intervals.push(setInterval(() => this._startClock(), 1000));
-          this._intervals.push(setInterval(() => this._calcTodayInOut().catch(() => {}), 300000));
-          this._intervals.push(setInterval(() => this._updateSolarEstimate(), 300000));
-          this._intervals.push(setInterval(() => this._updateWeather(), 300000));
-          this._intervals.push(setInterval(() => this._updateSunMoonPosition(), 10000));
-          // 24/7: restart ISS self-scheduling with backoff
-          this._scheduleISSFetch();
-          this._intervals.push(setInterval(() => this._updateSolarUI(), 3600000));
-          this._intervals.push(setInterval(() => this._updateCycleRate().catch(() => {}), 3600000));
-          // 24/7: restart entity health check
-          this._intervals.push(setInterval(() => this._bridge.verifyEntities(), 300000));
-          // 24/7: restart connection health check
-          this._connCheckInterval = setInterval(() => this._checkConnection(), 30000);
+          this._startIntervals();
           this._startMeshLerp();
           this._startBattArcs();
           this._updateWeather(); // immediate weather restart (fxKey was nulled on hide)
@@ -1279,8 +1250,7 @@ class SolarDashboard extends HTMLElement {
       // 24/7: Page Lifecycle API — freeze/resume (Chrome 134+)
       this._freezeHandler = () => {
         // Browser is freezing the tab — stop everything to avoid stale state on thaw
-        this._intervals.forEach(id => clearInterval(id));
-        this._intervals = [];
+        this._stopIntervals();
         if (this._flowPS1) this._flowPS1.stop();
         if (this._flowPS2) this._flowPS2.stop();
         if (this._flowPS3) this._flowPS3.stop();
@@ -1289,25 +1259,14 @@ class SolarDashboard extends HTMLElement {
         this._cancelAllAnimations();
         if (this._weatherFx) this._weatherFx.stop();
         if (this._meshRafId) { cancelAnimationFrame(this._meshRafId); this._meshRafId = null; }
-        if (this._connCheckInterval) { clearInterval(this._connCheckInterval); this._connCheckInterval = null; }
-        if (this._issScheduleId) { clearTimeout(this._issScheduleId); this._issScheduleId = null; }
-    if (this._initRetryId) { clearTimeout(this._initRetryId); this._initRetryId = null; }
-    if (this._fadeTimeout) { clearTimeout(this._fadeTimeout); this._fadeTimeout = null; }
+        if (this._initRetryId) { clearTimeout(this._initRetryId); this._initRetryId = null; }
+        if (this._fadeTimeout) { clearTimeout(this._fadeTimeout); this._fadeTimeout = null; }
       };
       this._resumeHandler = () => {
         // Browser thawed — force full recovery
         this._lastHassUpdate = Date.now(); // reset connection check
         this._refreshAllUI();
-        this._intervals.push(setInterval(() => this._startClock(), 1000));
-        this._intervals.push(setInterval(() => this._calcTodayInOut().catch(() => {}), 300000));
-        this._intervals.push(setInterval(() => this._updateSolarEstimate(), 300000));
-        this._intervals.push(setInterval(() => this._updateWeather(), 300000));
-        this._intervals.push(setInterval(() => this._updateSunMoonPosition(), 10000));
-        this._scheduleISSFetch();
-        this._intervals.push(setInterval(() => this._updateSolarUI(), 3600000));
-        this._intervals.push(setInterval(() => this._updateCycleRate().catch(() => {}), 3600000));
-        this._intervals.push(setInterval(() => this._bridge.verifyEntities(), 300000));
-        this._connCheckInterval = setInterval(() => this._checkConnection(), 30000);
+        this._startIntervals();
         this._startMeshLerp();
         this._startBattArcs();
       };
@@ -1316,9 +1275,6 @@ class SolarDashboard extends HTMLElement {
 
       // Start mesh gradient lerp loop — runs immediately so background animates
       this._startMeshLerp();
-
-      // 24/7: WebSocket connection health check — every 30s
-      this._connCheckInterval = setInterval(() => this._checkConnection(), 30000);
 
       // Initial full refresh — populates all card data behind the scenes
       this._refreshAllUI();
@@ -1358,9 +1314,29 @@ class SolarDashboard extends HTMLElement {
     }
   }
 
-  disconnectedCallback() {
+  _startIntervals() {
+    this._stopIntervals();
+    this._intervals.push(setInterval(() => this._startClock(), 1000));
+    this._intervals.push(setInterval(() => this._calcTodayInOut().catch(() => {}), 300000));
+    this._intervals.push(setInterval(() => this._updateSolarEstimate(), 300000));
+    this._intervals.push(setInterval(() => this._updateWeather(), 300000));
+    this._intervals.push(setInterval(() => this._updateSunMoonPosition(), 10000));
+    this._intervals.push(setInterval(() => this._updateSolarUI(), 3600000));
+    this._intervals.push(setInterval(() => this._updateCycleRate().catch(() => {}), 3600000));
+    this._intervals.push(setInterval(() => this._bridge.verifyEntities(), 300000));
+    this._connCheckInterval = setInterval(() => this._checkConnection(), 30000);
+    this._scheduleISSFetch();
+  }
+
+  _stopIntervals() {
     this._intervals.forEach(id => clearInterval(id));
     this._intervals = [];
+    if (this._connCheckInterval) { clearInterval(this._connCheckInterval); this._connCheckInterval = null; }
+    if (this._issScheduleId) { clearTimeout(this._issScheduleId); this._issScheduleId = null; }
+  }
+
+  disconnectedCallback() {
+    this._stopIntervals();
     if (this._flowPS1) this._flowPS1.stop();
     if (this._flowPS2) this._flowPS2.stop();
     if (this._flowPS3) this._flowPS3.stop();
@@ -1376,9 +1352,8 @@ class SolarDashboard extends HTMLElement {
     this._cancelAllAnimations();
     if (this._meshRafId) { cancelAnimationFrame(this._meshRafId); this._meshRafId = null; }
     if (this._updateRafId) { cancelAnimationFrame(this._updateRafId); this._updateRafId = null; }
-    if (this._connCheckInterval) { clearInterval(this._connCheckInterval); this._connCheckInterval = null; }
-    if (this._issScheduleId) { clearTimeout(this._issScheduleId); this._issScheduleId = null; }
     if (this._initRetryId) { clearTimeout(this._initRetryId); this._initRetryId = null; }
+    if (this._fadeTimeout) { clearTimeout(this._fadeTimeout); this._fadeTimeout = null; }
     this._cardsRevealed = false;
   }
 
@@ -2054,8 +2029,11 @@ class SolarDashboard extends HTMLElement {
       tte = fmtDHM(remaining / Math.abs(cur));
       if (tteLabel) tteLabel.textContent = t(lang, 'tte');
     } else if (cur > idleThreshold) {
-      if (soc != null && soc < 100 && remaining > 0) {
-        const toFill = battSpec.fullAh - remaining;
+      if (soc != null && soc < 100) {
+        const fullCap = (soc > 0 && remaining > 0)
+          ? Math.max(battSpec.fullAh || 0, remaining / (soc / 100))
+          : (battSpec.fullAh || 100);
+        const toFill = remaining > 0 ? fullCap - remaining : fullCap * (1 - soc / 100);
         if (toFill > 0) tte = fmtDHM(toFill / cur);
         else tte = '\u221E (' + t(lang, 'charging') + ')';
       } else {
@@ -3591,10 +3569,16 @@ class SolarDashboard extends HTMLElement {
   _applyBal(voltages) {
     const root = this.shadowRoot;
     const lang = this._bridge._hass?.language || 'en';
-    const allV = [...voltages];
-    const maxI = allV.indexOf(Math.max(...allV));
-    const minI = allV.indexOf(Math.min(...allV));
-    const delta = (Math.max(...allV) - Math.min(...allV)) * 1000;
+    const valid = voltages
+      .map((v, i) => ({ v, i }))
+      .filter(x => x.v != null && x.v > 0);
+    if (valid.length === 0) return;
+
+    const maxEntry = valid.reduce((a, b) => (b.v > a.v ? b : a));
+    const minEntry = valid.reduce((a, b) => (b.v < a.v ? b : a));
+    const maxI = maxEntry.i;
+    const minI = minEntry.i;
+    const delta = (maxEntry.v - minEntry.v) * 1000;
     const balancing = this._bridge.getStrVal(this._bridge.E.BALANCING) === 'on';
 
     // Remove old balancing classes

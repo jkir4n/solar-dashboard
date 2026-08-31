@@ -405,7 +405,8 @@ export class HABridge {
         if (!entityId.startsWith('sensor.')) continue;
         const attrs = state.attributes || {};
         if (['GRID_POWER', 'PV_POWER'].includes(key)) {
-          if (attrs.unit_of_measurement !== 'W') continue;
+          const uom = (attrs.unit_of_measurement || '').toLowerCase();
+          if (uom !== 'w' && uom !== 'kw') continue;
         }
         for (const kw of keywords) {
           if (entityId.includes(kw)) {
@@ -429,8 +430,10 @@ export class HABridge {
     const getPow = (key) => {
       const entry = this._gridEntityIds?.[key];
       if (!entry) return null;
-      const raw = this.getVal(entry.entityId);
+      let raw = this.getVal(entry.entityId);
       if (raw === null) return null;
+      const uom = (this.getState(entry.entityId)?.attributes?.unit_of_measurement || '').toLowerCase();
+      if (uom === 'kw') raw *= 1000;
       snap.gridAvailable = true;
       return entry.signed ? Math.max(0, raw) : raw;
     };
