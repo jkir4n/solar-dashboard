@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.65.1 (2026-09-01)
+
+### Bug Fixes
+- Power flow layout grid alignment and cell delta trend HTML rendering
+
+
 ## v0.65.0 (2026-09-01)
 
 ### Features
