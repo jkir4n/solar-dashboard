@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.65.0 (2026-09-01)
+
+### Features
+- Enhance UI/UX telemetry polish and atmospheric weather effects
+
+
 ## v0.64.3 (2026-08-31)
 
 ### Bug Fixes
