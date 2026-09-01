@@ -1196,6 +1196,45 @@ class SolarDashboard extends HTMLElement {
       makeStepper('gridConnectMinus', 'gridConnectPlus', 'gridConnectVal', 'GRID_CONNECT_SOC');
       makeStepper('gridDisconnectMinus', 'gridDisconnectPlus', 'gridDisconnectVal', 'GRID_DISCONNECT_SOC');
 
+      // Power flow nodes: tap to inspect 24h HA more-info dialog
+      const fireMoreInfo = (entityId) => {
+        if (!entityId) return;
+        const ev = new CustomEvent('hass-more-info', {
+          detail: { entityId },
+          bubbles: true,
+          composed: true,
+        });
+        this.dispatchEvent(ev);
+      };
+      const iconSolar = root.getElementById('iconSolar');
+      if (iconSolar) {
+        iconSolar.addEventListener('click', () => {
+          const eid = this._bridge._gridEntityIds?.PV_POWER?.entityId || this._bridge.E.SOLAR_POWER || this._bridge._entityIds?.[this._bridge.E.CURRENT];
+          fireMoreInfo(eid);
+        });
+      }
+      const iconBattery = root.getElementById('iconBattery');
+      if (iconBattery) {
+        iconBattery.addEventListener('click', () => {
+          const eid = this._bridge._entityIds?.[this._bridge.E.SOC] || this._bridge._entityIds?.[this._bridge.E.VOLTAGE];
+          fireMoreInfo(eid);
+        });
+      }
+      const iconGrid = root.getElementById('iconGrid');
+      if (iconGrid) {
+        iconGrid.addEventListener('click', () => {
+          const eid = this._bridge._gridEntityIds?.GRID_POWER?.entityId || this._bridge.E.GRID_POWER;
+          fireMoreInfo(eid);
+        });
+      }
+      const iconHome = root.getElementById('iconHome');
+      if (iconHome) {
+        iconHome.addEventListener('click', () => {
+          const eid = this._bridge._gridEntityIds?.HOME_POWER?.entityId || this._bridge.E.HOME_POWER || this._bridge._entityIds?.[this._bridge.E.POWER];
+          fireMoreInfo(eid);
+        });
+      }
+
       // Start clock
       this._startClock();
       this._calcTodayInOut().catch(() => {});
@@ -1454,6 +1493,7 @@ class SolarDashboard extends HTMLElement {
       <div style="display:flex;flex-direction:column;align-items:center;">
         <svg viewBox="0 0 200 200" width="200" height="200">
           <circle cx="100" cy="100" r="80" fill="none" stroke="var(--glass-border)" stroke-width="10"/>
+          <g id="battThresholds"></g>
           <circle id="battRing" class="batt-ring" cx="100" cy="100" r="80" fill="none" stroke="var(--green)" stroke-width="10" stroke-dasharray="0 502.65" stroke-linecap="round"/>
           <circle id="battCapDot" cx="100" cy="20" r="6" fill="#fff" opacity="0" style="transition:all 800ms ease-in-out;pointer-events:none;"/>
           <text id="battSOC" x="100" y="108" text-anchor="middle" dominant-baseline="middle" class="batt-soc" fill="var(--text)" style="filter:drop-shadow(0 0 8px var(--green-glow))">0%</text>
@@ -1539,57 +1579,64 @@ class SolarDashboard extends HTMLElement {
                       </svg>
                       <span class="grid-status-dot" id="gridStatusDot"></span>
                     </div>
-                    <span class="flow-label">${t(lang, 'grid')}</span>
-                    <div class="grid-info" id="gridInfo" style="display:none"><span id="gridVoltDisp">--</span><span id="gridFreqDisp">--</span></div>
+                    <span class="flow-label">${t(lang, 'gridNode')}</span>
+                    <div class="grid-info" id="gridInfo" style="display:none;">
+                      <span id="gridVolt">-- V</span>
+                      <span id="gridFreq">-- Hz</span>
+                    </div>
                   </div>
                 </div>
                 <div class="flow-hub-cell fh-grid-line">
-                  <div class="flow-line-wrap" id="flowWrap3">
-                    <div class="flow-line" id="flowLine3"></div>
-                    <div class="flow-particles" id="flowParticles3">${'<div class="flow-dot"></div>'.repeat(20)}</div>
-                    <span class="flow-watt" id="flowWatt3">0 W</span>
+                  <div class="flow-line-wrap flow-horizontal" id="flowWrap2">
+                    <div class="flow-line" id="flowLine2"></div>
+                    <div class="flow-particles" id="flowParticles2">${'<div class="flow-dot"></div>'.repeat(20)}</div>
+                    <span class="flow-watt fh-watt-horizontal" id="flowWatt2">0 W</span>
                   </div>
                 </div>
+                <div class="flow-hub-cell fh-junction-cell">
+                  <div class="fh-junction" id="flowJunction"></div>
+                </div>
                 <div class="flow-hub-cell fh-home-line">
-                  <div class="flow-line-wrap" id="flowWrap4">
-                    <div class="flow-line" id="flowLine4"></div>
-                    <div class="flow-particles" id="flowParticles4">${'<div class="flow-dot"></div>'.repeat(20)}</div>
-                    <span class="flow-watt" id="flowWatt4">0 W</span>
+                  <div class="flow-line-wrap flow-horizontal" id="flowWrap3">
+                    <div class="flow-line" id="flowLine3"></div>
+                    <div class="flow-particles" id="flowParticles3">${'<div class="flow-dot"></div>'.repeat(20)}</div>
+                    <span class="flow-watt fh-watt-horizontal" id="flowWatt3">0 W</span>
                   </div>
                 </div>
                 <div class="flow-hub-cell fh-home-node">
                   <div class="flow-node">
                     <div class="flow-icon" id="iconHome">
                       <svg viewBox="0 0 48 48">
-                        <polyline points="6,22 24,6 42,22"/>
-                        <rect x="14" y="22" width="20" height="20" rx="2" ry="2"/>
-                        <rect class="home-window" x="17" y="28" width="5" height="5" rx="0.5"/>
-                        <rect class="home-window" x="26" y="28" width="5" height="5" rx="0.5"/>
+                        <path d="M8 22 L24 8 L40 22 L40 42 L8 42 Z"/>
+                        <polyline points="18 42 18 26 30 26 30 42"/>
                       </svg>
                     </div>
-                    <span class="flow-label">${t(lang, 'home')}</span>
+                    <span class="flow-label">${t(lang, 'homeNode')}</span>
                   </div>
                 </div>
-                <div class="flow-hub-cell fh-bat-line">
-                  <div class="flow-line-wrap flow-vertical" id="flowWrap2">
-                    <div class="flow-line" id="flowLine2"></div>
-                    <div class="flow-particles" id="flowParticles2">${'<div class="flow-dot"></div>'.repeat(20)}</div>
-                    <span class="flow-watt fh-watt-vertical" id="flowWatt2">0 W</span>
+                <div class="flow-hub-cell fh-battery-line">
+                  <div class="flow-line-wrap flow-vertical" id="flowWrap4">
+                    <div class="flow-line" id="flowLine4"></div>
+                    <div class="flow-particles" id="flowParticles4">${'<div class="flow-dot"></div>'.repeat(20)}</div>
+                    <span class="flow-watt fh-watt-vertical" id="flowWatt4">0 W</span>
                   </div>
                 </div>
-                <div class="flow-hub-cell fh-bat-node">
+                <div class="flow-hub-cell fh-battery-node">
                   <div class="flow-node">
                     <div class="flow-icon" id="iconBattery" style="position:relative;">
+                      <canvas id="battArcCanvas" class="flow-arc-canvas"></canvas>
                       <svg viewBox="0 0 48 48">
-                        <rect x="8" y="14" width="32" height="24" rx="3" ry="3"/>
-                        <rect x="19" y="10" width="10" height="4" rx="2" ry="2"/>
+                        <rect x="8" y="14" width="32" height="24" rx="4" ry="4"/>
+                        <line x1="18" y1="10" x2="18" y2="14"/>
+                        <line x1="30" y1="10" x2="30" y2="14"/>
+                        <line x1="16" y1="26" x2="22" y2="26"/>
+                        <line x1="26" y1="26" x2="32" y2="26"/>
+                        <line x1="29" y1="23" x2="29" y2="29"/>
                       </svg>
-                      <svg id="battArcs" viewBox="0 0 48 48" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;"></svg>
                     </div>
                     <span class="flow-label">${t(lang, 'batteryNode')}</span>
                   </div>
                 </div>
-              <div class="fh-junction"></div>
             </div>
           </div>
   </div>
@@ -1609,6 +1656,7 @@ class SolarDashboard extends HTMLElement {
         <div id="solActualWrap" style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
           <span id="solActual" class="sol-output" style="color:var(--green)">-- W</span>
           <span id="solActualLabel" style="font-size:13px;color:var(--text2)">${t(lang, 'actual')}</span>
+          <span id="solPerfChip" class="sol-perf-chip" style="display:none">--%</span>
         </div>
         <div id="solEstimatedWrap" style="display:flex;align-items:baseline;gap:12px;margin-top:4px;flex-wrap:wrap">
           <span id="solOutput" style="font-size:20px;font-weight:700;color:var(--orange)">--- W</span>
@@ -1653,43 +1701,62 @@ class SolarDashboard extends HTMLElement {
       </div>
     <div class="card" id="controlsCard">
       <h2 class="section-title">${t(lang, 'controls')}</h2>
-      <div class="ctrl">
+      <div class="ctrl" id="ctrlRowChg">
         <div><div class="ctrl-name">${t(lang, 'ctrlCharging')}</div><div class="ctrl-desc">${t(lang, 'descCharging')}</div></div>
-        <label class="toggle"><input type="checkbox" id="chgToggle" checked><span class="slider"></span></label>
+        <div class="ctrl-actions">
+          <span class="ctrl-badge" id="chgBadge">--</span>
+          <label class="toggle"><input type="checkbox" id="chgToggle" checked><span class="slider"></span></label>
+        </div>
       </div>
-      <div class="ctrl">
+      <div class="ctrl" id="ctrlRowDischg">
         <div><div class="ctrl-name">${t(lang, 'ctrlDischarging')}</div><div class="ctrl-desc">${t(lang, 'descDischarging')}</div></div>
-        <label class="toggle"><input type="checkbox" id="dischgToggle" checked><span class="slider"></span></label>
+        <div class="ctrl-actions">
+          <span class="ctrl-badge" id="dischgBadge">--</span>
+          <label class="toggle"><input type="checkbox" id="dischgToggle" checked><span class="slider"></span></label>
+        </div>
       </div>
-      <div class="ctrl">
+      <div class="ctrl" id="ctrlRowGrid">
         <div><div class="ctrl-name">${t(lang, 'ctrlGridInput')}</div><div class="ctrl-desc">${t(lang, 'descGridInput')}</div></div>
-        <label class="toggle"><input type="checkbox" id="gridToggle"><span class="slider"></span></label>
+        <div class="ctrl-actions">
+          <span class="ctrl-badge" id="gridBadge">--</span>
+          <label class="toggle"><input type="checkbox" id="gridToggle"><span class="slider"></span></label>
+        </div>
       </div>
-      <div class="ctrl">
+      <div class="ctrl" id="ctrlRowAbsorption">
         <div><div class="ctrl-name">${t(lang, 'ctrlAbsorption')}</div><div class="ctrl-desc" id="absorptionDesc">${t(lang, 'absNotArmed')}</div><div class="ctrl-desc" id="absorptionDetails" style="font-size:0.78em;opacity:0.65;display:none"></div></div>
-        <label class="toggle"><input type="checkbox" id="absorptionToggle"><span class="slider"></span></label>
+        <div class="ctrl-actions">
+          <span class="ctrl-badge" id="absorptionBadge">--</span>
+          <label class="toggle"><input type="checkbox" id="absorptionToggle"><span class="slider"></span></label>
+        </div>
       </div>
-      <div class="ctrl">
+      <div class="ctrl" id="ctrlRowGridConnect">
         <div><div class="ctrl-name">${t(lang, 'ctrlGridConnect')}</div><div class="ctrl-desc">${t(lang, 'descGridConnect')}</div></div>
-        <div class="ctrl-stepper">
-          <button class="step-btn" id="gridConnectMinus">−</button>
-          <span id="gridConnectVal" class="step-val">--</span>
-          <button class="step-btn" id="gridConnectPlus">+</button>
+        <div class="ctrl-actions">
+          <div class="ctrl-stepper">
+            <button class="step-btn" id="gridConnectMinus">−</button>
+            <span id="gridConnectVal" class="step-val">--</span>
+            <button class="step-btn" id="gridConnectPlus">+</button>
+          </div>
         </div>
       </div>
-      <div class="ctrl">
+      <div class="ctrl" id="ctrlRowGridDisconnect">
         <div><div class="ctrl-name">${t(lang, 'ctrlGridDisconnect')}</div><div class="ctrl-desc">${t(lang, 'descGridDisconnect')}</div></div>
-        <div class="ctrl-stepper">
-          <button class="step-btn" id="gridDisconnectMinus">−</button>
-          <span id="gridDisconnectVal" class="step-val">--</span>
-          <button class="step-btn" id="gridDisconnectPlus">+</button>
+        <div class="ctrl-actions">
+          <div class="ctrl-stepper">
+            <button class="step-btn" id="gridDisconnectMinus">−</button>
+            <span id="gridDisconnectVal" class="step-val">--</span>
+            <button class="step-btn" id="gridDisconnectPlus">+</button>
+          </div>
         </div>
       </div>
-      <div class="ctrl">
+      <div class="ctrl" id="ctrlRowBalancer">
         <div><div class="ctrl-name">${t(lang, 'ctrlBalancer')}</div><div class="ctrl-desc" id="balDesc">--</div></div>
-        <div id="balSwitch" style="display:flex;align-items:center;gap:6px">
-          <span id="balSwitchLabel" style="font-size:12px;font-weight:600;color:var(--text2)">--</span>
-          <div id="balDot" style="width:8px;height:8px;border-radius:50%;background:var(--text3)"></div>
+        <div class="ctrl-actions">
+          <span class="ctrl-badge" id="balBadge">--</span>
+          <div id="balSwitch" style="display:flex;align-items:center;gap:6px">
+            <span id="balSwitchLabel" style="font-size:12px;font-weight:600;color:var(--text2)">--</span>
+            <div id="balDot" style="width:8px;height:8px;border-radius:50%;background:var(--text3)"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -1873,30 +1940,68 @@ class SolarDashboard extends HTMLElement {
         const label = root.getElementById('balSwitchLabel');
         const dot = root.getElementById('balDot');
         const desc = root.getElementById('balDesc');
+        const balRow = root.getElementById('ctrlRowBalancer');
+        const balBadge = root.getElementById('balBadge');
+        if (balRow) balRow.classList.toggle('active', active || switchOn);
         if (!switchOn) {
           label.textContent = t(lang, 'balDisabled');
           label.style.color = 'var(--red)';
           dot.style.background = 'var(--red)';
           dot.style.boxShadow = '0 0 6px var(--red-glow)';
           desc.textContent = t(lang, 'balOff');
+          if (balBadge) { balBadge.textContent = 'Off'; balBadge.className = 'ctrl-badge'; }
         } else if (active) {
           label.textContent = t(lang, 'balancing');
           label.style.color = 'var(--orange)';
           dot.style.background = 'var(--orange)';
           dot.style.boxShadow = '0 0 6px var(--orange-glow)';
           desc.textContent = t(lang, 'balActive');
+          if (balBadge) { balBadge.textContent = 'Active'; balBadge.className = 'ctrl-badge active'; }
         } else {
           label.textContent = t(lang, 'idle');
           label.style.color = 'var(--green)';
           dot.style.background = 'var(--green)';
           dot.style.boxShadow = '0 0 6px var(--green-glow)';
           desc.textContent = t(lang, 'balEnabledIdle');
+          if (balBadge) { balBadge.textContent = 'Standby'; balBadge.className = 'ctrl-badge'; }
         }
       }
-      if (eid === E.CHG_SWITCH) root.getElementById('chgToggle').checked = val === 'on';
-      if (eid === E.DISCHG_SWITCH) root.getElementById('dischgToggle').checked = val === 'on';
-      if (eid === E.GRID_SWITCH) { const el = root.getElementById('gridToggle'); if (el) el.checked = val === 'on'; }
-      if (eid === E.ABSORPTION_SWITCH) { const el = root.getElementById('absorptionToggle'); if (el) el.checked = val === 'on'; }
+      if (eid === E.CHG_SWITCH) {
+        const isOn = val === 'on';
+        const toggle = root.getElementById('chgToggle');
+        if (toggle) toggle.checked = isOn;
+        const row = root.getElementById('ctrlRowChg');
+        if (row) row.classList.toggle('active', isOn);
+        const badge = root.getElementById('chgBadge');
+        if (badge) { badge.textContent = isOn ? 'Active' : 'Standby'; badge.className = `ctrl-badge ${isOn ? 'active' : ''}`; }
+      }
+      if (eid === E.DISCHG_SWITCH) {
+        const isOn = val === 'on';
+        const toggle = root.getElementById('dischgToggle');
+        if (toggle) toggle.checked = isOn;
+        const row = root.getElementById('ctrlRowDischg');
+        if (row) row.classList.toggle('active', isOn);
+        const badge = root.getElementById('dischgBadge');
+        if (badge) { badge.textContent = isOn ? 'Active' : 'Standby'; badge.className = `ctrl-badge ${isOn ? 'active' : ''}`; }
+      }
+      if (eid === E.GRID_SWITCH) {
+        const isOn = val === 'on';
+        const el = root.getElementById('gridToggle');
+        if (el) el.checked = isOn;
+        const row = root.getElementById('ctrlRowGrid');
+        if (row) row.classList.toggle('active', isOn);
+        const badge = root.getElementById('gridBadge');
+        if (badge) { badge.textContent = isOn ? 'Active' : 'Off'; badge.className = `ctrl-badge ${isOn ? 'active' : ''}`; }
+      }
+      if (eid === E.ABSORPTION_SWITCH) {
+        const isOn = val === 'on';
+        const el = root.getElementById('absorptionToggle');
+        if (el) el.checked = isOn;
+        const row = root.getElementById('ctrlRowAbsorption');
+        if (row) row.classList.toggle('active', isOn);
+        const badge = root.getElementById('absorptionBadge');
+        if (badge) { badge.textContent = isOn ? 'Armed' : 'Off'; badge.className = `ctrl-badge ${isOn ? 'armed' : ''}`; }
+      }
       const absStatusEid = this._bridge._gridEntityIds?.ABSORPTION_STATUS?.entityId;
       if (absStatusEid && eid === absStatusEid) {
         const el = root.getElementById('absorptionDesc');
@@ -1966,6 +2071,27 @@ class SolarDashboard extends HTMLElement {
         } else {
           capDot.style.opacity = '0';
         }
+      }
+
+      // Threshold tick marks on radial gauge
+      const connectSoc = this._bridge.getVal(E.GRID_CONNECT_SOC) ?? 20;
+      const disconnectSoc = this._bridge.getVal(E.GRID_DISCONNECT_SOC) ?? 90;
+      const threshGroup = root.getElementById('battThresholds');
+      if (threshGroup) {
+        let svgTicks = '';
+        if (connectSoc > 0 && connectSoc < 100) {
+          const a1 = (connectSoc / 100) * 2 * Math.PI - Math.PI / 2;
+          const x1 = 100 + 73 * Math.cos(a1), y1 = 100 + 73 * Math.sin(a1);
+          const x2 = 100 + 87 * Math.cos(a1), y2 = 100 + 87 * Math.sin(a1);
+          svgTicks += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" class="batt-threshold-tick" stroke="var(--orange, #ff9f0a)" stroke-width="2.5" opacity="0.85"/>`;
+        }
+        if (disconnectSoc > 0 && disconnectSoc < 100) {
+          const a2 = (disconnectSoc / 100) * 2 * Math.PI - Math.PI / 2;
+          const x1 = 100 + 73 * Math.cos(a2), y1 = 100 + 73 * Math.sin(a2);
+          const x2 = 100 + 87 * Math.cos(a2), y2 = 100 + 87 * Math.sin(a2);
+          svgTicks += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" class="batt-threshold-tick" stroke="var(--blue, #0a84ff)" stroke-width="2.5" opacity="0.85"/>`;
+        }
+        if (threshGroup.innerHTML !== svgTicks) threshGroup.innerHTML = svgTicks;
       }
     } else {
       this._els.battSOC.textContent = '--%';
@@ -3477,6 +3603,19 @@ class SolarDashboard extends HTMLElement {
       performanceEl.textContent = isNight ? '\u{1F319}' : perfVal.toFixed(0) + '%';
       performanceEl.classList.toggle('night-icon', isNight);
     }
+    const solPerfChip = root.getElementById('solPerfChip');
+    if (solPerfChip) {
+      if (!isNight && this._solarEstimatedWatts > 50 && this._solarActualWatts > 10) {
+        const ratio = (this._solarActualWatts / this._solarEstimatedWatts) * 100;
+        const cls = ratio >= 90 ? 'optimal' : ratio >= 70 ? 'moderate' : 'low';
+        const label = ratio >= 90 ? 'Optimal' : ratio >= 70 ? 'Moderate' : 'Low';
+        solPerfChip.textContent = `\u26A1 ${Math.round(ratio)}% ${label}`;
+        solPerfChip.className = `sol-perf-chip ${cls}`;
+        solPerfChip.style.display = 'inline-flex';
+      } else {
+        solPerfChip.style.display = 'none';
+      }
+    }
     const efficiencyEl = root.getElementById('solEfficiency');
     if (efficiencyEl) {
       efficiencyEl.textContent = isNight ? '\u{1F319}' : effVal.toFixed(1) + '%';
@@ -3610,7 +3749,14 @@ class SolarDashboard extends HTMLElement {
     const balStatusEl = root.getElementById('balStatus');
     const oldDelta = parseFloat(balStatusEl.textContent.replace(/[^0-9.]/g, '')) || 0;
     const suffix = balancing ? t(lang, 'mVBalancing') : t(lang, 'mV');
-    this._animateValue(balStatusEl, oldDelta, delta, 600, v => `\u0394 ${Math.round(v)}${suffix}`);
+    let trend = '';
+    if (this._lastBalDelta != null) {
+      if (delta < this._lastBalDelta - 0.5) trend = '<span class="delta-trend closing">\u2193</span>';
+      else if (delta > this._lastBalDelta + 0.5) trend = '<span class="delta-trend widening">\u2191</span>';
+      else trend = '<span class="delta-trend stable">\u2194</span>';
+    }
+    this._lastBalDelta = delta;
+    this._animateValue(balStatusEl, oldDelta, delta, 600, v => `\u0394 ${Math.round(v)}${suffix} ${trend}`);
   }
 
   // ============ CALC TODAY IN/OUT ============

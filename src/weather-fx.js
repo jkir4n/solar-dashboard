@@ -267,15 +267,93 @@ export class WeatherFX {
         ctx.stroke();
       }
     }
+
+    // Shooting star meteors on clear night skies
+    if (baseAlpha > 0.15) {
+      this._renderMeteors(ctx, now, baseAlpha);
+    }
+  }
+
+  _renderMeteors(ctx, now, baseAlpha) {
+    if (!this._meteors) this._meteors = [];
+    if (!this._nextMeteorTime) this._nextMeteorTime = now + (25000 + Math.random() * 35000);
+    const w = ctx.canvas.width, h = ctx.canvas.height;
+
+    // Spawn new meteor
+    if (now >= this._nextMeteorTime) {
+      const angle = (Math.PI / 4) + (Math.random() - 0.5) * 0.4;
+      const startX = Math.random() * w * 0.8;
+      const startY = Math.random() * h * 0.35;
+      const speed = 14 + Math.random() * 10;
+      const len = 70 + Math.random() * 90;
+      this._meteors.push({
+        x: startX,
+        y: startY,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        len,
+        life: 0,
+        maxLife: 18 + Math.random() * 14,
+        alpha: 0.85 + Math.random() * 0.15,
+      });
+      this._nextMeteorTime = now + (45000 + Math.random() * 45000);
+    }
+
+    // Render & update active meteors
+    for (let i = this._meteors.length - 1; i >= 0; i--) {
+      const m = this._meteors[i];
+      m.life++;
+      m.x += m.vx;
+      m.y += m.vy;
+      const progress = m.life / m.maxLife;
+      const fade = progress < 0.2 ? progress / 0.2 : (1 - progress);
+      const a = m.alpha * fade * baseAlpha;
+      if (a > 0.01) {
+        const hyp = Math.hypot(m.vx, m.vy) || 1;
+        const tailX = m.x - (m.vx / hyp) * m.len;
+        const tailY = m.y - (m.vy / hyp) * m.len;
+        const grad = ctx.createLinearGradient(tailX, tailY, m.x, m.y);
+        grad.addColorStop(0, 'rgba(255, 255, 255, 0)');
+        grad.addColorStop(0.7, `rgba(200, 230, 255, ${(a * 0.6).toFixed(3)})`);
+        grad.addColorStop(1, `rgba(255, 255, 255, ${a.toFixed(3)})`);
+        ctx.beginPath();
+        ctx.moveTo(tailX, tailY);
+        ctx.lineTo(m.x, m.y);
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+      if (m.life >= m.maxLife) {
+        this._meteors.splice(i, 1);
+      }
+    }
   }
 
   _renderGoldenHourOverlay(ctx, sunElevation) {
-    const ghFactor = Math.cos((sunElevation / 15) * Math.PI / 2);
+    const ghFactor = Math.cos((Math.min(15, Math.max(0, sunElevation)) / 15) * (Math.PI / 2));
     const cloudDim = this._calcCloudDim(this._cloudCovCur ?? 0, this._weatherCondition ?? '');
-    const alpha = ghFactor * cloudDim * 0.06;
-    if (alpha < 0.005) return;
-    ctx.fillStyle = `rgba(255, 140, 40, ${alpha})`;
-    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    const baseAlpha = ghFactor * cloudDim;
+    if (baseAlpha < 0.005) return;
+    const w = ctx.canvas.width, h = ctx.canvas.height;
+    const { x: sunX, y: sunY } = WeatherFX._getSunCanvasPos(w, h, this._sunAzCur || 180, sunElevation);
+
+    ctx.save();
+    // 1. Horizon Rayleigh scattering gradient
+    const skyGrad = ctx.createLinearGradient(0, h * 0.3, 0, h);
+    skyGrad.addColorStop(0, 'rgba(255, 120, 50, 0)');
+    skyGrad.addColorStop(0.6, `rgba(255, 130, 40, ${(baseAlpha * 0.12).toFixed(3)})`);
+    skyGrad.addColorStop(1, `rgba(235, 75, 45, ${(baseAlpha * 0.22).toFixed(3)})`);
+    ctx.fillStyle = skyGrad;
+    ctx.fillRect(0, 0, w, h);
+
+    // 2. Solar corona warm bloom
+    const sunBloom = ctx.createRadialGradient(sunX, sunY, 10, sunX, sunY, w * 0.65);
+    sunBloom.addColorStop(0, `rgba(255, 180, 80, ${(baseAlpha * 0.25).toFixed(3)})`);
+    sunBloom.addColorStop(0.4, `rgba(255, 140, 50, ${(baseAlpha * 0.10).toFixed(3)})`);
+    sunBloom.addColorStop(1, 'rgba(255, 100, 30, 0)');
+    ctx.fillStyle = sunBloom;
+    ctx.fillRect(0, 0, w, h);
+    ctx.restore();
   }
 
   // Pre-render a cloud particle to an off-screen canvas and store it on p.
@@ -1345,10 +1423,11 @@ export class WeatherFX {
       // Store archetypes on instance so _generateCloudLobes can reference them
       this._archetypes = ARCH;
       const arch = ARCH[archetype];
-      // 2 depth layers — aggressively differentiated (spec §4)
+      // 3 depth layers — high wispy, mid altocumulus, low volumetric cumulus/nimbus
       const LAYERS = [
-        { count: 3, rMin:  40, rMax:  80, speedRange: [0.07, 0.13], alphaRange: [0.35, 0.50], yRange: [0.03, 0.30], windMult: 0.10 },
-        { count: 4, rMin: 110, rMax: 200, speedRange: [0.20, 0.35], alphaRange: [0.70, 0.90], yRange: [0.15, 0.55], windMult: 0.25 },
+        { count: 2, rMin:  35, rMax:  65, speedRange: [0.03, 0.08], alphaRange: [0.20, 0.38], yRange: [0.02, 0.20], windMult: 0.08 },
+        { count: 3, rMin:  70, rMax: 120, speedRange: [0.10, 0.18], alphaRange: [0.45, 0.65], yRange: [0.08, 0.38], windMult: 0.18 },
+        { count: 3, rMin: 120, rMax: 220, speedRange: [0.22, 0.38], alphaRange: [0.75, 0.95], yRange: [0.18, 0.58], windMult: 0.30 },
       ];
       LAYERS.forEach((layer, li) => {
         for (let ci = 0; ci < layer.count; ci++) {
@@ -3342,9 +3421,14 @@ export class WeatherFX {
     }
 
     if (state._flashAlpha > 0) {
-      ctx.globalAlpha = state._flashAlpha;
-      ctx.fillStyle = 'rgba(220,230,255,1)';
+      ctx.save();
+      const flashGrad = ctx.createRadialGradient(w * 0.5, h * 0.25, 40, w * 0.5, h * 0.35, w * 0.85);
+      flashGrad.addColorStop(0, `rgba(240, 245, 255, ${state._flashAlpha.toFixed(3)})`);
+      flashGrad.addColorStop(0.5, `rgba(200, 215, 255, ${(state._flashAlpha * 0.75).toFixed(3)})`);
+      flashGrad.addColorStop(1, `rgba(160, 180, 240, ${(state._flashAlpha * 0.35).toFixed(3)})`);
+      ctx.fillStyle = flashGrad;
       ctx.fillRect(0, 0, w, h);
+      ctx.restore();
       state._flashAlpha = Math.max(0, state._flashAlpha - state._flashDecay);
     }
 

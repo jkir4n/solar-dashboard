@@ -254,13 +254,19 @@ export const STYLES = `
     justify-content: center;
     padding: 8px;
     position: relative;
-    transition: filter 0.6s ease, border-color 0.4s ease, transform 0.3s ease, background 0.3s ease;
+    cursor: pointer;
+    user-select: none;
+    transition: filter 0.6s ease, border-color 0.4s ease, transform 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
     box-sizing: border-box;
   }
   .flow-icon:hover {
     background: var(--glass-hover);
     border-color: var(--glass-highlight);
-    transform: scale(1.06);
+    transform: scale(1.08);
+    box-shadow: 0 0 14px var(--glass-glow, rgba(255,255,255,0.1));
+  }
+  .flow-icon:active {
+    transform: scale(0.95);
   }
   .grid-status-dot { position: absolute; top: 1px; right: 1px; width: 8px; height: 8px; border-radius: 50%; background: #30D158; box-shadow: 0 0 4px #30D15888; border: 1.5px solid var(--card-bg, #111); transition: background 0.4s ease, box-shadow 0.4s ease; }
   .grid-status-dot.offline { background: #FF453A; box-shadow: 0 0 4px #FF453A88; }
@@ -399,6 +405,16 @@ export const STYLES = `
   .sol-output-empty .moon-icon { font-size: 36px; display: block; }
   .sol-output-empty .sunrise-time { font-size: 13px; font-weight: 600; color: var(--text2); }
   .sol-output-empty .sunrise-sub { font-size: 11px; color: var(--text3); }
+  .sol-perf-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; background: var(--fill-subtle); border: 1px solid var(--glass-border); color: var(--text2); transition: all 0.4s ease; margin-left: 8px; vertical-align: middle; }
+  .sol-perf-chip.optimal { background: var(--green-bg); color: var(--green); border-color: rgba(48, 209, 88, 0.25); box-shadow: 0 0 8px rgba(48, 209, 88, 0.12); }
+  .sol-perf-chip.moderate { background: var(--orange-bg); color: var(--orange); border-color: rgba(255, 159, 10, 0.25); }
+  .sol-perf-chip.low { background: var(--fill-subtle); color: var(--text3); }
+  .delta-trend { font-size: 13px; font-weight: 800; margin-left: 4px; transition: color 0.3s ease; }
+  .delta-trend.closing { color: var(--green); }
+  .delta-trend.widening { color: var(--red); }
+  .delta-trend.stable { color: var(--text3); }
+  .batt-threshold-tick { stroke-linecap: round; transition: opacity 0.5s ease, stroke 0.5s ease; }
+  .batt-threshold-dot { transition: all 0.5s ease; }
   .health-bar { height: 8px; border-radius: 4px; background: var(--glass-border); overflow: hidden; margin: 12px 0; }
   .health-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--red), var(--orange), var(--green)); transition: width 0.5s ease; position: relative; }
   .health-fill::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 50%; background: linear-gradient(180deg, rgba(255,255,255,0.3) 0%, transparent 100%); border-radius: 4px 4px 0 0; }
@@ -460,11 +476,16 @@ export const STYLES = `
     50% { opacity: 1; transform: translateX(3px); color: var(--orange); }
   }
 
-  .ctrl { display: flex; justify-content: space-between; align-items: center; padding: 18px 0; border-bottom: 1px solid var(--glass-border); }
+  .ctrl { display: flex; justify-content: space-between; align-items: center; padding: 12px 10px; margin: 0 -10px; border-radius: 10px; border-bottom: 1px solid var(--glass-border); transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease; }
   .ctrl:last-child { border-bottom: none; }
+  .ctrl.active { background: var(--green-bg); border-color: rgba(48, 209, 88, 0.2); box-shadow: 0 0 12px rgba(48, 209, 88, 0.08); }
   #controlsCard { display: flex; flex-direction: column; justify-content: space-between; }
   .ctrl-name { font-size: 14px; font-weight: 600; }
   .ctrl-desc { font-size: 11px; color: var(--text2); margin-top: 2px; }
+  .ctrl-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .ctrl-badge { font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 7px; border-radius: 6px; background: var(--fill-subtle); color: var(--text3); border: 1px solid var(--glass-border); transition: all 0.3s ease; }
+  .ctrl-badge.active { background: var(--green-bg); color: var(--green); border-color: rgba(48, 209, 88, 0.3); box-shadow: 0 0 8px rgba(48, 209, 88, 0.15); }
+  .ctrl-badge.armed { background: var(--orange-bg); color: var(--orange); border-color: rgba(255, 159, 10, 0.3); }
   .toggle { position: relative; width: 44px; height: 24px; cursor: pointer; display: inline-block; }
   .toggle input { display: none; }
   .slider { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: var(--glass-border); border-radius: 12px; transition: 0.3s; }
