@@ -1555,7 +1555,7 @@ class SolarDashboard extends HTMLElement {
                         <line x1="13.6" y1="34.4" x2="9.37" y2="38.63"/>
                       </svg>
                     </div>
-                    <span class="flow-label">${t(lang, 'solarNode')}</span>
+                    <span class="flow-label">${t(lang, 'solar')}</span>
                   </div>
                 </div>
                 <div class="flow-hub-cell fh-solar-line">
@@ -1579,64 +1579,58 @@ class SolarDashboard extends HTMLElement {
                       </svg>
                       <span class="grid-status-dot" id="gridStatusDot"></span>
                     </div>
-                    <span class="flow-label">${t(lang, 'gridNode')}</span>
-                    <div class="grid-info" id="gridInfo" style="display:none;">
-                      <span id="gridVolt">-- V</span>
-                      <span id="gridFreq">-- Hz</span>
-                    </div>
+                    <span class="flow-label">${t(lang, 'grid')}</span>
+                    <div class="grid-info" id="gridInfo" style="display:none"><span id="gridVoltDisp">--</span><span id="gridFreqDisp">--</span></div>
                   </div>
                 </div>
                 <div class="flow-hub-cell fh-grid-line">
-                  <div class="flow-line-wrap flow-horizontal" id="flowWrap2">
-                    <div class="flow-line" id="flowLine2"></div>
-                    <div class="flow-particles" id="flowParticles2">${'<div class="flow-dot"></div>'.repeat(20)}</div>
-                    <span class="flow-watt fh-watt-horizontal" id="flowWatt2">0 W</span>
-                  </div>
-                </div>
-                <div class="flow-hub-cell fh-junction-cell">
-                  <div class="fh-junction" id="flowJunction"></div>
-                </div>
-                <div class="flow-hub-cell fh-home-line">
-                  <div class="flow-line-wrap flow-horizontal" id="flowWrap3">
+                  <div class="flow-line-wrap" id="flowWrap3">
                     <div class="flow-line" id="flowLine3"></div>
                     <div class="flow-particles" id="flowParticles3">${'<div class="flow-dot"></div>'.repeat(20)}</div>
-                    <span class="flow-watt fh-watt-horizontal" id="flowWatt3">0 W</span>
+                    <span class="flow-watt" id="flowWatt3">0 W</span>
+                  </div>
+                </div>
+                <div class="flow-hub-cell fh-home-line">
+                  <div class="flow-line-wrap" id="flowWrap4">
+                    <div class="flow-line" id="flowLine4"></div>
+                    <div class="flow-particles" id="flowParticles4">${'<div class="flow-dot"></div>'.repeat(20)}</div>
+                    <span class="flow-watt" id="flowWatt4">0 W</span>
                   </div>
                 </div>
                 <div class="flow-hub-cell fh-home-node">
                   <div class="flow-node">
                     <div class="flow-icon" id="iconHome">
                       <svg viewBox="0 0 48 48">
-                        <path d="M8 22 L24 8 L40 22 L40 42 L8 42 Z"/>
-                        <polyline points="18 42 18 26 30 26 30 42"/>
+                        <polyline points="6,22 24,6 42,22"/>
+                        <rect x="14" y="22" width="20" height="20" rx="2" ry="2"/>
+                        <rect class="home-window" x="17" y="28" width="5" height="5" rx="0.5"/>
+                        <rect class="home-window" x="26" y="28" width="5" height="5" rx="0.5"/>
                       </svg>
                     </div>
-                    <span class="flow-label">${t(lang, 'homeNode')}</span>
+                    <span class="flow-label">${t(lang, 'home')}</span>
                   </div>
                 </div>
-                <div class="flow-hub-cell fh-battery-line">
-                  <div class="flow-line-wrap flow-vertical" id="flowWrap4">
-                    <div class="flow-line" id="flowLine4"></div>
-                    <div class="flow-particles" id="flowParticles4">${'<div class="flow-dot"></div>'.repeat(20)}</div>
-                    <span class="flow-watt fh-watt-vertical" id="flowWatt4">0 W</span>
+                <div class="flow-hub-cell fh-bat-line">
+                  <div class="flow-line-wrap flow-vertical" id="flowWrap2">
+                    <div class="flow-line" id="flowLine2"></div>
+                    <div class="flow-particles" id="flowParticles2">${'<div class="flow-dot"></div>'.repeat(20)}</div>
+                    <span class="flow-watt fh-watt-vertical" id="flowWatt2">0 W</span>
                   </div>
                 </div>
-                <div class="flow-hub-cell fh-battery-node">
+                <div class="flow-hub-cell fh-bat-node">
                   <div class="flow-node">
                     <div class="flow-icon" id="iconBattery" style="position:relative;">
                       <canvas id="battArcCanvas" class="flow-arc-canvas"></canvas>
                       <svg viewBox="0 0 48 48">
-                        <rect x="8" y="14" width="32" height="24" rx="4" ry="4"/>
-                        <line x1="18" y1="10" x2="18" y2="14"/>
-                        <line x1="30" y1="10" x2="30" y2="14"/>
-                        <line x1="16" y1="26" x2="22" y2="26"/>
-                        <line x1="26" y1="26" x2="32" y2="26"/>
-                        <line x1="29" y1="23" x2="29" y2="29"/>
+                        <rect x="8" y="14" width="32" height="24" rx="3" ry="3"/>
+                        <rect x="19" y="10" width="10" height="4" rx="2" ry="2"/>
                       </svg>
+                      <svg id="battArcs" viewBox="0 0 48 48" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;"></svg>
                     </div>
-                    <span class="flow-label">${t(lang, 'batteryNode')}</span>
+                    <span class="flow-label">${t(lang, 'battery')}</span>
                   </div>
                 </div>
+              <div class="fh-junction"></div>
             </div>
           </div>
   </div>
@@ -1814,7 +1808,9 @@ class SolarDashboard extends HTMLElement {
       <div id="balIndicator" style="text-align:center;font-size:14px;font-weight:600;color:var(--orange);display:none">
         <span id="balSrc">C1</span> <span style="color:var(--red)">\u25B2</span> <span class="bal-arrow">\u2192</span> <span class="bal-arrow">\u2192</span> <span class="bal-arrow">\u2192</span> <span style="color:var(--text3)">\u21C4</span> <span class="bal-arrow">\u2192</span> <span class="bal-arrow">\u2192</span> <span class="bal-arrow">\u2192</span> <span id="balDst">C12</span> <span style="color:var(--green)">\u25BC</span>
       </div>
-      <div id="balStatus" style="text-align:center;font-size:13px;font-weight:600;color:var(--text2)"></div>
+      <div id="balStatus" style="display:flex;align-items:center;justify-content:center;gap:6px;text-align:center;font-size:13px;font-weight:600;color:var(--text2)">
+        <span id="balStatusText"></span><span id="balTrend" class="delta-trend"></span>
+      </div>
     </div>
   </div>
 </div>
@@ -3746,17 +3742,28 @@ class SolarDashboard extends HTMLElement {
       root.getElementById('balIndicator').style.display = 'none';
     }
 
-    const balStatusEl = root.getElementById('balStatus');
-    const oldDelta = parseFloat(balStatusEl.textContent.replace(/[^0-9.]/g, '')) || 0;
+    const balStatusTextEl = root.getElementById('balStatusText') || root.getElementById('balStatus');
+    const balTrendEl = root.getElementById('balTrend');
+    const oldDelta = parseFloat(balStatusTextEl.textContent.replace(/[^0-9.]/g, '')) || 0;
     const suffix = balancing ? t(lang, 'mVBalancing') : t(lang, 'mV');
-    let trend = '';
-    if (this._lastBalDelta != null) {
-      if (delta < this._lastBalDelta - 0.5) trend = '<span class="delta-trend closing">\u2193</span>';
-      else if (delta > this._lastBalDelta + 0.5) trend = '<span class="delta-trend widening">\u2191</span>';
-      else trend = '<span class="delta-trend stable">\u2194</span>';
+    this._animateValue(balStatusTextEl, oldDelta, delta, 600, v => `\u0394 ${Math.round(v)}${suffix}`);
+    if (balTrendEl) {
+      if (this._lastBalDelta != null) {
+        if (delta < this._lastBalDelta - 0.5) {
+          balTrendEl.textContent = '\u2193';
+          balTrendEl.className = 'delta-trend closing';
+        } else if (delta > this._lastBalDelta + 0.5) {
+          balTrendEl.textContent = '\u2191';
+          balTrendEl.className = 'delta-trend widening';
+        } else {
+          balTrendEl.textContent = '\u2194';
+          balTrendEl.className = 'delta-trend stable';
+        }
+      } else {
+        balTrendEl.textContent = '';
+      }
     }
     this._lastBalDelta = delta;
-    this._animateValue(balStatusEl, oldDelta, delta, 600, v => `\u0394 ${Math.round(v)}${suffix} ${trend}`);
   }
 
   // ============ CALC TODAY IN/OUT ============
