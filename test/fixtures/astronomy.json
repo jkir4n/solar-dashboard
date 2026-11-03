@@ -1,0 +1,316 @@
+{
+  "schemaVersion": "solar-dashboard.astronomy-fixtures/1",
+  "retrieved": "2026-10-31",
+  "purpose": "Reference data only. These are independent observer ephemerides for validating the astronomy engine in Task 7. This file must not be imported by production code.",
+  "primarySource": {
+    "name": "NASA/JPL Horizons System (observer ephemeris API)",
+    "toolUrl": "https://ssd.jpl.nasa.gov/horizons/",
+    "apiUrl": "https://ssd.jpl.nasa.gov/api/horizons.api",
+    "retrieved": "2026-10-31",
+    "queryTemplate": {
+      "COMMAND": "10 = Sun, 301 = Moon, 299 = Venus, 499 = Mars, 599 = Jupiter",
+      "CENTER": "coord@399",
+      "COORD_TYPE": "GEODETIC",
+      "SITE_COORD": "longitude_deg, latitude_deg, elevation_km",
+      "STEP_SIZE": "1m",
+      "QUANTITIES": "4 = apparent azimuth/elevation, 10 = illuminated fraction",
+      "APPARENT": "AIRLESS",
+      "TIME_DIGITS": "MINUTES",
+      "note": "Horizons rejects requests where START_TIME is not strictly earlier than STOP_TIME; each case therefore uses START=T and STOP=T+1 minute, and only the START row is recorded."
+    }
+  },
+  "secondarySource": {
+    "name": "USNO Astronomical Applications Department, celestial navigation API",
+    "toolUrl": "https://aa.usno.navy.mil/data/celnav",
+    "apiUrl": "https://aa.usno.navy.mil/api/celnav",
+    "retrieved": "2026-10-31",
+    "fields": "zn = azimuth in degrees from true north; hc = altitude in degrees; coordinates are latitude,longitude; tz=0 selects UTC.",
+    "coverage": "Sun, Moon, Venus, Mars, Jupiter and navigational stars. The celnav table does not list Mercury, so it cannot cross-check the Mercury case."
+  },
+  "supplementarySources": [
+    {
+      "name": "IMCCE Miriade ephemcc (INPOP19 ephemeris, LTE/OBSPM/CNRS)",
+      "toolUrl": "https://ssp.imcce.fr/webservices/miriade/api/ephemcc/",
+      "apiUrl": "https://ssp.imcce.fr/webservices/miriade/api/ephemcc.php",
+      "retrieved": "2026-10-31",
+      "fields": "tcoor=5 returns J2000 astrometric RA/Dec plus az/el; tcoor=3 returns local az/el only. Observer order is latitude,longitude,altitude_metres.",
+      "caveat": "Its LOCAL az/el is expressed in a J2000 astrometric frame without precession applied to the horizon rotation, so it sits about 0.37 deg from a true-of-date apparent az/el in 2026. Use its RA/Dec, not its az/el, for comparison."
+    },
+    {
+      "name": "IAU 1958 galactic pole definition, published J2000 values (Wikipedia: Galactic coordinate system, table 'J2000.0 equatorial coordinates approximating the galactic reference points')",
+      "toolUrl": "https://en.wikipedia.org/wiki/Galactic_coordinate_system",
+      "retrieved": "2026-10-31",
+      "fields": "North galactic pole at J2000 RA 12h 51.4m, Dec +27.13 deg, in Coma Berenices near 31 Com. Used to corroborate the ICRS pole direction for the Milky Way case; the horizontal transform is computed here, not published."
+    }
+  ],
+  "conventions": {
+    "time": "UTC ISO-8601 instants (Z suffix). Local time is informational only and never used for computation.",
+    "azimuthDeg": "Degrees from TRUE north, increasing clockwise when viewed from above. 0 = north, 90 = east, 180 = south, 270 = west. Range [0, 360).",
+    "elevationDeg": "Geometric altitude of the topocentric APPARENT direction above the astronomical horizon, in degrees. Negative values are below the horizon. NO atmospheric refraction is applied (Horizons APPARENT=AIRLESS), so a consumer that enables refraction (computeSky defaults to refraction:true) cannot compare these numbers directly.",
+    "illuminationFraction": "Illuminated fraction of the apparent disc, 0..1. Derived from Horizons QUANTITIES=10 percent divided by 100.",
+    "referenceFrame": "Topocentric, observer at the geodetic site below, body centre, light-time and stellar aberration corrected, rotated to the observer horizon by Horizons.",
+    "coordinates": "Site geodetic latitude/longitude in degrees, elevation in metres. In the source query the elevation is expressed in kilometres.",
+    "phaseSense": "Waxing/waning is NOT a Horizons field. Where a case records phaseSense, it was derived independently from the sign of the illuminated-fraction change across the surrounding 12-hour samples, which are recorded with the case.",
+    "fixedDirections": "Non-solar-system directions (the Milky Way north galactic pole) are recorded as ICRS/J2000 right ascension and declination and then rotated into the SAME topocentric azimuth/elevation convention as the bodies: azimuth from TRUE north clockwise, airless geometric elevation above the astronomical horizon, observer at the site below. The rotation must include precession (and ideally nutation) of the equatorial frame to the date of observation; omitting precession displaces the result by about 0.37 deg in 2026 and is the single easiest way to get this case wrong."
+  },
+  "acceptanceTargets": {
+    "source": "docs/superpowers/plans/2026-10-31-architectural-solar-dashboard.md, Task 7",
+    "sunAngularSeparationDeg": 0.5,
+    "moonAngularSeparationDeg": 1.0,
+    "planetAngularSeparationDeg": 1.0,
+    "illuminationFractionError": 0.02,
+    "comparisonRule": "Compare unit vectors built from azimuth and elevation. Near the zenith (elevation above ~85 deg) azimuth is ill-conditioned, so vector separation is the only stable metric; do not assert azimuth differences there.",
+    "targetsAre": "Validation targets, not claims about the current engine."
+  },
+  "coverage": {
+    "caseCount": 11,
+    "note": "One id per case in cases[]. The facet tags for each case live in its own coverage[] array.",
+    "caseIds": [
+      "install-site-baseline-flagged",
+      "march-equinox-north-culmination",
+      "june-solstice-north-culmination",
+      "december-solstice-south-culmination",
+      "moon-first-quarter-waxing",
+      "moon-last-quarter-waning",
+      "local-midnight-install-site",
+      "polar-night-tromso",
+      "polar-day-tromso",
+      "mercury-install-site-baseline",
+      "milky-way-ngp-baseline"
+    ]
+  },
+  "cases": [
+    {
+      "id": "install-site-baseline-flagged",
+      "label": "Install site, 12:16 IST midday. This is the case the SDD ledger flagged as an azimuth-convention error (346.53 deg).",
+      "coverage": ["install-site", "daytime-high-sun", "regression"],
+      "source": { "name": "NASA/JPL Horizons", "apiUrl": "https://ssd.jpl.nasa.gov/api/horizons.api", "retrieved": "2026-10-31" },
+      "utcInstant": "2026-10-31T07:00:00Z",
+      "localTimeLabel": "2026-10-31 12:30 IST",
+      "site": { "name": "Install site", "latitudeDeg": 11, "longitudeDeg": 76.9, "elevationM": 400 },
+      "sun": { "azimuthDeg": 193.44481, "elevationDeg": 64.173137 },
+      "moon": { "azimuthDeg": 300.264866, "elevationDeg": -15.577577, "illuminationFraction": 0.6826708 },
+      "planet": { "name": "Venus", "azimuthDeg": 215.905803, "elevationDeg": 58.109474, "illuminationFraction": 0.0219359 },
+      "note": "Horizons places the Sun south-south-west at 193.4448 deg, not at 346.53 deg. The ledger finding is stale: see docs/astronomy-fixtures-notes.md."
+    },
+    {
+      "id": "march-equinox-north-culmination",
+      "label": "March equinox, northern hemisphere, Sun near meridian transit in the south.",
+      "coverage": ["equinox", "northern-hemisphere", "meridian-transit"],
+      "source": { "name": "NASA/JPL Horizons", "apiUrl": "https://ssd.jpl.nasa.gov/api/horizons.api", "retrieved": "2026-10-31" },
+      "utcInstant": "2027-03-20T12:00:00Z",
+      "localTimeLabel": "2027-03-20 12:00 UTC",
+      "site": { "name": "Greenwich", "latitudeDeg": 51.4769, "longitudeDeg": -0.0005, "elevationM": 46 },
+      "sun": { "azimuthDeg": 177.598225, "elevationDeg": 38.358079 },
+      "moon": { "azimuthDeg": 25.012585, "elevationDeg": -27.406389, "illuminationFraction": 0.9520148 },
+      "planet": { "name": "Venus", "azimuthDeg": 213.165238, "elevationDeg": 18.522001, "illuminationFraction": 0.7872603 },
+      "note": "Sun declination is approximately -0.12 deg at this instant (meridian altitude 38.358 deg minus co-latitude), consistent with the equinox."
+    },
+    {
+      "id": "june-solstice-north-culmination",
+      "label": "June solstice, northern hemisphere, Sun at its highest meridian altitude.",
+      "coverage": ["solstice", "june-solstice", "northern-hemisphere", "meridian-transit"],
+      "source": { "name": "NASA/JPL Horizons", "apiUrl": "https://ssd.jpl.nasa.gov/api/horizons.api", "retrieved": "2026-10-31" },
+      "utcInstant": "2027-06-21T12:00:00Z",
+      "localTimeLabel": "2027-06-21 13:00 BST",
+      "site": { "name": "Greenwich", "latitudeDeg": 51.4769, "longitudeDeg": -0.0005, "elevationM": 46 },
+      "sun": { "azimuthDeg": 179.136125, "elevationDeg": 61.957088 },
+      "moon": { "azimuthDeg": 310.498775, "elevationDeg": -53.119855, "illuminationFraction": 0.9465078 },
+      "planet": { "name": "Jupiter", "azimuthDeg": 107.794877, "elevationDeg": 31.874127, "illuminationFraction": 0.9942018 },
+      "note": "Sun declination is approximately +23.43 deg (meridian altitude minus co-latitude), consistent with the June solstice."
+    },
+    {
+      "id": "december-solstice-south-culmination",
+      "label": "December solstice, southern hemisphere: Sun culminates in the NORTH, exercising the 359-0 deg azimuth wrap.",
+      "coverage": ["solstice", "december-solstice", "southern-hemisphere", "meridian-transit", "azimuth-north-wrap"],
+      "source": { "name": "NASA/JPL Horizons", "apiUrl": "https://ssd.jpl.nasa.gov/api/horizons.api", "retrieved": "2026-10-31" },
+      "utcInstant": "2026-12-21T02:00:00Z",
+      "localTimeLabel": "2026-12-21 13:00 AEDT",
+      "site": { "name": "Sydney", "latitudeDeg": -33.8688, "longitudeDeg": 151.2093, "elevationM": 58 },
+      "sun": { "azimuthDeg": 351.221937, "elevationDeg": 79.454668 },
+      "moon": { "azimuthDeg": 93.342777, "elevationDeg": -47.509922, "illuminationFraction": 0.8759741 },
+      "planet": { "name": "Mars", "azimuthDeg": 268.403554, "elevationDeg": -22.87791, "illuminationFraction": 0.9143945 },
+      "note": "Azimuth 351.2 deg is just west of north while the Sun is within 11 deg of the zenith, so assert the vector, not the azimuth."
+    },
+    {
+      "id": "moon-first-quarter-waxing",
+      "label": "Waxing first quarter: Moon at half illumination and rising in the east-south-east.",
+      "coverage": ["moon-phase", "waxing", "first-quarter"],
+      "source": { "name": "NASA/JPL Horizons", "apiUrl": "https://ssd.jpl.nasa.gov/api/horizons.api", "retrieved": "2026-10-31" },
+      "utcInstant": "2026-11-17T12:00:00Z",
+      "localTimeLabel": "2026-11-17 17:30 IST",
+      "site": { "name": "Install site", "latitudeDeg": 11, "longitudeDeg": 76.9, "elevationM": 400 },
+      "sun": { "azimuthDeg": 249.447681, "elevationDeg": 5.064253 },
+      "moon": { "azimuthDeg": 149.576508, "elevationDeg": 61.723398, "illuminationFraction": 0.502903, "phaseSense": "waxing" },
+      "planet": { "name": "Venus", "azimuthDeg": 264.022618, "elevationDeg": -23.672218, "illuminationFraction": 0.1571317 },
+      "phaseSenseVerification": {
+        "illuminationSamples": [
+          { "utcInstant": "2026-11-17T00:00:00Z", "illuminationFraction": 0.4528105 },
+          { "utcInstant": "2026-11-17T12:00:00Z", "illuminationFraction": 0.502903 },
+          { "utcInstant": "2026-11-18T00:00:00Z", "illuminationFraction": 0.548701 }
+        ],
+        "derivation": "Illuminated fraction increases across the surrounding 12-hour samples, therefore waxing."
+      }
+    },
+    {
+      "id": "moon-last-quarter-waning",
+      "label": "Waning last quarter: Moon at half illumination south of the celestial equator, Sun below the horizon.",
+      "coverage": ["moon-phase", "waning", "last-quarter"],
+      "source": { "name": "NASA/JPL Horizons", "apiUrl": "https://ssd.jpl.nasa.gov/api/horizons.api", "retrieved": "2026-10-31" },
+      "utcInstant": "2026-11-01T18:00:00Z",
+      "localTimeLabel": "2026-11-01 23:30 IST",
+      "site": { "name": "Install site", "latitudeDeg": 11, "longitudeDeg": 76.9, "elevationM": 400 },
+      "sun": { "azimuthDeg": 246.724889, "elevationDeg": -80.522837 },
+      "moon": { "azimuthDeg": 67.828684, "elevationDeg": -9.11361, "illuminationFraction": 0.5044156, "phaseSense": "waning" },
+      "planet": { "name": "Jupiter", "azimuthDeg": 68.871126, "elevationDeg": -24.55731, "illuminationFraction": 0.9918077 },
+      "phaseSenseVerification": {
+        "illuminationSamples": [
+          { "utcInstant": "2026-11-01T06:00:00Z", "illuminationFraction": 0.5771959 },
+          { "utcInstant": "2026-11-01T18:00:00Z", "illuminationFraction": 0.5044156 },
+          { "utcInstant": "2026-11-02T06:00:00Z", "illuminationFraction": 0.4641455 }
+        ],
+        "derivation": "Illuminated fraction decreases across the surrounding 12-hour samples, therefore waning."
+      }
+    },
+    {
+      "id": "local-midnight-install-site",
+      "label": "Local midnight at the install site (00:00 IST), Sun near lower culmination.",
+      "coverage": ["local-midnight", "night", "sun-far-below-horizon"],
+      "source": { "name": "NASA/JPL Horizons", "apiUrl": "https://ssd.jpl.nasa.gov/api/horizons.api", "retrieved": "2026-10-31" },
+      "utcInstant": "2026-11-15T18:30:00Z",
+      "localTimeLabel": "2026-11-16 00:00 IST",
+      "site": { "name": "Install site", "latitudeDeg": 11, "longitudeDeg": 76.9, "elevationM": 400 },
+      "sun": { "azimuthDeg": 192.367241, "elevationDeg": -82.189282 },
+      "moon": { "azimuthDeg": 251.116931, "elevationDeg": -15.843017, "illuminationFraction": 0.3320822 },
+      "planet": { "name": "Venus", "azimuthDeg": 90.830304, "elevationDeg": -61.954752, "illuminationFraction": 0.1410094 },
+      "note": "Sun is 82 deg below the horizon: full astronomical night. A correct visibility model must return zero sun contribution here."
+    },
+    {
+      "id": "polar-night-tromso",
+      "label": "Polar night: Sun never rises at Tromso on the December solstice, sampled at local midnight.",
+      "coverage": ["polar-night", "high-latitude", "sun-never-rises"],
+      "source": { "name": "NASA/JPL Horizons", "apiUrl": "https://ssd.jpl.nasa.gov/api/horizons.api", "retrieved": "2026-10-31" },
+      "utcInstant": "2026-12-21T23:00:00Z",
+      "localTimeLabel": "2026-12-22 00:00 CET",
+      "site": { "name": "Tromso", "latitudeDeg": 69.6492, "longitudeDeg": 18.9553, "elevationM": 1 },
+      "sun": { "azimuthDeg": 5.566056, "elevationDeg": -43.715976 },
+      "moon": { "azimuthDeg": 226.339588, "elevationDeg": 39.646366, "illuminationFraction": 0.9314928 },
+      "planet": { "name": "Jupiter", "azimuthDeg": 119.11228, "elevationDeg": 24.289434, "illuminationFraction": 0.9940041 },
+      "note": "Maximum solar altitude on this date is about -3.1 deg (90 - 69.65 - 23.44), so the Sun stays below the horizon for the whole day."
+    },
+    {
+      "id": "polar-day-tromso",
+      "label": "Polar day: Sun above the horizon at local midnight at Tromso on the June solstice.",
+      "coverage": ["polar-day", "high-latitude", "sun-above-horizon-at-midnight"],
+      "source": { "name": "NASA/JPL Horizons", "apiUrl": "https://ssd.jpl.nasa.gov/api/horizons.api", "retrieved": "2026-10-31" },
+      "utcInstant": "2027-06-21T22:00:00Z",
+      "localTimeLabel": "2027-06-22 00:00 CEST",
+      "site": { "name": "Tromso", "latitudeDeg": 69.6492, "longitudeDeg": 18.9553, "elevationM": 1 },
+      "sun": { "azimuthDeg": 349.432362, "elevationDeg": 3.451869 },
+      "moon": { "azimuthDeg": 137.749312, "elevationDeg": -6.757155, "illuminationFraction": 0.9256927 },
+      "planet": { "name": "Mars", "azimuthDeg": 272.197082, "elevationDeg": 5.347399, "illuminationFraction": 0.8942672 },
+      "note": "Sun is positive at local midnight (lower culmination altitude about +3.1 deg), so no night occurs. Any engine that forces night from a clock hour rather than solar elevation fails here."
+    },
+    {
+      "id": "mercury-install-site-baseline",
+      "label": "Mercury at the install-site baseline instant, only 9.7 deg from the Sun and high in the south-south-east; a daytime object, so this case tests position only, not visibility.",
+      "coverage": ["mercury", "install-site", "low-solar-elongation", "daytime-planet"],
+      "source": { "name": "NASA/JPL Horizons", "apiUrl": "https://ssd.jpl.nasa.gov/api/horizons.api", "retrieved": "2026-10-31" },
+      "utcInstant": "2026-10-31T07:00:00Z",
+      "localTimeLabel": "2026-10-31 12:30 IST",
+      "site": { "name": "Install site", "latitudeDeg": 11, "longitudeDeg": 76.9, "elevationM": 400 },
+      "sun": { "azimuthDeg": 193.44481, "elevationDeg": 64.173137 },
+      "moon": { "azimuthDeg": 300.264866, "elevationDeg": -15.577577, "illuminationFraction": 0.6826708 },
+      "planet": { "name": "Mercury", "azimuthDeg": 174.418409, "elevationDeg": 60.148957, "illuminationFraction": 0.0664084 },
+      "note": "Sun and Moon repeat the install-site baseline values because this is the same instant and site; only the planet block is new. Mercury is a 6.6 percent crescent (phase angle 150.1 deg) and is 0.687 au from the observer. The plan adds Mercury to the planet list in Task 7, so this is its reference value. Do not assert visibility here: the sky is full daylight."
+    },
+    {
+      "id": "milky-way-ngp-baseline",
+      "label": "North galactic pole of the Milky Way brought into the local horizon frame at the install-site baseline instant. It fixes the great circle that the galactic band is drawn on.",
+      "coverage": ["milky-way", "galactic-pole", "fixed-icrs-direction", "install-site", "frame-rotation"],
+      "source": { "name": "IAU 1958 pole definition (ICRS/J2000) with a local horizon transform computed for this file", "apiUrl": "https://en.wikipedia.org/wiki/Galactic_coordinate_system", "retrieved": "2026-10-31" },
+      "utcInstant": "2026-10-31T07:00:00Z",
+      "localTimeLabel": "2026-10-31 12:30 IST",
+      "site": { "name": "Install site", "latitudeDeg": 11, "longitudeDeg": 76.9, "elevationM": 400 },
+      "sun": { "azimuthDeg": 193.44481, "elevationDeg": 64.173137 },
+      "moon": { "azimuthDeg": 300.264866, "elevationDeg": -15.577577, "illuminationFraction": 0.6826708 },
+      "milkyWay": {
+        "icrs": {
+          "raDeg": 192.85948,
+          "raHours": 12.8572987,
+          "raSexagesimal": "12h 51m 26.28s",
+          "decDeg": 27.12825,
+          "decSexagesimal": "+27 deg 07 min 41.7 sec",
+          "frame": "ICRS, epoch J2000.0",
+          "constellation": "Coma Berenices, near 31 Com"
+        },
+        "azimuthDeg": 304.97607,
+        "elevationDeg": 58.94725,
+        "convention": "True-north-clockwise azimuth, airless geometric elevation, topocentric at the site above. Same convention as every body in this file; the pole is above the horizon in the north-west at this instant.",
+        "transform": "GMST from the IAU 1982/Meeus polynomial, apparent sidereal time approximated by mean sidereal time plus the equation of the equinoxes (omitted; below 0.005 deg), IAU 1976 precession J2000 -> mean of date, then the standard hour-angle to horizontal rotation. Validated by running the same pipeline on the Sun's Horizons ICRF astrometric position: 193.43278 / 64.17450 vs Horizons apparent 193.44481 / 64.173137, a 0.012 deg azimuth difference consistent with the ~20 arcsec annual aberration between astrometric and apparent coordinates."
+      },
+      "note": "This case is a coordinate transformation, not an ephemeris. The pole direction is fixed in ICRS; the only time-dependent parts are precession and Earth rotation. Compare the resulting unit vector, and treat the galactic band as the great circle perpendicular to it. A renderer that pins the band to one screen point instead of orienting it by this pole will fail the case."
+    }
+  ],
+  "crossChecks": [
+    {
+      "caseId": "march-equinox-north-culmination",
+      "body": "Sun",
+      "secondary": { "azimuthDeg": 177.598613, "elevationDeg": 38.360051 },
+      "divergenceDeg": { "azimuth": 0.000388, "elevation": 0.001972 },
+      "assessment": "Agrees within 0.002 deg. Corroborates azimuth-from-true-north clockwise."
+    },
+    {
+      "caseId": "march-equinox-north-culmination",
+      "body": "Venus",
+      "secondary": { "azimuthDeg": 213.165212, "elevationDeg": 18.524092 },
+      "divergenceDeg": { "azimuth": 0.000026, "elevation": 0.002091 },
+      "assessment": "Agrees within 0.003 deg."
+    },
+    {
+      "caseId": "moon-first-quarter-waxing",
+      "body": "Sun",
+      "secondary": { "azimuthDeg": 249.447715, "elevationDeg": 5.06656 },
+      "divergenceDeg": { "azimuth": 0.000034, "elevation": 0.002307 },
+      "assessment": "Agrees within 0.003 deg at low solar altitude, where refraction would be most visible if either source applied it."
+    },
+    {
+      "caseId": "moon-first-quarter-waxing",
+      "body": "Moon",
+      "secondary": { "azimuthDeg": 149.575275, "elevationDeg": 62.158063 },
+      "divergenceDeg": { "azimuth": 0.001233, "elevation": 0.434665 },
+      "assessment": "Azimuth agrees to 0.0012 deg. The 0.43 deg altitude gap matches lunar horizontal parallax projected on the sky (0.95 deg x cos 62.16 deg = 0.44 deg): the USNO hc value for the Moon is effectively geocentric while the Horizons value is topocentric. Treated as a documented convention difference, not a source error. Use the Horizons (topocentric) value as the fixture expectation."
+    },
+    {
+      "caseId": "mercury-install-site-baseline",
+      "body": "Mercury",
+      "secondary": {
+        "name": "IMCCE Miriade (INPOP19)",
+        "j2000AstrometricRaDeg": 224.0561334,
+        "j2000AstrometricDecDeg": -18.6033078,
+        "localAzimuthDeg": 175.1107,
+        "localElevationDeg": 60.2896,
+        "localFrameNote": "The az/el pair is in IMCCE's J2000 astrometric local frame."
+      },
+      "divergenceDeg": { "azimuth": 0.692291, "elevation": 0.140643 },
+      "assessment": "Equatorial agreement is 0.04 arcsec: IMCCE J2000 astrometric 224.0561334 / -18.6033078 against the Horizons ICRF astrometric equivalent of 14h56m13.47s / -18 deg 36 min 11.9 sec (224.056125 / -18.603306). The body position is corroborated independently. The 0.69 deg azimuth and 0.14 deg elevation gap is a frame artefact in IMCCE's local output: feeding its own J2000 RA/Dec through a precession-aware horizontal transform reproduces the Horizons az/el to 0.0055 deg, while IMCCE's published local pair sits 0.37 deg away on the sky. That 0.37 deg is the precession of the equatorial frame from J2000 to 2026 that its local conversion does not apply. Do not use the IMCCE local pair as the expectation; the Horizons value stands."
+    },
+    {
+      "caseId": "milky-way-ngp-baseline",
+      "body": "Milky Way north galactic pole",
+      "secondary": {
+        "name": "astronomy-engine Rotation_EQJ_HOR (the library path used by src/scene/sky-state.js)",
+        "azimuthDeg": 304.97442,
+        "elevationDeg": 58.94859
+      },
+      "divergenceDeg": { "azimuth": -0.00165, "elevation": 0.00134 },
+      "assessment": "The fixture value comes from an independent Meeus/IAU 1976 pipeline that does not use astronomy-engine; the library path used by the renderer agrees to 0.002 deg, more than two orders of magnitude inside the 1 deg target. The pole direction itself is corroborated by the published J2000 definition (12h 51.4m, +27.13 deg, Coma Berenices near 31 Com)."
+    }
+  ],
+  "knownLimitations": [
+    "Only one instant per case. Diurnal motion is not sampled, so a sign or wrap error that happens to cancel at the chosen instant could pass.",
+    "Polar cases use Tromso (69.65 N) only; southern polar sites are not covered.",
+    "The Horizons AIRLESS convention omits refraction, while computeSky defaults to refraction:true. Comparisons must pass refraction:false or reproduce the refraction model.",
+    "These fixtures are data. No test asserts them yet; wiring them in is Task 7 work."
+  ]
+}

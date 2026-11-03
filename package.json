@@ -9,8 +9,12 @@
     "watch": "rollup -c --watch"
   },
   "devDependencies": {
-    "rollup": "^4.0.0",
     "@rollup/plugin-node-resolve": "^15.0.0",
-    "@rollup/plugin-terser": "^0.4.0"
+    "@rollup/plugin-terser": "^0.4.0",
+    "rollup": "^4.0.0"
+  },
+  "dependencies": {
+    "astronomy-engine": "2.1.19",
+    "three": "0.184.0"
   }
 }

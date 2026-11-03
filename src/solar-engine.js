@@ -1,3 +1,4 @@
+import { Observer, Equator, Horizon } from 'astronomy-engine';
 const toRad = d => d * Math.PI / 180;
 const toDeg = r => r * 180 / Math.PI;
 
@@ -87,46 +88,11 @@ export class SolarEngine {
   // v9 line 1831: solarPosition
   // NOTE: azimuth uses sinZen (sin of zenith) in denominator, not cos(elevation)
   getPosition(date) {
-    const minuteKey = Math.floor(date.getTime() / 60000);
-    if (this._posCache && this._posCache.key === minuteKey) return this._posCache.val;
-    const T = this._julianCentury(date);
-    const decl = this._solarDeclination(T);
-    const eot = this._equationOfTime(T);
-    const timezone = date.getTimezoneOffset() / -60;
-    const offset = eot + 4 * this.lon - 60 * timezone;
-    const tst = date.getHours() * 60 + date.getMinutes() + date.getSeconds() / 60 + offset;
-    const ha = tst / 4 - 180;
-
-    const latR = toRad(this.lat), declR = toRad(decl), haR = toRad(ha);
-    const cosZen = Math.sin(latR) * Math.sin(declR) + Math.cos(latR) * Math.cos(declR) * Math.cos(haR);
-    const zenith = toDeg(Math.acos(Math.max(-1, Math.min(1, cosZen))));
-    let elevation = 90 - zenith;
-
-    // Atmospheric refraction correction (v9 line 1845)
-    if (elevation > 85) { /* no correction */ }
-    else if (elevation > 5) {
-      const tanE = Math.tan(toRad(elevation));
-      elevation += (58.1 / tanE - 0.07 / (tanE ** 3) + 0.000086 / (tanE ** 5)) / 3600;
-    } else if (elevation > -0.575) {
-      elevation += (1735 - 518.2 * elevation + 103.4 * elevation ** 2 - 12.79 * elevation ** 3 + 0.711 * elevation ** 4) / 3600;
-    } else {
-      elevation += (-20.774 / Math.tan(toRad(elevation))) / 3600;
-    }
-
-    // Azimuth (v9 line 1856): uses sinZen in denominator
-    const sinZen = Math.sin(toRad(zenith));
-    let azimuth;
-    if (sinZen === 0) {
-      azimuth = 180;
-    } else {
-      const cosAz = (Math.sin(latR) * cosZen - Math.sin(declR)) / (Math.cos(latR) * sinZen);
-      azimuth = toDeg(Math.acos(Math.max(-1, Math.min(1, cosAz))));
-      if (ha > 0) azimuth = 360 - azimuth;
-    }
-
-    const result = { elevation, azimuth, zenith };
-    this._posCache = { key: minuteKey, val: result };
-    return result;
+    const key=Math.floor(date.getTime()/60000);
+    if(this._posCache?.key===key)return this._posCache.val;
+    const observer=new Observer(this.lat,this.lon,this.altitude),eq=Equator('Sun',date,observer,true,true),h=Horizon(date,observer,eq.ra,eq.dec,'normal');
+    const val={elevation:h.altitude,azimuth:h.azimuth,zenith:90-h.altitude};
+    this._posCache={key,val};return val;
   }
 
   // Moon position — Meeus Ch.47 simplified (main perturbation terms only)

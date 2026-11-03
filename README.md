@@ -232,14 +232,31 @@ The project uses Rollup to bundle the ES modules in `src/` into a single distrib
 
 ```
 src/
-  ha-bridge.js        # HA state access, helper management, history fetching
-  solar-engine.js     # NOAA/Meeus solar + lunar position and irradiance calculations
-  weather-fx.js       # Canvas particle systems, weather backdrops, sun/moon discs
-  charts.js           # Custom canvas charting with crosshair/tooltip
-  styles.js           # All CSS (dark/light themes, glassmorphism)
-  solar-dashboard.js  # Main Web Component, DOM, UI updates
+  solar-dashboard.js    # Main Web Component, lifecycle, telemetry pipeline
+  ha-bridge.js          # HA state access, entity discovery, history/statistics
+  solar-engine.js       # NOAA/Meeus solar + lunar ephemerides and degradation
+  weather-state.js      # Weather provider priority, blending, and observation state
+  iss-tracker.js        # International Space Station real-time orbit tracker
+  energy-state.js       # Power balance routing and domain invariant validation
+  controls.js           # Optimistic hardware controls and step bounds
+  charts.js             # Canvas charting with animated datasets & crosshair tooltips
+  i18n.js               # Multi-language translations across 20 locales
+  hud/
+    hud-template.js     # Glassmorphic Tactical Command Center HUD layout & inspector
+    hud-styles.js       # Full-bleed HUD styles, panel mode, responsive breakpoints
+  scene/
+    world-scene.js      # Three.js 3D orchestration, camera presets & fly-to easing
+    sky-state.js        # Ephemeris-driven celestial positions and sky parameters
+    sky-environment.js  # 3D celestial sphere, 4-way theme matrix, moon terminator & mist
+    weather-effects.js  # Atmospheric lighting, cloud archetypes, rain/hail/sleet
+    weather-particles.js# GPU particle system with roof/plinth collision & bounce
+    house-compound.js   # 3D architectural compound, 16S cells, balancing arc, inverter LEDs
+    energy-conduits.js  # Dynamic power conduits with charge/discharge polarity
+    star-catalogue.js   # 925 bright stars with astronomical coordinates & magnitudes
 ```
 
-## License
+## Licenses & Attribution
 
-MIT
+- **Application Code**: Licensed under the [MIT License](LICENSE). Copyright (c) 2026 Kiran J.
+- **Third-Party Libraries**: [Three.js](https://threejs.org/) (MIT) and [Astronomy Engine](https://github.com/cosinekitty/astronomy) (MIT).
+- **Bundled Star Catalogue**: Derived from the [HYG Database v4.1](https://github.com/astronexus/HYG-Database) (David Nash / Astronexus), licensed under [Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)](https://creativecommons.org/licenses/by-sa/4.0/). See [`NOTICE`](NOTICE) for full attribution and modification details.

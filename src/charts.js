@@ -45,7 +45,7 @@ export class ChartManager {
   // ─── drawChart ───────────────────────────────────────────────
   // Ported from v9 line 2033-2131
   drawChart(canvas, datasets, opts = {}, animate = false) {
-    if (!canvas) return;
+    if (!canvas || this._disposed) return;
     const rect = canvas.getBoundingClientRect();
     if (rect.width === 0 || rect.height === 0) return;
     const canvasId = canvas.id || canvas.dataset.chartId || 'anon';
@@ -333,6 +333,7 @@ export class ChartManager {
   // ─── attachCrosshair ─────────────────────────────────────────
   // Ported from v9 line 2302-2334
   attachCrosshair(canvas) {
+    if(this._disposed)return;
     if (!canvas) return;
 
     // Remove previous listeners to prevent leaks on repeated calls
@@ -379,6 +380,7 @@ export class ChartManager {
   }
 
   detachAll() {
+    this._disposed=true;
     // NI8: Cancel pending chart animations
     for (const canvasId of Object.keys(this._chartAnimIds)) {
       if (this._chartAnimIds[canvasId]) {
@@ -410,6 +412,7 @@ export class ChartManager {
   // ─── showPlaceholder ─────────────────────────────────────────
   // Ported from v9 line 2337-2351
   showPlaceholder(canvas, message) {
+    if(this._disposed)return;
     if (!canvas) return;
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     const dpr = window.devicePixelRatio || 1;
@@ -440,6 +443,7 @@ export class ChartManager {
   // Ported from v9 line 2345-2475
   // Returns { powerData, socData } for caller to render solar chart etc.
   async loadRange(range, canvases, entityIds, timezone) {
+    this._range=range;
     const tz = timezone || 'UTC';
     let powerData = null, socData = null;
 
@@ -494,6 +498,7 @@ export class ChartManager {
         }
       }
     } catch (e) {
+      if(this._disposed||this._range!==range)return {powerData:null,socData:null,timeXLabel:()=>''};
       console.warn('Chart fetch failed', e);
       // NI9: Show error placeholder on all requested canvases
       if (canvases.power) this.showPlaceholder(canvases.power, 'Failed to load');
@@ -501,6 +506,7 @@ export class ChartManager {
       if (canvases.solar) this.showPlaceholder(canvases.solar, 'Failed to load');
     }
 
+    if(this._disposed||this._range!==range)return {powerData:null,socData:null,timeXLabel:()=>''};
     // Build x-label function from timestamps formatted in the specified timezone
     let timeFmt, dateFmt;
     try {

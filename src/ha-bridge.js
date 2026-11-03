@@ -108,6 +108,8 @@ export class HABridge {
 
   get E() { return this._entities || {}; }
   get battSpec() { return this._battSpec; }
+  get hass() { return this._hass; }
+  get gridEntities() { return this._gridEntityIds || {}; }
 
   // Called on every set hass(hass) from the main component
   update(hass) {
@@ -534,8 +536,13 @@ export class HABridge {
     return aux;
   }
 
-  getWeatherAuxSnap() {
-    const ids = this._cachedWeatherAuxIds;
+  getWeatherAuxSnap(weatherEntityId) {
+    let ids = this._cachedWeatherAuxIds;
+    if (weatherEntityId && weatherEntityId !== this._cachedWeatherEntityId) {
+      ids = this._discoverWeatherAuxSensors(weatherEntityId);
+    } else if (!ids && (weatherEntityId || this._cachedWeatherEntityId)) {
+      ids = this._cachedWeatherAuxIds = this._discoverWeatherAuxSensors(weatherEntityId || this._cachedWeatherEntityId);
+    }
     if (!ids) return { precipProb: null, thunderstormProb: null, precipIntensity: null, heatIndex: null, windChill: null };
     const getVal = id => {
       if (!id) return null;

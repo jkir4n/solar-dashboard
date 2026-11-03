@@ -1,0 +1,22 @@
+# Notices and Attribution
+
+## Software Code
+The Solar Dashboard software code is licensed under the MIT License.
+Copyright (c) 2026 Kiran J.
+See the LICENSE file for full license terms.
+
+## Bundled Third-Party Libraries
+- **Three.js**: Copyright (c) 2010-2026 three.js authors. Licensed under the MIT License.
+- **Astronomy Engine**: Copyright (c) 2019-2023 Don Cross. Licensed under the MIT License.
+
+## Bundled Astronomical Data
+- **HYG Database v4.1** (David Nash / Astronexus)
+  Bright-star subset (925 stars with magnitude <= 4.5).
+  Source: https://github.com/astronexus/HYG-Database/blob/main/hyg/CURRENT/hygdata_v41.csv
+  Data License: Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)
+  License details: https://creativecommons.org/licenses/by-sa/4.0/
+
+  Modifications:
+  Retained star names, converted J2000 Right Ascension from degrees to hours,
+  retained Declination degrees, visual magnitude, and B-V color index.
+  This notice applies strictly to the bundled astronomical data subset and does not alter the MIT license governing the application software code.

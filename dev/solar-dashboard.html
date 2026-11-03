@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Solar Dashboard — source verification</title>
+<style>body{margin:0;background:#edf1ec;font-family:system-ui}nav{padding:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#fff;color:#223b36;position:relative;z-index:100}nav label{font-size:12px}solar-dashboard{display:block;min-height:700px}select,button{font:inherit}#log{font-size:11px}nav small{margin-left:auto}</style>
+<script type="importmap">{"imports":{"astronomy-engine":"/node_modules/astronomy-engine/esm/astronomy.js","three":"/node_modules/three/build/three.module.js","three/addons/":"/node_modules/three/examples/jsm/"}}</script></head>
+<body><nav><label>Fixture <select id="fixture"></select></label><label>Weather <select id="weather"></select></label><label><input id="dark" type="checkbox">Dark</label><label>Language <select id="language"><option>en</option><option>de</option><option>fr</option><option>ja</option></select></label><button id="remount">Remount</button><span id="log"></span><small>DEV ONLY · Synthetic data · No live control calls</small></nav><div id="mount"></div>
+<script type="module">
+import {createHassFixture,scenarios,conditions} from '/dev/fixtures.js';
+// The legacy ISS tracker uses fetch directly; fixtures never make external requests.
+const originalFetch=window.fetch.bind(window);
+window.fetch=(input,options)=>String(input).startsWith('https://api.wheretheiss.at/')?Promise.resolve(new Response(JSON.stringify({latitude:0,longitude:0,altitude:420,visibility:'eclipsed'}),{status:200,headers:{'Content-Type':'application/json'}})):originalFetch(input,options);
+await import('../src/solar-dashboard.js');
+const el=id=>document.getElementById(id);
+for(const name of scenarios)el('fixture').add(new Option(name,name));
+for(const name of conditions)el('weather').add(new Option(name,name));
+let card;
+function update(){window.fixtureHass=createHassFixture(el('fixture').value,{condition:el('weather').value,dark:el('dark').checked,language:el('language').value});card.hass=window.fixtureHass;}
+function mount(){card?.remove();card=document.createElement('solar-dashboard');card.setConfig({});el('mount').append(card);update();window.card=card;}
+for(const id of ['fixture','weather','dark','language'])el(id).addEventListener('change',update);
+el('remount').addEventListener('click',mount);
+document.addEventListener('hass-more-info',event=>{el('log').textContent=`More info: ${event.detail.entityId}`;});
+mount();
+setInterval(()=>{el('log').textContent=`${window.fixtureHass.requests.filter(r=>r.domain).length} mock control calls`;if(el('fixture').value!=='disconnected')card.hass=window.fixtureHass;},5000);
+</script></body></html>
