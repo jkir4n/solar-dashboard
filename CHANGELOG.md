@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.66.0 (2026-11-03)
+
+### Features
+- 3D Command Center architectural redesign and HUD command stage
+
+
 ## v0.65.1 (2026-09-01)
 
 ### Bug Fixes
