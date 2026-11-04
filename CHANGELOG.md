@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.66.1 (2026-11-04)
+
+### Bug Fixes
+- Guard solar chart range fetch when PV power entity is absent
+
+
 ## v0.66.0 (2026-11-03)
 
 ### Features
