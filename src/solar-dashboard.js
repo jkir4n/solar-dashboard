@@ -2079,7 +2079,7 @@ class SolarDashboard extends HTMLElement {
     };
     const batteryPowerEntity = E.DISCHG_POWER || E.POWER;
     const solarPowerEntity = this._bridge.gridEntities.PV_POWER?.entityId;
-    const samePowerEntity = batteryPowerEntity === solarPowerEntity;
+    const samePowerEntity = batteryPowerEntity && batteryPowerEntity === solarPowerEntity;
 
     let result, solarResult;
     try {
@@ -2099,10 +2099,12 @@ class SolarDashboard extends HTMLElement {
             soc: E.SOC,
             _signed: !E.DISCHG_POWER,
           }, this._bridge.timezone),
-          this._charts.loadRange(range, {}, {
-            power: solarPowerEntity,
-            _signed: false,
-          }, this._bridge.timezone),
+          solarPowerEntity
+            ? this._charts.loadRange(range, {}, {
+                power: solarPowerEntity,
+                _signed: false,
+              }, this._bridge.timezone)
+            : Promise.resolve({ powerData: [], socData: [], timeXLabel: () => () => '' }),
         ]);
       }
     } catch (e) {

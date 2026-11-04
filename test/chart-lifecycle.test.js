@@ -9,6 +9,13 @@ test('older failed chart requests cannot overwrite a newer range',async()=>{
     const old=chart.loadRange('Live',{power:{}},{power:'sensor.pv'},'UTC');
     await chart.loadRange('7D',{power:{}},{power:'sensor.pv'},'UTC');const count=placeholders.length;
     rejectOld(new Error('Old request failed'));await old;assert.equal(placeholders.length,count);
-    chart._disposed=true;assert.equal((await chart.loadRange('7D',{}, {power:'sensor.pv'},'UTC')).powerData,null);
+    chart._disposed=true;
+    const disposedRes = await chart.loadRange('7D',{}, {power:'sensor.pv'},'UTC');
+    assert.equal(disposedRes.powerData,null);
+    assert.equal(disposedRes.timeXLabel()(0), '');
+
+    const unconfiguredChart = new ChartManager({});
+    const missingRes = await unconfiguredChart.loadRange('Live', {}, {}, 'UTC');
+    assert.equal(missingRes.timeXLabel()(0), '');
   }finally{globalThis.window=oldWindow;}
 });

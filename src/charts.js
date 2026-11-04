@@ -450,7 +450,7 @@ export class ChartManager {
     // Validate entity IDs before fetching
     if (!entityIds?.power) {
       console.warn('[Solar] Chart loadRange skipped — missing power entity ID:', entityIds);
-      return { powerData, socData, timeXLabel: () => '' };
+      return { powerData, socData, timeXLabel: () => () => '' };
     }
 
     // Determine if power entity is signed (POWER fallback has negative=discharge, positive=charge)
@@ -498,7 +498,7 @@ export class ChartManager {
         }
       }
     } catch (e) {
-      if(this._disposed||this._range!==range)return {powerData:null,socData:null,timeXLabel:()=>''};
+      if(this._disposed||this._range!==range)return {powerData:null,socData:null,timeXLabel:()=>()=>''};
       console.warn('Chart fetch failed', e);
       // NI9: Show error placeholder on all requested canvases
       if (canvases.power) this.showPlaceholder(canvases.power, 'Failed to load');
@@ -506,7 +506,7 @@ export class ChartManager {
       if (canvases.solar) this.showPlaceholder(canvases.solar, 'Failed to load');
     }
 
-    if(this._disposed||this._range!==range)return {powerData:null,socData:null,timeXLabel:()=>''};
+    if(this._disposed||this._range!==range)return {powerData:null,socData:null,timeXLabel:()=>()=>''};
     // Build x-label function from timestamps formatted in the specified timezone
     let timeFmt, dateFmt;
     try {
